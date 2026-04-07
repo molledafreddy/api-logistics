@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+build/
+
+# Environment
+.env
+.env.development
+.env.staging
+.env.production
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.sw[op]
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker volumes
+docker/data/
+
+# Temp
+tmp/
+temp/
