@@ -10,6 +10,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
+import hpp from 'hpp';
+import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import {
@@ -23,8 +25,23 @@ import {
   EmptyStringToUndefinedInterceptor,
 } from './common/interceptors/index';
 import { TrimStringPipe } from './common/pipes/index';
+import { initSentry } from './common/sentry/sentry.init';
 
 async function bootstrap() {
+  // ─── Sentry (debe inicializarse ANTES del NestFactory) ───
+  initSentry({
+    dsn: process.env.SENTRY_DSN || '',
+    environment: process.env.NODE_ENV || 'development',
+    release: process.env.APP_VERSION || '1.0.0',
+    tracesSampleRate: parseFloat(
+      process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1',
+    ),
+    profilesSampleRate: parseFloat(
+      process.env.SENTRY_PROFILES_SAMPLE_RATE || '0',
+    ),
+    enabled: !!process.env.SENTRY_DSN,
+  });
+
   // ─── Crear aplicación ──────────────────
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
@@ -33,27 +50,63 @@ async function bootstrap() {
   const port = configService.get<number>('APP_PORT', 3000);
   const apiPrefix = configService.get<string>('API_PREFIX', 'v1');
   const nodeEnv = configService.get<string>('NODE_ENV');
-  console.log('main.ts DEBUG:', { NODE_ENV: nodeEnv, API_PREFIX: apiPrefix });
+  const isProd = nodeEnv === 'production';
+  const bodySizeLimit = configService.get<string>(
+    'MAX_REQUEST_BODY_SIZE',
+    '1mb',
+  );
+
+  // ─── Trust proxy (necesario tras LB / Nginx para X-Forwarded-* y rate-limit por IP) ───
+  app.set('trust proxy', 1);
 
   // ─── Static assets (cliente WS de pruebas, etc.) ───
   app.useStaticAssets(join(process.cwd(), 'public'), { prefix: '/public/' });
 
-  // ─── Seguridad ─────────────────────────
-  // En dev desactivamos CSP para que el ws-tester pueda cargar socket.io desde CDN
+  // ─── Límites de tamaño de payload ─────
+  app.use(json({ limit: bodySizeLimit }));
+  app.use(urlencoded({ extended: true, limit: bodySizeLimit }));
+
+  // ─── Seguridad: cabeceras (Helmet) ────
   app.use(
     helmet({
-      contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
+      // En dev desactivamos CSP para que el ws-tester pueda cargar socket.io desde CDN
+      contentSecurityPolicy: isProd ? undefined : false,
       crossOriginEmbedderPolicy: false,
+      // HSTS estricto sólo en producción (1 año + subdominios + preload)
+      hsts: isProd
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
+      referrerPolicy: { policy: 'no-referrer' },
+      frameguard: { action: 'deny' },
+      noSniff: true,
     }),
   );
+
+  // ─── Seguridad: HTTP Parameter Pollution ───
+  app.use(hpp());
+
+  // ─── Compresión ────────────────────────
   app.use(compression());
+
+  // ─── CORS (default-deny) ──────────────
+  const corsOrigins = (configService.get<string>('CORS_ORIGINS', '') || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: (configService.get<string>('CORS_ORIGINS', '') || '')
-      .split(',')
-      .map((origin) => origin.trim()),
+    origin: (origin, cb) => {
+      // Requests sin Origin (curl, healthcheck interno) → permitido
+      if (!origin) return cb(null, true);
+      if (corsOrigins.includes(origin)) return cb(null, true);
+      logger.warn(`CORS bloqueado para origin=${origin}`);
+      return cb(new Error('Origin no permitido por CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    exposedHeaders: ['X-Request-ID'],
+    maxAge: 86400,
   });
 
   // ─── Prefijo global ───────────────────

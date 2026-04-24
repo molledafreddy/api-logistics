@@ -4,13 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as jwt from 'jsonwebtoken';
 import { JwtHeader, SigningKeyCallback, VerifyErrors } from 'jsonwebtoken';
-import type { JwksClient, Options as JwksOptions } from 'jwks-rsa';
-// jwks-rsa exporta el factory como module.exports (CJS) y como default (ESM).
-// Usamos require para asegurar compatibilidad con ts-jest/CommonJS sin perder tipado.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const jwksRsaModule = require('jwks-rsa');
-const jwksClient: (options: JwksOptions) => JwksClient =
-  jwksRsaModule.default ?? jwksRsaModule;
+import { JwksClient } from 'jwks-rsa';
 import { Socket } from 'socket.io';
 import { User } from '../modules/auth/entities/user.entity';
 import { IUserPayload } from '../common/interfaces/user-payload.interface';
@@ -45,7 +39,7 @@ export class WsAuthService {
       this.configService.get<string>('supabase.url')!;
     this.issuer = `${supabaseUrl}/auth/v1`;
     this.audience = process.env.SUPABASE_JWT_AUD || 'authenticated';
-    this.jwks = jwksClient({
+    this.jwks = new JwksClient({
       jwksUri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
       cache: true,
       rateLimit: true,

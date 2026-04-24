@@ -72,9 +72,22 @@ export const validationSchema = Joi.object({
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').default(''),
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').default(''),
 
-  // ─── Rate Limiting ────────────────────────
+  // ─── Rate Limiting (3 buckets) ────────────
+  THROTTLE_SHORT_TTL: Joi.number().default(1000),
+  THROTTLE_SHORT_LIMIT: Joi.number().default(10),
   THROTTLE_TTL: Joi.number().default(60000),
   THROTTLE_LIMIT: Joi.number().default(100),
+  THROTTLE_LONG_TTL: Joi.number().default(3600000),
+  THROTTLE_LONG_LIMIT: Joi.number().default(1000),
+
+  // ─── Performance / Body limits ────────────
+  MAX_REQUEST_BODY_SIZE: Joi.string().default('1mb'),
+  MAX_FILE_UPLOAD_SIZE: Joi.string().default('25mb'),
+
+  // ─── Sentry (observabilidad) ──────────────
+  SENTRY_DSN: Joi.string().allow('').default(''),
+  SENTRY_TRACES_SAMPLE_RATE: Joi.number().min(0).max(1).default(0.1),
+  SENTRY_PROFILES_SAMPLE_RATE: Joi.number().min(0).max(1).default(0),
 
   // ─── Logging ──────────────────────────────
   LOG_LEVEL: Joi.string()

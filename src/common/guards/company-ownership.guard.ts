@@ -4,55 +4,61 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { IUserPayload } from '../interfaces/user-payload.interface';
 import { UserRole } from '../enums/user-role.enum';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
- * Company Ownership Guard
- * Verifies the authenticated user belongs to the company referenced in the request.
+ * CompanyOwnershipGuard — Global (registrado como APP_GUARD)
  *
- * Checks for companyId in this order:
+ * Defensa en profundidad multi-tenant: verifica que el usuario autenticado
+ * pertenezca a la empresa referenciada en la request.
+ *
+ * Se activa solo si la request trae un `companyId` explícito en:
  *   1. Route param :companyId
- *   2. Request body { companyId }
- *   3. The user's own companyId (for scoped resources like /users within the same company)
+ *   2. Body { companyId }
+ *   3. Query ?companyId=
  *
- * super_admin always passes.
- * Use with @UseGuards(CompanyOwnershipGuard) on controllers/routes that are company-scoped.
+ * Casos de bypass (return true):
+ *   - Endpoint @Public()
+ *   - Sin user en la request (lo maneja JwtAuthGuard)
+ *   - super_admin
+ *   - Sin companyId explícito (el service debe filtrar por user.companyId)
+ *
+ * Plan §20.4 — guard #7 en el pipeline.
  */
 @Injectable()
 export class CompanyOwnershipGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const request = context.switchToHttp().getRequest();
     const user = request.user as IUserPayload | undefined;
 
-    if (!user) {
-      return true; // Let JwtAuthGuard handle missing user
-    }
+    if (!user) return true;
+    if (user.role === UserRole.SUPER_ADMIN) return true;
 
-    // super_admin bypasses company check
-    if (user.role === UserRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    // Determine the target company ID
     const targetCompanyId =
-      request.params.companyId || request.body?.companyId || null;
+      request.params?.companyId ||
+      request.body?.companyId ||
+      request.query?.companyId ||
+      null;
 
-    // If there's no target companyId in the request, skip this guard
-    // (the resource may be implicitly scoped to user.companyId in the service)
-    if (!targetCompanyId) {
-      return true;
-    }
+    if (!targetCompanyId) return true;
 
-    // User must belong to the target company
     if (!user.companyId) {
       throw new ForbiddenException('No perteneces a ninguna empresa');
     }
-
     if (user.companyId !== targetCompanyId) {
       throw new ForbiddenException('No tienes acceso a esta empresa');
     }
-
     return true;
   }
 }

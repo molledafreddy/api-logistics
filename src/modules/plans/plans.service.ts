@@ -9,7 +9,7 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 import { CreatePermissionDefinitionDto } from './dto/create-permission-definition.dto';
 import { UpdatePermissionDefinitionDto } from './dto/update-permission-definition.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
-import { PermissionsCacheService } from './permissions-cache.service';
+import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 
 @Injectable()
 export class PlansService {
@@ -28,25 +28,17 @@ export class PlansService {
   // --- Planes ---
   async createPlan(dto: CreatePlanDto) {
     this.logger.debug(`[createPlan] dto: ${JSON.stringify(dto)}`);
-    console.log('[PLANS_SERVICE] Antes de planRepository.save');
-    const result = await this.planRepository.save(dto);
-    console.log('[PLANS_SERVICE] Resultado de planRepository.save', result);
-    return result;
+    return this.planRepository.save(dto);
   }
 
   async findAllPlans() {
     this.logger.debug(`[findAllPlans] llamada`);
-    console.log('[PLANS_SERVICE] Antes de planRepository.find');
-    const result = await this.planRepository.find();
-    console.log('[PLANS_SERVICE] Resultado de planRepository.find', result);
-    return result;
+    return this.planRepository.find();
   }
 
   async findOnePlan(id: string) {
     this.logger.debug(`[findOnePlan] id: ${id}`);
-    console.log('[PLANS_SERVICE] Antes de planRepository.findOne');
     const plan = await this.planRepository.findOne({ where: { id } });
-    console.log('[PLANS_SERVICE] Resultado de planRepository.findOne', plan);
     if (!plan) throw new NotFoundException('Plan not found');
     return plan;
   }

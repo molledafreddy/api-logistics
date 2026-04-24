@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/index';
 import { Public } from '../../common/decorators/public.decorator';
@@ -29,6 +30,11 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  // Estricto: 3 registros / minuto, 10 / hora por IP
+  @Throttle({
+    short: { limit: 3, ttl: 60_000 },
+    long: { limit: 10, ttl: 3_600_000 },
+  })
   @ApiOperation({ summary: 'Registrar nuevo usuario y empresa' })
   @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente' })
   @ApiResponse({ status: 409, description: 'Email ya registrado' })
@@ -41,9 +47,15 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  // Estricto anti-bruteforce: 5 logins / minuto, 30 / hora por IP
+  @Throttle({
+    short: { limit: 5, ttl: 60_000 },
+    long: { limit: 30, ttl: 3_600_000 },
+  })
   @ApiOperation({ summary: 'Iniciar sesión' })
   @ApiResponse({ status: 200, description: 'Login exitoso' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
+  @ApiResponse({ status: 429, description: 'Demasiados intentos' })
   async login(@Body() dto: LoginDto, @Req() req: any) {
     const ipAddress = req.ip || req.socket?.remoteAddress;
     return this.authService.login(dto, ipAddress);
@@ -52,6 +64,8 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  // 20 refresh / minuto por IP
+  @Throttle({ short: { limit: 20, ttl: 60_000 } })
   @ApiOperation({ summary: 'Refrescar access token' })
   @ApiResponse({ status: 200, description: 'Token refrescado' })
   @ApiResponse({ status: 401, description: 'Refresh token inválido' })

@@ -48,3 +48,33 @@ export async function getAccessToken(
   }
   return jwt;
 }
+
+/**
+ * Defensive teardown for E2E suites.
+ *
+ * Si `beforeAll` falla, `app` queda `undefined` y `afterAll` rompe con
+ * "Cannot read properties of undefined (reading 'close')". Este helper
+ * cierra el DataSource (TypeORM) y la app sin lanzar.
+ */
+export async function closeTestApp(
+  app: INestApplication | undefined,
+): Promise<void> {
+  if (!app) return;
+  try {
+    // Cerrar DataSource (si está disponible) para liberar el pool de Supabase
+    // antes de cerrar la app, evitando "MaxClientsInSessionMode".
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DataSource } = require('typeorm');
+    const ds = app.get(DataSource, { strict: false });
+    if (ds && ds.isInitialized) {
+      await ds.destroy();
+    }
+  } catch {
+    // ignore
+  }
+  try {
+    await app.close();
+  } catch {
+    // ignore
+  }
+}

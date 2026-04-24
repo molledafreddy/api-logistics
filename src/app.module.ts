@@ -4,6 +4,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
+import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 // Config
 import { validationSchema } from './config/validation.schema';
@@ -16,6 +17,7 @@ import { mailConfig } from './config/mail.config';
 import { stripeConfig } from './config/stripe.config';
 import { throttleConfig } from './config/throttle.config';
 import { supabaseConfig } from './config/supabase.config';
+import { sentryConfig } from './config/sentry.config';
 
 // Core modules
 import { DatabaseModule } from './database/database.module';
@@ -52,10 +54,15 @@ import { GatewaysModule } from './gateways/gateways.module';
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { PermissionGuard } from './common/guards/permission.guard';
+import { CompanyOwnershipGuard } from './common/guards/company-ownership.guard';
 
 // Controllers
 import { HealthController } from './health.controller';
 import { RootController } from './root.controller';
+
+// Middleware
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 @Module({
   imports: [
@@ -74,6 +81,7 @@ import { RootController } from './root.controller';
         stripeConfig,
         throttleConfig,
         supabaseConfig,
+        sentryConfig,
       ],
     }),
 
@@ -83,15 +91,26 @@ import { RootController } from './root.controller';
     // ─── Common (global) ───────
     CommonModule,
 
-    // ─── Rate Limiting ─────────
+    // ─── Rate Limiting (multi-bucket) ─────────
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         throttlers: [
           {
+            name: 'short',
+            ttl: config.get<number>('THROTTLE_SHORT_TTL', 1000),
+            limit: config.get<number>('THROTTLE_SHORT_LIMIT', 10),
+          },
+          {
+            name: 'medium',
             ttl: config.get<number>('THROTTLE_TTL', 60000),
             limit: config.get<number>('THROTTLE_LIMIT', 100),
+          },
+          {
+            name: 'long',
+            ttl: config.get<number>('THROTTLE_LONG_TTL', 3600000),
+            limit: config.get<number>('THROTTLE_LONG_LIMIT', 1000),
           },
         ],
       }),
@@ -131,12 +150,17 @@ import { RootController } from './root.controller';
   ],
   controllers: [HealthController, RootController],
   providers: [
-    // Guard global de throttle
+    // ─── Guards globales (orden importa, plan §20.4) ───
+    // 1. Rate limiting → 2. JWT → 3. Roles → 4. Permission (cache Redis) → 5. Ownership
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    // Guard global de autenticación JWT (Supabase)
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    // Guard global de roles
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionGuard },
+    { provide: APP_GUARD, useClass: CompanyOwnershipGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}
