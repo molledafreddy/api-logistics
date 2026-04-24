@@ -8,7 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
-import { AUDIT_KEY, AuditOptions } from '../decorators/audit.decorator.js';
+import { AUDIT_KEY, AuditOptions } from '../decorators/audit.decorator';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -17,10 +17,9 @@ export class AuditInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const auditOptions = this.reflector.getAllAndOverride<AuditOptions | undefined>(
-      AUDIT_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const auditOptions = this.reflector.getAllAndOverride<
+      AuditOptions | undefined
+    >(AUDIT_KEY, [context.getHandler(), context.getClass()]);
 
     if (!auditOptions) {
       return next.handle();

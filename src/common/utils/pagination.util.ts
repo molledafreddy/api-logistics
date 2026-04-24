@@ -1,6 +1,6 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { PaginationDto } from '../dto/pagination.dto.js';
-import { IPaginatedResult } from '../interfaces/paginated-result.interface.js';
+import { PaginationDto } from '../dto/pagination.dto';
+import { IPaginatedResult } from '../interfaces/paginated-result.interface';
 
 export async function paginate<T extends ObjectLiteral>(
   queryBuilder: SelectQueryBuilder<T>,

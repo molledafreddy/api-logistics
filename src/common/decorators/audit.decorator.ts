@@ -7,5 +7,4 @@ export interface AuditOptions {
   resource: string;
 }
 
-export const Audit = (options: AuditOptions) =>
-  SetMetadata(AUDIT_KEY, options);
+export const Audit = (options: AuditOptions) => SetMetadata(AUDIT_KEY, options);

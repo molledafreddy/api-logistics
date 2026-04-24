@@ -6,21 +6,56 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 
 // Config
-import { validationSchema } from './config/validation.schema.js';
-import { appConfig } from './config/app.config.js';
-import { databaseConfig } from './config/database.config.js';
-import { redisConfig } from './config/redis.config.js';
-import { jwtConfig } from './config/jwt.config.js';
-import { s3Config } from './config/s3.config.js';
-import { mailConfig } from './config/mail.config.js';
-import { stripeConfig } from './config/stripe.config.js';
-import { throttleConfig } from './config/throttle.config.js';
+import { validationSchema } from './config/validation.schema';
+import { appConfig } from './config/app.config';
+import { databaseConfig } from './config/database.config';
+import { redisConfig } from './config/redis.config';
+import { jwtConfig } from './config/jwt.config';
+import { s3Config } from './config/s3.config';
+import { mailConfig } from './config/mail.config';
+import { stripeConfig } from './config/stripe.config';
+import { throttleConfig } from './config/throttle.config';
+import { supabaseConfig } from './config/supabase.config';
 
 // Core modules
-import { DatabaseModule } from './database/database.module.js';
+import { DatabaseModule } from './database/database.module';
+import { CommonModule } from './common/common.module';
+
+// Feature modules
+import { AuthModule } from './modules/auth/auth.module';
+import { CompaniesModule } from './modules/companies/companies.module';
+import { UsersModule } from './modules/users/users.module';
+import { PlansModule } from './modules/plans/plans.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { VerificationsModule } from './modules/verifications/verifications.module';
+import { RelationshipsModule } from './modules/relationships/relationships.module';
+import { FilesModule } from './modules/files/files.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { TrucksModule } from './modules/trucks/trucks.module';
+import { DriversModule } from './modules/drivers/drivers.module';
+import { RoutesModule } from './modules/routes/routes.module';
+import { ShipmentsModule } from './modules/shipments/shipments.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { DeliveryRunsModule } from './modules/delivery-runs/delivery-runs.module';
+import { RecurringTemplatesModule } from './modules/recurring-templates/recurring-templates.module';
+import { OptimizationModule } from './modules/optimization/optimization.module';
+
+// Gateways (WebSockets)
+import { GatewaysModule } from './gateways/gateways.module';
+
+// Guards
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 // Controllers
-import { HealthController } from './health.controller.js';
+import { HealthController } from './health.controller';
+import { RootController } from './root.controller';
 
 @Module({
   imports: [
@@ -38,11 +73,15 @@ import { HealthController } from './health.controller.js';
         mailConfig,
         stripeConfig,
         throttleConfig,
+        supabaseConfig,
       ],
     }),
 
     // ─── Base de datos ─────────
     DatabaseModule,
+
+    // ─── Common (global) ───────
+    CommonModule,
 
     // ─── Rate Limiting ─────────
     ThrottlerModule.forRootAsync({
@@ -64,12 +103,40 @@ import { HealthController } from './health.controller.js';
     // ─── Scheduler (Cron) ──────
     ScheduleModule.forRoot(),
 
-    // ─── Business Modules (se agregan en fases posteriores) ──
+    // ─── Business Modules ────────────────────
+    AuthModule,
+    CompaniesModule,
+    UsersModule,
+    PlansModule,
+    SubscriptionsModule,
+    VerificationsModule,
+    RelationshipsModule,
+    FilesModule,
+    AuditModule,
+    NotificationsModule,
+    AdminModule,
+    TrucksModule,
+    DriversModule,
+    RoutesModule,
+    ShipmentsModule,
+    TrackingModule,
+    ExpensesModule,
+    ChatModule,
+    DashboardModule,
+    ReportsModule,
+    DeliveryRunsModule,
+    RecurringTemplatesModule,
+    OptimizationModule,
+    GatewaysModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, RootController],
   providers: [
     // Guard global de throttle
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Guard global de autenticación JWT (Supabase)
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Guard global de roles
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

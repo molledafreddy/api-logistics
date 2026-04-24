@@ -1,29 +1,51 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType, HttpStatus, Logger } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  ValidationPipe,
+  VersioningType,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
-import { AppModule } from './app.module.js';
-import { GlobalExceptionFilter, TypeormExceptionFilter } from './common/filters/index.js';
+import { join } from 'path';
+import { AppModule } from './app.module';
+import {
+  GlobalExceptionFilter,
+  TypeormExceptionFilter,
+} from './common/filters/index';
 import {
   ResponseTransformInterceptor,
   LoggingInterceptor,
   TimeoutInterceptor,
-} from './common/interceptors/index.js';
-import { TrimStringPipe } from './common/pipes/index.js';
+  EmptyStringToUndefinedInterceptor,
+} from './common/interceptors/index';
+import { TrimStringPipe } from './common/pipes/index';
 
 async function bootstrap() {
   // ─── Crear aplicación ──────────────────
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('APP_PORT', 3000);
   const apiPrefix = configService.get<string>('API_PREFIX', 'v1');
+  const nodeEnv = configService.get<string>('NODE_ENV');
+  console.log('main.ts DEBUG:', { NODE_ENV: nodeEnv, API_PREFIX: apiPrefix });
+
+  // ─── Static assets (cliente WS de pruebas, etc.) ───
+  app.useStaticAssets(join(process.cwd(), 'public'), { prefix: '/public/' });
 
   // ─── Seguridad ─────────────────────────
-  app.use(helmet());
+  // En dev desactivamos CSP para que el ws-tester pueda cargar socket.io desde CDN
+  app.use(
+    helmet({
+      contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.use(compression());
   app.enableCors({
     origin: (configService.get<string>('CORS_ORIGINS', '') || '')
@@ -36,12 +58,6 @@ async function bootstrap() {
 
   // ─── Prefijo global ───────────────────
   app.setGlobalPrefix(apiPrefix);
-
-  // ─── Versionado ────────────────────────
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
 
   // ─── Pipes globales ────────────────────
   app.useGlobalPipes(
@@ -64,7 +80,10 @@ async function bootstrap() {
   );
 
   // ─── Interceptores globales ────────────
+  // EmptyStringToUndefinedInterceptor debe ir ANTES de la validación de DTOs
+  // (Nest ejecuta interceptores antes que pipes en el ciclo de request).
   app.useGlobalInterceptors(
+    new EmptyStringToUndefinedInterceptor(),
     new LoggingInterceptor(),
     new TimeoutInterceptor(),
     new ResponseTransformInterceptor(),
@@ -72,34 +91,101 @@ async function bootstrap() {
 
   // ─── Swagger / OpenAPI ─────────────────
   if (configService.get('NODE_ENV') !== 'production') {
+    const wsDocs = [
+      '## 🔌 WebSockets (Socket.IO)',
+      '',
+      'Además de los endpoints REST, la API expone tres namespaces en tiempo real.',
+      '',
+      `**Cliente de pruebas interactivo:** [\`/public/ws-tester.html\`](/public/ws-tester.html)`,
+      '',
+      '### Conexión',
+      '```js',
+      `import { io } from 'socket.io-client';`,
+      `const socket = io('http://localhost:3000/chat', {`,
+      `  auth: { token: '<JWT_SUPABASE>' }, // o headers Authorization: 'Bearer ...'`,
+      `  transports: ['websocket'],`,
+      `});`,
+      '```',
+      '',
+      '### Namespaces',
+      '',
+      '#### `/notifications` — push de notificaciones',
+      '| Dirección | Evento | Descripción |',
+      '|---|---|---|',
+      '| ⬅️ Server | `notification:new` | Nueva notificación dirigida al usuario |',
+      '| ➡️ Client | `notification:markRead` | Confirmación de lectura |',
+      '',
+      '_Room automática:_ `user:{userId}` (al conectar).',
+      '',
+      '#### `/chat` — mensajería',
+      '| Dirección | Evento | Payload |',
+      '|---|---|---|',
+      '| ➡️ Client | `chat:join` | `{ conversationId }` — valida acceso y une al room |',
+      '| ➡️ Client | `chat:leave` | `{ conversationId }` |',
+      '| ➡️ Client | `chat:send` | `{ conversationId, content, type?, fileUrl?, fileName? }` — persiste y difunde |',
+      '| ➡️ Client | `chat:typingStart` / `chat:typingStop` | `{ conversationId }` |',
+      '| ➡️ Client | `chat:markRead` | `{ conversationId }` |',
+      '| ⬅️ Server | `chat:newMessage` | mensaje completo difundido al room |',
+      '| ⬅️ Server | `chat:userTyping` | `{ conversationId, userId, typing }` |',
+      '| ⬅️ Server | `chat:messageRead` | `{ conversationId, userId, updated }` |',
+      '| ⬅️ Server | `chat:userOnline` / `chat:userOffline` | `{ userId }` |',
+      '',
+      '_Rooms:_ `conv:{conversationId}`, `user:{userId}`.',
+      '',
+      '#### `/tracking` — ubicaciones GPS en vivo',
+      '| Dirección | Evento | Payload |',
+      '|---|---|---|',
+      '| ➡️ Client | `tracking:subscribe` | `{ shipmentId?, truckId? }` |',
+      '| ➡️ Client | `tracking:unsubscribe` | `{ shipmentId?, truckId? }` |',
+      '| ➡️ Client | `tracking:location` | `{ shipmentId?, truckId?, lat, lng, speed?, heading? }` (driver app) |',
+      '| ⬅️ Server | `tracking:locationUpdate` | punto difundido al room del shipment/truck |',
+      '',
+      '_Rooms:_ `shipment:{id}`, `truck:{id}`.',
+      '',
+      '### Auth',
+      'Mismo JWT de Supabase del header HTTP. Si falla → el socket se desconecta inmediatamente.',
+      '',
+      '### Bridge REST ↔ WS',
+      'Cualquier creación vía REST (notificación, mensaje, tracking point) **también** se difunde por WS automáticamente vía `EventEmitter2`.',
+    ].join('\n');
+
     const swaggerConfig = new DocumentBuilder()
       .setTitle('API Logistics')
-      .setDescription('Plataforma de gestión logística multi-tenant')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'Authorization',
-          description: 'Ingresa tu JWT token',
-          in: 'header',
-        },
-        'access-token',
+      .setDescription(
+        'Plataforma de gestión logística multi-tenant.\n\n' + wsDocs,
       )
+      .setVersion('1.0')
+      .addBearerAuth({
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Ingresa tu JWT token',
+        in: 'header',
+      })
       .addTag('Health', 'Health checks')
       .addTag('Auth', 'Autenticación y sesiones')
       .addTag('Companies', 'Gestión de empresas')
-      .addTag('Users', 'Gestión de usuarios')
+      .addTag('Users (Team)', 'Gestión de usuarios del equipo')
+      .addTag('Plans', 'Planes y permisos')
       .addTag('Subscriptions', 'Suscripciones y facturación')
+      .addTag('Verifications', 'Verificación KYC de empresas')
+      .addTag('Relationships', 'Relaciones cliente-carrier entre empresas')
       .addTag('Trucks', 'Gestión de flota')
       .addTag('Drivers', 'Gestión de conductores')
-      .addTag('Shipments', 'Gestión de envíos')
-      .addTag('Tracking', 'Tracking en tiempo real')
-      .addTag('Expenses', 'Gestión de gastos')
-      .addTag('Chat', 'Mensajería')
+      .addTag('Routes', 'Gestión de rutas predefinidas')
+      .addTag(
+        'Shipments',
+        'Gestión de envíos (incluye flujo accept/reject cross-company)',
+      )
+      .addTag('Tracking', 'Tracking GPS en tiempo real')
+      .addTag('Expenses', 'Gestión de gastos y reembolsos')
+      .addTag('Chat', 'Mensajería y conversaciones')
       .addTag('Notifications', 'Notificaciones')
-      .addTag('Dashboard', 'Dashboard y reportes')
+      .addTag('Files', 'Subida y descarga de archivos (Supabase Storage)')
+      .addTag('Audit', 'Logs de auditoría')
+      .addTag('Dashboard', 'KPIs y métricas agregadas')
+      .addTag('Reports', 'Reportes y exportaciones (JSON/CSV)')
       .addTag('Admin', 'Panel de administración')
       .build();
 
@@ -118,9 +204,11 @@ async function bootstrap() {
 
   // ─── Iniciar servidor ──────────────────
   await app.listen(port);
-  logger.log(`🚀 API Logistics running on: http://localhost:${port}/${apiPrefix}`);
+  logger.log(
+    `🚀 API Logistics running on: http://localhost:${port}/${apiPrefix}`,
+  );
   logger.log(`📚 Swagger docs: http://localhost:${port}/docs`);
+  logger.log(`🔌 WS Tester:  http://localhost:${port}/public/ws-tester.html`);
 }
 
 bootstrap();
-

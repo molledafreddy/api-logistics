@@ -6,7 +6,7 @@ export class CreateExtensions1700000000001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "postgis"`);
+    // await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "postgis"`);
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "pg_trgm"`);
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "btree_gist"`);
   }

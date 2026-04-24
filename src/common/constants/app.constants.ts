@@ -12,12 +12,12 @@ export const JWT_REFRESH_STRATEGY = 'jwt-refresh';
 
 // ─── Cache TTLs (seconds) ───────────────────
 export const CACHE_TTL = {
-  USER_CONTEXT: 300,      // 5 min
-  COMPANY: 600,           // 10 min
-  PLAN: 3600,             // 1 hour
-  PERMISSIONS: 3600,      // 1 hour
-  DASHBOARD: 60,          // 1 min
-  RESOURCE_COUNT: 300,    // 5 min
+  USER_CONTEXT: 300, // 5 min
+  COMPANY: 600, // 10 min
+  PLAN: 3600, // 1 hour
+  PERMISSIONS: 3600, // 1 hour
+  DASHBOARD: 60, // 1 min
+  RESOURCE_COUNT: 300, // 5 min
 } as const;
 
 // ─── File Upload ────────────────────────────
@@ -33,14 +33,14 @@ export const ALLOWED_DOCUMENT_TYPES = [
 
 // ─── Pre-signed URL TTLs (seconds) ─────────
 export const PRESIGNED_URL_TTL = {
-  UPLOAD: 900,   // 15 min
+  UPLOAD: 900, // 15 min
   DOWNLOAD: 3600, // 1 hour
 } as const;
 
 // ─── Rate Limits ────────────────────────────
 export const RATE_LIMITS = {
-  LOGIN: { ttl: 900000, limit: 5 },          // 5 intentos en 15 min
-  REGISTER: { ttl: 3600000, limit: 3 },      // 3 registros por hora
+  LOGIN: { ttl: 900000, limit: 5 }, // 5 intentos en 15 min
+  REGISTER: { ttl: 3600000, limit: 3 }, // 3 registros por hora
   FORGOT_PASSWORD: { ttl: 3600000, limit: 3 }, // 3 por hora
-  API_DEFAULT: { ttl: 60000, limit: 100 },   // 100 por minuto
+  API_DEFAULT: { ttl: 60000, limit: 100 }, // 100 por minuto
 } as const;

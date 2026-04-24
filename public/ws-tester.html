@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WS Tester · API Logistics</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --green: #22c55e;
+        --red: #ef4444;
+        --yellow: #eab308;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+      }
+      header {
+        padding: 12px 24px;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      header .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      header .auth-row {
+        display: grid;
+        grid-template-columns: 320px 1fr auto;
+        gap: 8px;
+        align-items: end;
+      }
+      header label {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      header .help {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      header .help a { color: var(--accent); }
+      input[type="text"], input[type="password"], textarea {
+        background: #0b1220;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 10px;
+        width: 100%;
+        font: inherit;
+      }
+      textarea { resize: vertical; min-height: 60px; font-family: ui-monospace, monospace; }
+      button {
+        background: var(--accent);
+        color: #0f172a;
+        border: 0;
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary { background: #475569; color: var(--text); }
+      button.danger { background: var(--red); color: #fff; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      main {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        padding: 16px 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        min-height: 600px;
+      }
+      .card header {
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card header h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .card .body {
+        padding: 12px 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+      }
+      .row { display: flex; gap: 8px; }
+      .row input { flex: 1; }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+      .dot.on { background: var(--green); }
+      .dot.idle { background: var(--yellow); }
+      .log {
+        background: #020617;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 10px;
+        flex: 1;
+        overflow-y: auto;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .log .entry { padding: 2px 0; word-break: break-word; }
+      .log .out { color: var(--accent); }
+      .log .in  { color: var(--green); }
+      .log .err { color: var(--red); }
+      .log .sys { color: var(--muted); }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+      .pill {
+        background: #0b1220;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="top">
+        <h1>🔌 WS Tester · API Logistics</h1>
+        <span class="help">
+          Necesitas un JWT. Obtenlo con
+          <a href="/docs#/Auth/AuthController_login" target="_blank">POST /v1/auth/login</a>
+          y copia el <code>access_token</code> abajo 👇
+        </span>
+      </div>
+      <div class="auth-row">
+        <div>
+          <label for="apiUrl">API URL</label>
+          <input type="text" id="apiUrl" value="http://localhost:3000" placeholder="http://localhost:3000" />
+        </div>
+        <div>
+          <label for="token">🔑 JWT Token (Supabase access_token) — pégalo aquí</label>
+          <input type="text" id="token" placeholder="eyJhbGciOi... (sin la palabra Bearer)" autocomplete="off" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="secondary" id="clearToken" type="button">Clear</button>
+        </div>
+      </div>
+    </header>
+    <main>
+      <!-- ───── NOTIFICATIONS ───── -->
+      <section class="card" data-ns="/notifications">
+        <header>
+          <h2>📣 /notifications</h2>
+          <span class="status"><span class="dot" id="dot-notif"></span><span id="state-notif">disconnected</span></span>
+        </header>
+        <div class="body">
+          <div class="row">
+            <button data-action="connect">Connect</button>
+            <button class="secondary" data-action="disconnect">Disconnect</button>
+          </div>
+          <p class="status">Servidor empuja al room <span class="pill">user:{tu_id}</span> el evento <span class="pill">notification:new</span>.</p>
+          <div class="log" id="log-notif"></div>
+        </div>
+      </section>
+
+      <!-- ───── CHAT ───── -->
+      <section class="card" data-ns="/chat">
+        <header>
+          <h2>💬 /chat</h2>
+          <span class="status"><span class="dot" id="dot-chat"></span><span id="state-chat">disconnected</span></span>
+        </header>
+        <div class="body">
+          <div class="row">
+            <button data-action="connect">Connect</button>
+            <button class="secondary" data-action="disconnect">Disconnect</button>
+          </div>
+          <div>
+            <label>conversationId</label>
+            <div class="row">
+              <input type="text" id="chat-conv" placeholder="uuid de la conversación" />
+              <button data-action="join">Join</button>
+              <button class="secondary" data-action="leave">Leave</button>
+            </div>
+          </div>
+          <div>
+            <label>mensaje</label>
+            <div class="row">
+              <input type="text" id="chat-msg" placeholder="Hola desde WS" />
+              <button data-action="send">Send</button>
+            </div>
+          </div>
+          <div class="row">
+            <button class="secondary" data-action="typing-start">typingStart</button>
+            <button class="secondary" data-action="typing-stop">typingStop</button>
+            <button class="secondary" data-action="mark-read">markRead</button>
+          </div>
+          <div class="log" id="log-chat"></div>
+        </div>
+      </section>
+
+      <!-- ───── TRACKING ───── -->
+      <section class="card" data-ns="/tracking">
+        <header>
+          <h2>📍 /tracking</h2>
+          <span class="status"><span class="dot" id="dot-track"></span><span id="state-track">disconnected</span></span>
+        </header>
+        <div class="body">
+          <div class="row">
+            <button data-action="connect">Connect</button>
+            <button class="secondary" data-action="disconnect">Disconnect</button>
+          </div>
+          <div>
+            <label>shipmentId / truckId</label>
+            <div class="row">
+              <input type="text" id="track-shipment" placeholder="shipmentId" />
+              <input type="text" id="track-truck" placeholder="truckId" />
+            </div>
+            <div class="row" style="margin-top:6px">
+              <button data-action="subscribe">Subscribe</button>
+              <button class="secondary" data-action="unsubscribe">Unsubscribe</button>
+            </div>
+          </div>
+          <div>
+            <label>send location (driver simulation)</label>
+            <div class="row">
+              <input type="text" id="track-lat" value="25.7617" placeholder="lat" />
+              <input type="text" id="track-lng" value="-80.1918" placeholder="lng" />
+              <button data-action="send-location">Send</button>
+            </div>
+          </div>
+          <div class="log" id="log-track"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const sockets = { '/notifications': null, '/chat': null, '/tracking': null };
+      const dotIds   = { '/notifications': 'dot-notif',  '/chat': 'dot-chat',  '/tracking': 'dot-track' };
+      const stateIds = { '/notifications': 'state-notif','/chat': 'state-chat','/tracking': 'state-track' };
+      const logIds   = { '/notifications': 'log-notif',  '/chat': 'log-chat',  '/tracking': 'log-track' };
+
+      // Persistencia del token y URL en localStorage
+      const tokenEl = document.getElementById('token');
+      const urlEl = document.getElementById('apiUrl');
+      tokenEl.value = localStorage.getItem('ws_tester_token') || '';
+      urlEl.value = localStorage.getItem('ws_tester_url') || urlEl.value;
+      tokenEl.addEventListener('input', () => localStorage.setItem('ws_tester_token', tokenEl.value));
+      urlEl.addEventListener('input', () => localStorage.setItem('ws_tester_url', urlEl.value));
+      document.getElementById('clearToken').addEventListener('click', () => {
+        tokenEl.value = '';
+        localStorage.removeItem('ws_tester_token');
+        tokenEl.focus();
+      });
+
+      function log(ns, type, message, payload) {
+        const el = document.getElementById(logIds[ns]);
+        const time = new Date().toLocaleTimeString();
+        const line = document.createElement('div');
+        line.className = 'entry ' + type;
+        const arrow = type === 'out' ? '→' : type === 'in' ? '←' : type === 'err' ? '✗' : '·';
+        const data = payload !== undefined ? '  ' + JSON.stringify(payload) : '';
+        line.textContent = `[${time}] ${arrow} ${message}${data}`;
+        el.appendChild(line);
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function setState(ns, state) {
+        const dot = document.getElementById(dotIds[ns]);
+        const lbl = document.getElementById(stateIds[ns]);
+        dot.className = 'dot' + (state === 'connected' ? ' on' : state === 'connecting' ? ' idle' : '');
+        lbl.textContent = state;
+      }
+
+      function connect(ns) {
+        const url = document.getElementById('apiUrl').value.trim();
+        const token = document.getElementById('token').value.trim();
+        if (!token) { log(ns, 'err', 'Falta JWT en el input superior'); return; }
+        if (sockets[ns]) sockets[ns].disconnect();
+
+        setState(ns, 'connecting');
+        log(ns, 'sys', `connecting to ${url}${ns}`);
+
+        const socket = io(url + ns, {
+          auth: { token },
+          transports: ['websocket'],
+          reconnection: true,
+          reconnectionAttempts: 3,
+        });
+        sockets[ns] = socket;
+
+        socket.on('connect',     () => { setState(ns, 'connected'); log(ns, 'sys', 'connected'); });
+        socket.on('disconnect',  (reason) => { setState(ns, 'disconnected'); log(ns, 'sys', 'disconnected: ' + reason); });
+        socket.on('connect_error', (e) => { setState(ns, 'disconnected'); log(ns, 'err', 'connect_error: ' + e.message); });
+        socket.on('error', (e) => log(ns, 'err', 'error', e));
+        socket.on('connected', (data) => log(ns, 'in', 'connected', data));
+
+        // Eventos específicos por namespace
+        if (ns === '/notifications') {
+          socket.on('notification:new', (n) => log(ns, 'in', 'notification:new', n));
+        }
+        if (ns === '/chat') {
+          socket.on('chat:newMessage',  (m) => log(ns, 'in', 'chat:newMessage', m));
+          socket.on('chat:messageRead', (m) => log(ns, 'in', 'chat:messageRead', m));
+          socket.on('chat:userTyping',  (m) => log(ns, 'in', 'chat:userTyping', m));
+          socket.on('chat:userOnline',  (m) => log(ns, 'in', 'chat:userOnline', m));
+          socket.on('chat:userOffline', (m) => log(ns, 'in', 'chat:userOffline', m));
+        }
+        if (ns === '/tracking') {
+          socket.on('tracking:locationUpdate', (p) => log(ns, 'in', 'tracking:locationUpdate', p));
+        }
+      }
+
+      function disconnect(ns) {
+        if (sockets[ns]) { sockets[ns].disconnect(); sockets[ns] = null; }
+      }
+
+      function emit(ns, event, payload) {
+        const s = sockets[ns];
+        if (!s || !s.connected) { log(ns, 'err', 'no conectado'); return; }
+        log(ns, 'out', event, payload);
+        s.emit(event, payload, (ack) => { if (ack !== undefined) log(ns, 'in', event + ' (ack)', ack); });
+      }
+
+      // Wire up clicks
+      document.querySelectorAll('.card').forEach((card) => {
+        const ns = card.dataset.ns;
+        card.querySelectorAll('button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const a = btn.dataset.action;
+            if (a === 'connect') return connect(ns);
+            if (a === 'disconnect') return disconnect(ns);
+
+            if (ns === '/chat') {
+              const conv = document.getElementById('chat-conv').value.trim();
+              if (a === 'join')  return emit(ns, 'chat:join',  { conversationId: conv });
+              if (a === 'leave') return emit(ns, 'chat:leave', { conversationId: conv });
+              if (a === 'send')
+                return emit(ns, 'chat:send', { conversationId: conv, content: document.getElementById('chat-msg').value });
+              if (a === 'typing-start') return emit(ns, 'chat:typingStart', { conversationId: conv });
+              if (a === 'typing-stop')  return emit(ns, 'chat:typingStop',  { conversationId: conv });
+              if (a === 'mark-read')    return emit(ns, 'chat:markRead',    { conversationId: conv });
+            }
+            if (ns === '/tracking') {
+              const shipmentId = document.getElementById('track-shipment').value.trim() || undefined;
+              const truckId = document.getElementById('track-truck').value.trim() || undefined;
+              if (a === 'subscribe')   return emit(ns, 'tracking:subscribe',   { shipmentId, truckId });
+              if (a === 'unsubscribe') return emit(ns, 'tracking:unsubscribe', { shipmentId, truckId });
+              if (a === 'send-location') {
+                return emit(ns, 'tracking:location', {
+                  shipmentId, truckId,
+                  lat: parseFloat(document.getElementById('track-lat').value),
+                  lng: parseFloat(document.getElementById('track-lng').value),
+                });
+              }
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

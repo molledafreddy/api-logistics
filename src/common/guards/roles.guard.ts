@@ -1,11 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator.js';
-import { UserRole } from '../enums/user-role.enum.js';
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import { UserRole } from '../enums/user-role.enum';
+import { IUserPayload } from '../interfaces/user-payload.interface';
 
 /**
- * Roles Guard — Stub for Fase 0
- * Full implementation in Fase 1
+ * Roles Guard — Validates user has one of the required roles.
+ * Works with the @Roles() decorator.
+ * If no @Roles() is set on the handler, access is granted.
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -17,11 +24,30 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
+    // No @Roles() decorator → allow access
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    // TODO: Implement role check against request user
+    const request = context.switchToHttp().getRequest();
+    const user = request.user as IUserPayload | undefined;
+
+    // No user in request (shouldn't happen if JwtAuthGuard runs first)
+    if (!user) {
+      throw new ForbiddenException('Acceso denegado');
+    }
+
+    // super_admin always has access
+    if (user.role === UserRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    if (!requiredRoles.includes(user.role)) {
+      throw new ForbiddenException(
+        'No tienes permisos para realizar esta acción',
+      );
+    }
+
     return true;
   }
 }

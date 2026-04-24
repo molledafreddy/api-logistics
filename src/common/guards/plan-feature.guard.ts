@@ -1,6 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PLAN_FEATURE_KEY } from '../decorators/plan-feature.decorator.js';
+import { PLAN_FEATURE_KEY } from '../decorators/plan-feature.decorator';
 
 /**
  * Plan Feature Guard — Stub for Fase 0
@@ -20,7 +25,21 @@ export class PlanFeatureGuard implements CanActivate {
       return true;
     }
 
-    // TODO: Implement plan feature check
-    return true;
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    const company = user?.company;
+    if (!company) {
+      // Si no hay empresa asociada, denegar
+      return false;
+    }
+
+    // company.planFeatures = ['api', 'advanced_reports', ...]
+    const planFeatures: string[] = company.planFeatures || [];
+    if (planFeatures.includes(requiredFeature)) {
+      return true;
+    }
+    throw new ForbiddenException(
+      `Feature de plan no habilitada: ${requiredFeature}`,
+    );
   }
 }

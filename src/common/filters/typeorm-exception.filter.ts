@@ -7,13 +7,16 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { QueryFailedError, EntityNotFoundError } from 'typeorm';
-import { ERROR_CODES } from '../constants/error-codes.js';
+import { ERROR_CODES } from '../constants/error-codes';
 
 @Catch(QueryFailedError, EntityNotFoundError)
 export class TypeormExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(TypeormExceptionFilter.name);
 
-  catch(exception: QueryFailedError | EntityNotFoundError, host: ArgumentsHost): void {
+  catch(
+    exception: QueryFailedError | EntityNotFoundError,
+    host: ArgumentsHost,
+  ): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -27,7 +30,10 @@ export class TypeormExceptionFilter implements ExceptionFilter {
       message = 'Resource not found';
       errorCode = ERROR_CODES.RESOURCE_NOT_FOUND;
     } else if (exception instanceof QueryFailedError) {
-      const driverError = exception.driverError as { code?: string; detail?: string };
+      const driverError = exception.driverError as {
+        code?: string;
+        detail?: string;
+      };
 
       switch (driverError?.code) {
         case '23505': // unique_violation

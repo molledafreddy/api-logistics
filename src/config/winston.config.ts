@@ -21,7 +21,5 @@ const jsonFormat = winston.format.combine(
 export const winstonConfig = {
   level: process.env.LOG_LEVEL || 'debug',
   format: isProduction || logFormat === 'json' ? jsonFormat : prettyFormat,
-  transports: [
-    new winston.transports.Console(),
-  ],
+  transports: [new winston.transports.Console()],
 };

@@ -1,7 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { SUPER_ADMIN_KEY } from '../decorators/super-admin.decorator.js';
-import { UserRole } from '../enums/user-role.enum.js';
+import { SUPER_ADMIN_KEY } from '../decorators/super-admin.decorator';
+import { UserRole } from '../enums/user-role.enum';
 
 /**
  * Super Admin Guard — Stub for Fase 0

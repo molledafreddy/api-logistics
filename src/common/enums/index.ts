@@ -1,12 +1,29 @@
-export { CompanyType } from './company-type.enum.js';
-export { CompanyStatus } from './company-status.enum.js';
-export { UserRole } from './user-role.enum.js';
-export { UserStatus } from './user-status.enum.js';
-export { SubscriptionStatus } from './subscription-status.enum.js';
-export { PlanTier } from './plan-tier.enum.js';
-export { ShipmentStatus } from './shipment-status.enum.js';
-export { TruckStatus } from './truck-status.enum.js';
-export { DriverStatus } from './driver-status.enum.js';
-export { RelationshipStatus } from './relationship-status.enum.js';
-export { ExpenseStatus } from './expense-status.enum.js';
-export { VerificationStatus } from './verification-status.enum.js';
+export { CompanyType } from './company-type.enum';
+export { CompanyStatus } from './company-status.enum';
+export { UserRole } from './user-role.enum';
+export { UserStatus } from './user-status.enum';
+export { SubscriptionStatus } from './subscription-status.enum';
+export { PlanTier } from './plan-tier.enum';
+export { ShipmentStatus } from './shipment-status.enum';
+export { TruckStatus } from './truck-status.enum';
+export { DriverStatus } from './driver-status.enum';
+export { RelationshipStatus } from './relationship-status.enum';
+export { ExpenseStatus } from './expense-status.enum';
+export { VerificationStatus } from './verification-status.enum';
+
+// ─── PARTE 7 (Sprint 0) — Multi-vertical ───
+export { ServiceType } from './service-type.enum';
+export { BusinessModel } from './business-model.enum';
+export {
+  CargoType,
+  PASSENGER_CARGO_TYPES,
+  FREIGHT_CARGO_TYPES,
+  ALL_CARGO_TYPES,
+} from './cargo-type.enum';
+
+// ─── PARTE 7 (Sprint 1) — DeliveryRun ───
+export { DeliveryRunStatus } from './delivery-run-status.enum';
+export type { DeliveryRunShift } from './delivery-run-status.enum';
+
+// ─── PARTE 7 (Sprint 2) — RecurringTemplate ───
+export { RecurrencePattern } from './recurrence-pattern.enum';

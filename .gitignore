@@ -9,10 +9,9 @@ build/
 
 # Environment
 .env
-.env.development
-.env.staging
-.env.production
-.env.local
+.env.*
+!.env.example
+!.env.test.example
 
 # IDE
 .vscode/
@@ -42,3 +41,8 @@ docker/data/
 # Temp
 tmp/
 temp/
+
+# Local debug scripts (no commitear)
+decode-jwt.js
+fetch-jwks.js
+manual-curl-endpoints.md

@@ -30,11 +30,17 @@ export const validationSchema = Joi.object({
   REDIS_PASSWORD: Joi.string().allow('').default(''),
   REDIS_TLS: Joi.boolean().default(false),
 
-  // ─── JWT ──────────────────────────────────
-  JWT_PRIVATE_KEY: Joi.string().required(),
-  JWT_PUBLIC_KEY: Joi.string().required(),
+  // ─── JWT (legacy, optional — Supabase handles auth) ─
+  JWT_PRIVATE_KEY: Joi.string().allow('').default(''),
+  JWT_PUBLIC_KEY: Joi.string().allow('').default(''),
   JWT_ACCESS_TOKEN_TTL: Joi.number().default(900),
   JWT_REFRESH_TOKEN_TTL: Joi.number().default(604800),
+
+  // ─── Supabase ─────────────────────────────
+  SUPABASE_URL: Joi.string().uri().required(),
+  SUPABASE_ANON_KEY: Joi.string().required(),
+  SUPABASE_SERVICE_ROLE_KEY: Joi.string().required(),
+  SUPABASE_JWT_SECRET: Joi.string().required(),
 
   // ─── S3 / MinIO ──────────────────────────
   S3_ENDPOINT: Joi.string().uri().required(),

@@ -1,2 +1,2 @@
-export { ParseUuidPipe } from './parse-uuid.pipe.js';
-export { TrimStringPipe } from './trim-string.pipe.js';
+export { ParseUuidPipe } from './parse-uuid.pipe';
+export { TrimStringPipe } from './trim-string.pipe';

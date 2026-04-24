@@ -13,7 +13,7 @@ export class TrimStringPipe implements PipeTransform {
       if (typeof value === 'string') {
         result[key] = value.trim();
       } else if (this.isObject(value)) {
-        result[key] = this.trim(value as Record<string, unknown>);
+        result[key] = this.trim(value);
       } else {
         result[key] = value;
       }
@@ -26,7 +26,7 @@ export class TrimStringPipe implements PipeTransform {
     const { type } = metadata;
 
     if (this.isObject(values) && type === 'body') {
-      return this.trim(values as Record<string, unknown>);
+      return this.trim(values);
     }
 
     return values;

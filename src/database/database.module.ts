@@ -14,9 +14,15 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         port: configService.get<number>('DB_PORT', 5432),
         database: configService.get<string>('DB_NAME', 'logistics_dev'),
         username: configService.get<string>('DB_USER', 'logistics'),
-        password: configService.get<string>('DB_PASSWORD', 'logistics_dev_pass'),
-        ssl: configService.get<boolean>('DB_SSL', false),
-        logging: configService.get<boolean>('DB_LOGGING', false),
+        password: configService.get<string>(
+          'DB_PASSWORD',
+          'logistics_dev_pass',
+        ),
+        ssl:
+          configService.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
+        logging: configService.get<string>('DB_LOGGING') === 'true',
         synchronize: false, // NEVER true in production
         autoLoadEntities: true,
         namingStrategy: new SnakeNamingStrategy(),

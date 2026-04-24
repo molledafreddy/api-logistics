@@ -1,4 +1,5 @@
 export enum ShipmentStatus {
+  PENDING_ACCEPTANCE = 'pending_acceptance',
   DRAFT = 'draft',
   QUOTED = 'quoted',
   CONFIRMED = 'confirmed',

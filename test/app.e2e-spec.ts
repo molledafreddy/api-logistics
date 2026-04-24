@@ -1,3 +1,5 @@
+// jest.setTimeout(20000);
+// jest.mock('jwks-rsa');
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';

@@ -5,7 +5,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ERROR_CODES } from '../constants/error-codes.js';
+import { ERROR_CODES } from '../constants/error-codes';
 
 export class ValidationException extends Error {
   constructor(public readonly errors: Record<string, string[]>) {
