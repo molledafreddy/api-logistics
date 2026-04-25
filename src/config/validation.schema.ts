@@ -41,6 +41,7 @@ export const validationSchema = Joi.object({
   SUPABASE_ANON_KEY: Joi.string().required(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().required(),
   SUPABASE_JWT_SECRET: Joi.string().required(),
+  SUPABASE_JWT_AUD: Joi.string().default('authenticated'),
 
   // ─── S3 / MinIO ──────────────────────────
   S3_ENDPOINT: Joi.string().uri().required(),
@@ -94,4 +95,17 @@ export const validationSchema = Joi.object({
     .valid('error', 'warn', 'info', 'debug', 'verbose')
     .default('debug'),
   LOG_FORMAT: Joi.string().valid('json', 'pretty').default('pretty'),
+
+  // ─── Seeds (CLI scripts) ──────────────────
+  SUPER_ADMIN_EMAIL: Joi.string().email().default('admin@logistics-api.com'),
+  SUPER_ADMIN_PASSWORD: Joi.string().min(8).default('SuperAdmin1!@#'),
+  SEED_DEMO: Joi.boolean().default(false),
+
+  // ─── Testing flags ────────────────────────
+  // E2E_TEST=true bypasses real Supabase JWT verification (uses HS256 stub).
+  E2E_TEST: Joi.boolean().default(false),
+
+  // ─── Legacy / optional ────────────────────
+  // Solo usado por src/seeds/seed.ts (script TypeORM CLI antiguo).
+  DATABASE_URL: Joi.string().uri().allow('').optional(),
 });

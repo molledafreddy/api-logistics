@@ -70,6 +70,10 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema,
+      validationOptions: {
+        abortEarly: false, // reporta TODOS los env vars inválidos (no solo el primero)
+        allowUnknown: true, // permite variables extra (CI, OS, etc.) sin romper
+      },
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
       load: [
         appConfig,

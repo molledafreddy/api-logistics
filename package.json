@@ -37,6 +37,7 @@
     "openapi:postman": "ts-node -r tsconfig-paths/register scripts/openapi/generate-postman.ts",
     "openapi:check": "pnpm run openapi:generate && pnpm run openapi:audit",
     "openapi:full": "pnpm run openapi:generate && pnpm run openapi:audit && pnpm run openapi:postman",
+    "env:check": "ts-node -r tsconfig-paths/register scripts/check-env-schema.ts",
     "prepare": "husky"
   },
   "dependencies": {
