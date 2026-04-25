@@ -8,6 +8,18 @@ y versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Unreleased]
 
+### Added — DX / Quality gates
+
+- **Pre-push hook** (`.husky/pre-push`): ejecuta `pnpm test` + `env:check` +
+  `openapi:check` antes de cada `git push` (~25s). Aborta el push si alguna
+  verificación falla. Saltable con `git push --no-verify` o `SKIP_HOOKS=1`.
+- **Validación de env vars completa** (`src/config/validation.schema.ts`):
+  añadidas `SUPABASE_JWT_AUD`, `SUPER_ADMIN_*`, `SEED_DEMO`, `E2E_TEST`,
+  `DATABASE_URL`. `ConfigModule` ahora usa `abortEarly: false` para reportar
+  TODAS las vars inválidas a la vez.
+- **Script `pnpm env:check`** (`scripts/check-env-schema.ts`): valida que
+  `.env.example` siga siendo coherente con el Joi schema (detecta drift).
+
 ### Added — OpenAPI & Postman toolchain
 
 - **Pipeline OpenAPI completo** sin dependencia de Postgres:

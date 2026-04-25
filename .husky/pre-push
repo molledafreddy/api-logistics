@@ -1,0 +1,52 @@
+#!/usr/bin/env sh
+# ─────────────────────────────────────────────────────────────
+# pre-push hook — gate de calidad antes de subir a remoto
+#
+# Corre 3 verificaciones en serie. Si alguna falla, aborta el push.
+# Para saltarlo en emergencia: `git push --no-verify`
+# ─────────────────────────────────────────────────────────────
+
+set -e
+
+# Solo correr si hay cambios en el árbol api/ (este repo monorepo-friendly).
+# Si todo el repo es "api/", siempre corre.
+
+echo ""
+echo "🛡️  Pre-push gate"
+echo "──────────────────────────────────────────────"
+
+# Permitir saltarlo con SKIP_HOOKS=1 (útil para WIP branches)
+if [ "$SKIP_HOOKS" = "1" ]; then
+  echo "⏭️   SKIP_HOOKS=1 → saltando verificaciones"
+  exit 0
+fi
+
+START=$(date +%s)
+
+# 1. Unit tests
+echo ""
+echo "🧪  [1/3] pnpm test (unit) …"
+pnpm test --silent
+
+# 2. Env schema vs .env.example drift
+echo ""
+echo "🔧  [2/3] pnpm env:check …"
+pnpm run --silent env:check
+
+# 3. OpenAPI generate + audit
+echo ""
+echo "📚  [3/3] pnpm openapi:check …"
+pnpm run --silent openapi:check > /tmp/openapi-check.log 2>&1 || {
+  echo "❌  openapi:check falló — output completo:"
+  cat /tmp/openapi-check.log
+  exit 1
+}
+tail -1 /tmp/openapi-check.log
+
+END=$(date +%s)
+ELAPSED=$((END - START))
+
+echo ""
+echo "──────────────────────────────────────────────"
+echo "✅  Pre-push OK  (${ELAPSED}s)"
+echo ""
