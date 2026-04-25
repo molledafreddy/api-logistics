@@ -1,0 +1,5476 @@
+{
+  "info": {
+    "_postman_id": "00000000-0000-0000-0000-000000000001",
+    "name": "API Logistics v1.0",
+    "description": "Plataforma de gestión logística multi-tenant.\n\nGenerado automáticamente desde `docs/openapi.json` por `scripts/openapi/generate-postman.ts`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Admin dashboard stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "dashboard"]
+            },
+            "description": "Admin dashboard stats"
+          },
+          "response": []
+        },
+        {
+          "name": "List all companies (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "companies"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all companies (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get company detail (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/companies/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "companies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Get company detail (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update company (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/companies/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "companies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Update company (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "List all subscriptions (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "subscriptions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all subscriptions (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "List all verifications (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/verifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "verifications"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all verifications (admin)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Get audit logs for a company (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/company/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "audit", "company", ":companyId"],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Get audit logs for a company (paginated)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get audit logs for a specific resource (e.g., company, verification, subscription)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/:resourceType/:resourceId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "audit", ":resourceType", ":resourceId"],
+              "variable": [
+                {
+                  "key": "resourceType",
+                  "value": "",
+                  "description": "Path variable: resourceType"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "",
+                  "description": "Path variable: resourceId"
+                }
+              ]
+            },
+            "description": "Get audit logs for a specific resource (e.g., company, verification, subscription)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar nuevo usuario y empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Mi Empresa de Transporte\",\n  \"companyType\": \"carrier\",\n  \"taxId\": \"J-12345678-9\",\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\",\n  \"email\": \"juan@empresa.com\",\n  \"password\": \"MyP@ssw0rd!\",\n  \"phone\": \"+1234567890\",\n  \"timezone\": \"America/New_York\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar nuevo usuario y empresa"
+          },
+          "response": []
+        },
+        {
+          "name": "Iniciar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@empresa.com\",\n  \"password\": \"MyP@ssw0rd!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Iniciar sesión"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const json = pm.response.json();",
+                  "  const access = json.accessToken || json.access_token || json.token || (json.data && json.data.accessToken);",
+                  "  const refresh = json.refreshToken || json.refresh_token || (json.data && json.data.refreshToken);",
+                  "  if (access) {",
+                  "    pm.environment.set('jwt', access);",
+                  "    pm.collectionVariables.set('jwt', access);",
+                  "    console.log('✅ jwt actualizado en environment');",
+                  "  }",
+                  "  if (refresh) {",
+                  "    pm.environment.set('refreshToken', refresh);",
+                  "    pm.collectionVariables.set('refreshToken', refresh);",
+                  "  }",
+                  "} catch (e) { console.warn(\"No se pudo parsear JWT del response:\", e.message); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refrescar access token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Refrescar access token"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const json = pm.response.json();",
+                  "  const access = json.accessToken || json.access_token || json.token || (json.data && json.data.accessToken);",
+                  "  const refresh = json.refreshToken || json.refresh_token || (json.data && json.data.refreshToken);",
+                  "  if (access) {",
+                  "    pm.environment.set('jwt', access);",
+                  "    pm.collectionVariables.set('jwt', access);",
+                  "    console.log('✅ jwt actualizado en environment');",
+                  "  }",
+                  "  if (refresh) {",
+                  "    pm.environment.set('refreshToken', refresh);",
+                  "    pm.collectionVariables.set('refreshToken', refresh);",
+                  "  }",
+                  "} catch (e) { console.warn(\"No se pudo parsear JWT del response:\", e.message); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "string",
+                "description": "",
+                "disabled": false
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Cerrar sesión"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener perfil del usuario autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "profile"]
+            },
+            "description": "Obtener perfil del usuario autenticado"
+          },
+          "response": []
+        },
+        {
+          "name": "Re-enviar email de verificación",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "resend-verification"]
+            },
+            "description": "Re-enviar email de verificación"
+          },
+          "response": []
+        },
+        {
+          "name": "Sincronizar estado de verificación de email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-email"]
+            },
+            "description": "Sincronizar estado de verificación de email"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Listar mis conversaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "string",
+                  "description": "direct | group | shipment",
+                  "disabled": true
+                },
+                {
+                  "key": "shipmentId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar mis conversaciones"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear conversación (direct, group o shipment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"direct\",\n  \"title\": \"string\",\n  \"shipmentId\": \"string\",\n  \"participantIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear conversación (direct, group o shipment)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener una conversación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener una conversación"
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar participantes a la conversación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/participants",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations",
+                ":id",
+                "participants"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Agregar participantes a la conversación"
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar un participante",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/participants/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations",
+                ":id",
+                "participants",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Path variable: userId"
+                }
+              ]
+            },
+            "description": "Quitar un participante"
+          },
+          "response": []
+        },
+        {
+          "name": "Abandonar la conversación",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/leave",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations", ":id", "leave"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Abandonar la conversación"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar mensajes (paginación con cursor \"before\")",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations", ":id", "messages"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "before",
+                  "value": "string",
+                  "description": "Cursor: traer mensajes antes de este ID",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 50,
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar mensajes (paginación con cursor \"before\")"
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar mensaje en una conversación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations", ":id", "messages"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"text\",\n  \"content\": \"string\",\n  \"fileUrl\": \"string\",\n  \"fileName\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Enviar mensaje en una conversación"
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar todos los mensajes como leídos",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/conversations/:id/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "conversations", ":id", "read"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Marcar todos los mensajes como leídos"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un mensaje (solo el autor)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/messages/:messageId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "messages", ":messageId"],
+              "variable": [
+                {
+                  "key": "messageId",
+                  "value": "",
+                  "description": "Path variable: messageId"
+                }
+              ]
+            },
+            "description": "Eliminar un mensaje (solo el autor)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cantidad de mensajes no leídos del usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "unread-count"]
+            },
+            "description": "Cantidad de mensajes no leídos del usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "Listar empresas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "companies"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por nombre",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "shipper",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending_verification",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "Ordenar por campo",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar empresas"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear empresa (solo super_admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "companies"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Logistics\",\n  \"legalName\": \"Acme Logistics LLC\",\n  \"type\": \"carrier\",\n  \"serviceType\": \"freight\",\n  \"businessModel\": \"small_fleet\",\n  \"taxId\": \"12-3456789\",\n  \"mcNumber\": \"MC-123456\",\n  \"dotNumber\": \"1234567\",\n  \"scacCode\": \"ACME\",\n  \"email\": \"info@acmelogistics.com\",\n  \"phone\": \"+1-555-123-4567\",\n  \"website\": \"https://acmelogistics.com\",\n  \"addressLine1\": \"123 Main St\",\n  \"addressLine2\": \"Suite 100\",\n  \"city\": \"Miami\",\n  \"state\": \"FL\",\n  \"zipCode\": \"33101\",\n  \"country\": \"US\",\n  \"timezone\": \"America/New_York\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear empresa (solo super_admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener empresa por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/companies/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "companies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener empresa por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar empresa",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/companies/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "companies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Logistics\",\n  \"legalName\": \"Acme Logistics LLC\",\n  \"type\": \"carrier\",\n  \"serviceType\": \"freight\",\n  \"businessModel\": \"small_fleet\",\n  \"taxId\": \"12-3456789\",\n  \"mcNumber\": \"MC-123456\",\n  \"dotNumber\": \"1234567\",\n  \"scacCode\": \"ACME\",\n  \"email\": \"info@acmelogistics.com\",\n  \"phone\": \"+1-555-123-4567\",\n  \"website\": \"https://acmelogistics.com\",\n  \"addressLine1\": \"123 Main St\",\n  \"addressLine2\": \"Suite 100\",\n  \"city\": \"Miami\",\n  \"state\": \"FL\",\n  \"zipCode\": \"33101\",\n  \"country\": \"US\",\n  \"timezone\": \"America/New_York\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar empresa"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar empresa (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/companies/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "companies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar empresa (soft delete)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "KPIs generales del negocio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "overview"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "KPIs generales del negocio"
+          },
+          "response": []
+        },
+        {
+          "name": "Distribución de shipments por status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/shipments/by-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "shipments", "by-status"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Distribución de shipments por status"
+          },
+          "response": []
+        },
+        {
+          "name": "Ingresos (sumatoria de shipments completados)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/revenue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "revenue"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Ingresos (sumatoria de shipments completados)"
+          },
+          "response": []
+        },
+        {
+          "name": "Gastos agrupados por categoría",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/expenses/by-category",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "expenses", "by-category"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Gastos agrupados por categoría"
+          },
+          "response": []
+        },
+        {
+          "name": "Utilización de la flota por status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/fleet/utilization",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "fleet", "utilization"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Utilización de la flota por status"
+          },
+          "response": []
+        },
+        {
+          "name": "Top 10 drivers por viajes y rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/drivers/top",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "drivers", "top"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "granularity",
+                  "value": "day",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Top 10 drivers por viajes y rating"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "DeliveryRuns",
+      "item": [
+        {
+          "name": "Listar runs (filtros + paginación)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-04-23",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2026-04-01",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-04-30",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "planned",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "scheduledDate",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar runs (filtros + paginación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear un DeliveryRun (opcionalmente con shipmentIds)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AM Lincoln Elementary\",\n  \"scheduledDate\": \"2026-04-23\",\n  \"shift\": \"morning\",\n  \"startTime\": \"07:00\",\n  \"driverId\": \"00000000-0000-0000-0000-000000000000\",\n  \"truckId\": \"00000000-0000-0000-0000-000000000000\",\n  \"routeId\": \"00000000-0000-0000-0000-000000000000\",\n  \"shipmentIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un DeliveryRun (opcionalmente con shipmentIds)"
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle del run con shipments expandidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Detalle del run con shipments expandidos"
+          },
+          "response": []
+        },
+        {
+          "name": "Editar nombre / fecha / turno",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"string\",\n  \"scheduledDate\": \"2026-04-24\",\n  \"shift\": \"morning\",\n  \"startTime\": \"07:30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Editar nombre / fecha / turno"
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar / cambiar driver y/o truck (DR-005, DR-006)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/assign-driver",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "assign-driver"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": {},\n  \"truckId\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asignar / cambiar driver y/o truck (DR-005, DR-006)"
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar shipments al run (DR-001)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/add-shipments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "add-shipments"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Agregar shipments al run (DR-001)"
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar shipments del run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/remove-shipments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "remove-shipments"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Quitar shipments del run"
+          },
+          "response": []
+        },
+        {
+          "name": "Reordenar la secuencia de stops (DR-007, DR-008)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/reorder",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "reorder"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sequence\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Reordenar la secuencia de stops (DR-007, DR-008)"
+          },
+          "response": []
+        },
+        {
+          "name": "Iniciar el run → in_progress (DR-003)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "start"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Iniciar el run → in_progress (DR-003)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cerrar el run (manual, también es automático al completar todos los stops)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "complete"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Cerrar el run (manual, también es automático al completar todos los stops)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar el run (libera shipments no entregados)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "cancel"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Lluvia intensa, sin condiciones\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cancelar el run (libera shipments no entregados)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cerrar un stop como entregado (DR-004)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/stops/:shipmentId/done",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "delivery-runs",
+                ":id",
+                "stops",
+                ":shipmentId",
+                "done"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                },
+                {
+                  "key": "shipmentId",
+                  "value": "",
+                  "description": "Path variable: shipmentId"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"string\",\n  \"signedBy\": \"string\",\n  \"podUrl\": \"https://example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cerrar un stop como entregado (DR-004)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reportar incidente en un stop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/stops/:shipmentId/incident",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "delivery-runs",
+                ":id",
+                "stops",
+                ":shipmentId",
+                "incident"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                },
+                {
+                  "key": "shipmentId",
+                  "value": "",
+                  "description": "Path variable: shipmentId"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cliente ausente, no se pudo entregar\",\n  \"photoUrl\": \"https://example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Reportar incidente en un stop"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Drivers",
+      "item": [
+        {
+          "name": "Listar drivers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por nombre, email o licencia",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "Filtrar por camión asignado",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "lastName",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar drivers"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear driver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"string\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1-555-987-6543\",\n  \"birthDate\": \"1985-03-15\",\n  \"licenseNumber\": \"D1234567\",\n  \"licenseClass\": \"CDL-A\",\n  \"licenseState\": \"FL\",\n  \"licenseExpiresAt\": \"2028-12-31\",\n  \"status\": \"available\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Miami\",\n  \"state\": \"FL\",\n  \"zipCode\": \"33101\",\n  \"country\": \"US\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear driver"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener driver por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener driver por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar driver",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"string\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1-555-987-6543\",\n  \"birthDate\": \"1985-03-15\",\n  \"licenseNumber\": \"D1234567\",\n  \"licenseClass\": \"CDL-A\",\n  \"licenseState\": \"FL\",\n  \"licenseExpiresAt\": \"2028-12-31\",\n  \"status\": \"available\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"Miami\",\n  \"state\": \"FL\",\n  \"zipCode\": \"33101\",\n  \"country\": \"US\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar driver"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar driver (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar driver (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener viaje actual del driver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id/current-trip",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id", "current-trip"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener viaje actual del driver"
+          },
+          "response": []
+        },
+        {
+          "name": "Estadísticas del driver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id", "stats"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Estadísticas del driver"
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar estado del driver",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/drivers/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "drivers", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"available\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cambiar estado del driver"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        {
+          "name": "Listar gastos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "shipmentId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar gastos"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear gasto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentId\": \"string\",\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"category\": \"fuel\",\n  \"description\": \"Diesel fuel - Pilot truck stop\",\n  \"amount\": \"125.50\",\n  \"currency\": \"USD\",\n  \"expenseDate\": \"2026-04-20\",\n  \"receiptUrl\": \"string\",\n  \"vendorName\": \"Pilot Travel Centers\",\n  \"paymentMethod\": \"company_card\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear gasto"
+          },
+          "response": []
+        },
+        {
+          "name": "Resumen de gastos por categoría/status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", "summary"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "shipmentId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Resumen de gastos por categoría/status"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener gasto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener gasto por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar gasto (solo si está pending)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentId\": \"string\",\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"category\": \"fuel\",\n  \"description\": \"Diesel fuel - Pilot truck stop\",\n  \"amount\": \"125.50\",\n  \"currency\": \"USD\",\n  \"expenseDate\": \"2026-04-20\",\n  \"receiptUrl\": \"string\",\n  \"vendorName\": \"Pilot Travel Centers\",\n  \"paymentMethod\": \"company_card\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar gasto (solo si está pending)"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar gasto (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar gasto (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Aprobar gasto",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id", "approve"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Aprobar gasto"
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar gasto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id", "reject"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Rechazar gasto"
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar gasto como reembolsado",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/:id/reimburse",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", ":id", "reimburse"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Marcar gasto como reembolsado"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Generate a pre-signed S3 upload URL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/upload-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "upload-url"]
+            },
+            "description": "Generate a pre-signed S3 upload URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate a pre-signed S3 download URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/download-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "download-url"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Generate a pre-signed S3 download URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a file from S3 storage",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Delete a file from S3 storage"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check (liveness simple)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Health check (liveness simple)"
+          },
+          "response": []
+        },
+        {
+          "name": "Liveness probe — el proceso responde (Kubernetes/Docker)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health", "live"]
+            },
+            "description": "Liveness probe — el proceso responde (Kubernetes/Docker)"
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness probe — la API puede atender tráfico (DB + Redis)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health", "ready"]
+            },
+            "description": "Readiness probe — la API puede atender tráfico (DB + Redis)"
+          },
+          "response": []
+        },
+        {
+          "name": "Root endpoint (smoke check)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1"]
+            },
+            "description": "Root endpoint (smoke check)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List my notifications (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "string",
+                  "description": "",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List my notifications (paginated)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark a single notification as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:id/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", ":id", "read"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Mark a single notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark all unread notifications as read for current user",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "read-all"]
+            },
+            "description": "Mark all unread notifications as read for current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Register a push notification token for mobile app",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/push-tokens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "push-tokens"]
+            },
+            "description": "Register a push notification token for mobile app"
+          },
+          "response": []
+        },
+        {
+          "name": "Unregister/deactivate a push notification token",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/push-tokens/:token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "push-tokens", ":token"],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "",
+                  "description": "Path variable: token"
+                }
+              ]
+            },
+            "description": "Unregister/deactivate a push notification token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Optimization",
+      "item": [
+        {
+          "name": "Optimiza la secuencia de stops del run (Sprint 7)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/optimize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "optimize"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"haversine\",\n  \"avgSpeedKmh\": 5,\n  \"serviceTimePerStopMin\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Reordena `optimizedSequence`, calcula `estimatedDistanceKm`/`estimatedDurationMin`, y persiste el detalle por stop en `etaPerStop`. Provider configurable (haversine | google_routes | mapbox). Reglas: OPT-001 (estado planned/ready), OPT-002 (≥2 stops con coords), OPT-003 (carrier dueño)."
+          },
+          "response": []
+        },
+        {
+          "name": "ETAs en vivo por stop (último GPS conocido del truck)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-runs/:id/etas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-runs", ":id", "etas"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Calcula ETA pendientes restantes para los stops del run. Si el run está IN_PROGRESS, usa el último TrackingPoint del truck como origen; de lo contrario el primer stop pendiente. Stops ya entregados aparecen con `state=completed` y `etaAt=null`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plans",
+      "item": [
+        {
+          "name": "Listar todos los permisos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "permissions"]
+            },
+            "description": "Listar todos los permisos"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear un nuevo permiso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "permissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"shipments.manage\",\n  \"description\": \"Permite crear, editar y eliminar envíos\",\n  \"feature\": \"shipments\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un nuevo permiso"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener un permiso por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/permissions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "permissions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener un permiso por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar un permiso por ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/permissions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "permissions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Permite gestionar todos los envíos de la empresa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar un permiso por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un permiso por ID",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/permissions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "permissions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar un permiso por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar un permiso a un plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/assign-permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", "assign-permission"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"uuid-del-plan\",\n  \"permissionId\": \"uuid-del-permiso\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asignar un permiso a un plan"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar todos los planes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans"]
+            },
+            "description": "Listar todos los planes"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear un nuevo plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Starter\",\n  \"description\": \"Plan para pequeñas empresas de transporte\",\n  \"price\": 19.99,\n  \"interval\": \"month\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un nuevo plan"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener un plan por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener un plan por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar un plan por ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Starter Plus\",\n  \"price\": 24.99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar un plan por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un plan por ID",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "plans", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar un plan por ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RecurringTemplates",
+      "item": [
+        {
+          "name": "Listar plantillas (filtros + paginación)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates"],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pattern",
+                  "value": "daily",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar plantillas (filtros + paginación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear plantilla de recurrencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AM Lincoln Elementary\",\n  \"pattern\": \"weekly\",\n  \"daysOfWeek\": [\n    1,\n    2,\n    3,\n    4,\n    5\n  ],\n  \"time\": \"07:00\",\n  \"startDate\": \"2026-04-01\",\n  \"endDate\": \"2026-12-15\",\n  \"exceptions\": [\n    \"2026-07-04\"\n  ],\n  \"driverId\": \"00000000-0000-0000-0000-000000000000\",\n  \"truckId\": \"00000000-0000-0000-0000-000000000000\",\n  \"routeId\": \"00000000-0000-0000-0000-000000000000\",\n  \"shipmentTemplates\": [\n    {\n      \"originAddress\": \"742 Evergreen Terrace\",\n      \"originLat\": \"string\",\n      \"originLng\": \"string\",\n      \"destinationAddress\": \"Lincoln Elementary School\",\n      \"destinationLat\": \"string\",\n      \"destinationLng\": \"string\",\n      \"description\": \"Pickup Bart Simpson\",\n      \"cargoType\": \"passenger\",\n      \"weightKg\": \"string\",\n      \"volumeM3\": \"string\",\n      \"pieces\": 0,\n      \"customerCompanyId\": \"00000000-0000-0000-0000-000000000000\",\n      \"metadata\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear plantilla de recurrencia"
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle de plantilla",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Detalle de plantilla"
+          },
+          "response": []
+        },
+        {
+          "name": "Editar plantilla (RT-003: no afecta runs ya generados)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AM Lincoln Elementary\",\n  \"pattern\": \"weekly\",\n  \"daysOfWeek\": [\n    1,\n    2,\n    3,\n    4,\n    5\n  ],\n  \"time\": \"07:00\",\n  \"startDate\": \"2026-04-01\",\n  \"endDate\": \"2026-12-15\",\n  \"exceptions\": [\n    \"2026-07-04\"\n  ],\n  \"driverId\": \"00000000-0000-0000-0000-000000000000\",\n  \"truckId\": \"00000000-0000-0000-0000-000000000000\",\n  \"routeId\": \"00000000-0000-0000-0000-000000000000\",\n  \"shipmentTemplates\": [\n    {\n      \"originAddress\": \"742 Evergreen Terrace\",\n      \"originLat\": \"string\",\n      \"originLng\": \"string\",\n      \"destinationAddress\": \"Lincoln Elementary School\",\n      \"destinationLat\": \"string\",\n      \"destinationLng\": \"string\",\n      \"description\": \"Pickup Bart Simpson\",\n      \"cargoType\": \"passenger\",\n      \"weightKg\": \"string\",\n      \"volumeM3\": \"string\",\n      \"pieces\": 0,\n      \"customerCompanyId\": \"00000000-0000-0000-0000-000000000000\",\n      \"metadata\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Editar plantilla (RT-003: no afecta runs ya generados)"
+          },
+          "response": []
+        },
+        {
+          "name": "Soft delete (RT-005: runs históricos se conservan)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Soft delete (RT-005: runs históricos se conservan)"
+          },
+          "response": []
+        },
+        {
+          "name": "Forzar generación manual para una fecha específica. RT-002: idempotente.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id", "generate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-04-24\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Forzar generación manual para una fecha específica. RT-002: idempotente."
+          },
+          "response": []
+        },
+        {
+          "name": "Pausar plantilla (RT-004) — active = false",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id/pause",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id", "pause"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Pausar plantilla (RT-004) — active = false"
+          },
+          "response": []
+        },
+        {
+          "name": "Reanudar plantilla (RT-004) — active = true",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recurring-templates/:id/resume",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recurring-templates", ":id", "resume"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Reanudar plantilla (RT-004) — active = true"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Relationships",
+      "item": [
+        {
+          "name": "Create a company relationship invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentCompanyId\": \"string\",\n  \"childCompanyId\": \"string\",\n  \"relationshipType\": \"covered_carrier\",\n  \"invitationEmail\": \"string\",\n  \"invitationMessage\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a company relationship invitation"
+          },
+          "response": []
+        },
+        {
+          "name": "List all relationships for a company (as parent or child)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships/company/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships", "company", ":companyId"],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ]
+            },
+            "description": "List all relationships for a company (as parent or child)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get relationship details by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Get relationship details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept or reject a pending relationship invitation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships/:id/respond",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships", ":id", "respond"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"accepted\",\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Accept or reject a pending relationship invitation"
+          },
+          "response": []
+        },
+        {
+          "name": "Terminate an active (accepted) relationship",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships/:id/terminate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships", ":id", "terminate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Terminate an active (accepted) relationship"
+          },
+          "response": []
+        },
+        {
+          "name": "Get relationship status change history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relationships/:id/logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relationships", ":id", "logs"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Get relationship status change history"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Reporte de shipments (JSON o CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/shipments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "shipments"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "string",
+                  "description": "Filtrar por status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Reporte de shipments (JSON o CSV)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reporte de gastos (JSON o CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "expenses"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Reporte de gastos (JSON o CSV)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reporte de performance de drivers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/drivers/performance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "drivers", "performance"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Reporte de performance de drivers"
+          },
+          "response": []
+        },
+        {
+          "name": "Resumen financiero (revenue vs expenses)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/financial-summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "financial-summary"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "Fecha desde (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "Fecha hasta (ISO)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Resumen financiero (revenue vs expenses)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "item": [
+        {
+          "name": "Listar rutas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por nombre, origen o destino",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "draft",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar rutas"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear ruta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Miami → Orlando\",\n  \"description\": \"string\",\n  \"status\": \"draft\",\n  \"originAddress\": \"101 NE 1st St, Miami, FL\",\n  \"originLat\": \"25.7617\",\n  \"originLng\": \"-80.1918\",\n  \"destinationAddress\": \"500 N Orange Ave, Orlando, FL\",\n  \"destinationLat\": \"28.5383\",\n  \"destinationLng\": \"-81.3792\",\n  \"distanceKm\": \"378.50\",\n  \"estimatedDurationMin\": 240,\n  \"basePrice\": \"850.00\",\n  \"currency\": \"USD\",\n  \"waypoints\": [\n    {\n      \"address\": \"string\",\n      \"lat\": 25.7617,\n      \"lng\": -80.1918,\n      \"order\": 1,\n      \"notes\": \"string\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear ruta"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener ruta por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener ruta por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar ruta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Miami → Orlando\",\n  \"description\": \"string\",\n  \"status\": \"draft\",\n  \"originAddress\": \"101 NE 1st St, Miami, FL\",\n  \"originLat\": \"25.7617\",\n  \"originLng\": \"-80.1918\",\n  \"destinationAddress\": \"500 N Orange Ave, Orlando, FL\",\n  \"destinationLat\": \"28.5383\",\n  \"destinationLng\": \"-81.3792\",\n  \"distanceKm\": \"378.50\",\n  \"estimatedDurationMin\": 240,\n  \"basePrice\": \"850.00\",\n  \"currency\": \"USD\",\n  \"waypoints\": [\n    {\n      \"address\": \"string\",\n      \"lat\": 25.7617,\n      \"lng\": -80.1918,\n      \"order\": 1,\n      \"notes\": \"string\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar ruta"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar ruta (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar ruta (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicar ruta (queda en draft)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id/duplicate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id", "duplicate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Duplicar ruta (queda en draft)"
+          },
+          "response": []
+        },
+        {
+          "name": "Activar ruta",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Activar ruta"
+          },
+          "response": []
+        },
+        {
+          "name": "Archivar ruta",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/:id/archive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", ":id", "archive"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Archivar ruta"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Shipments",
+      "item": [
+        {
+          "name": "Listar shipments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por trackingCode, ref, descripción",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending_acceptance",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "low",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "routeId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "customerCompanyId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pickupFrom",
+                  "value": "string",
+                  "description": "Pickup desde (ISO date)",
+                  "disabled": true
+                },
+                {
+                  "key": "pickupTo",
+                  "value": "string",
+                  "description": "Pickup hasta (ISO date)",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar shipments"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear shipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerCompanyId\": \"string\",\n  \"proposedCarrierId\": \"string\",\n  \"referenceNumber\": \"PO-12345\",\n  \"status\": \"draft\",\n  \"priority\": \"normal\",\n  \"routeId\": \"string\",\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"originAddress\": \"101 NE 1st St, Miami, FL\",\n  \"originLat\": \"25.7617\",\n  \"originLng\": \"-80.1918\",\n  \"originContactName\": \"Jane Doe\",\n  \"originContactPhone\": \"+1-555-111-2222\",\n  \"destinationAddress\": \"500 N Orange Ave, Orlando, FL\",\n  \"destinationLat\": \"28.5383\",\n  \"destinationLng\": \"-81.3792\",\n  \"destinationContactName\": \"John Receiver\",\n  \"destinationContactPhone\": \"+1-555-333-4444\",\n  \"description\": \"Pallets de electrónica\",\n  \"weightKg\": \"1500.00\",\n  \"volumeM3\": \"12.50\",\n  \"pieces\": 24,\n  \"cargoType\": \"general\",\n  \"pickupAt\": \"2026-04-22T10:00:00Z\",\n  \"deliveryAt\": \"2026-04-23T18:00:00Z\",\n  \"price\": \"1250.00\",\n  \"currency\": \"USD\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar shipment por tracking code (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/tracking/:code",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", "tracking", ":code"],
+              "variable": [
+                {
+                  "key": "code",
+                  "value": "",
+                  "description": "Path variable: code"
+                }
+              ]
+            },
+            "description": "Buscar shipment por tracking code (público)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener shipment por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener shipment por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar shipment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerCompanyId\": \"string\",\n  \"proposedCarrierId\": \"string\",\n  \"referenceNumber\": \"PO-12345\",\n  \"status\": \"draft\",\n  \"priority\": \"normal\",\n  \"routeId\": \"string\",\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"originAddress\": \"101 NE 1st St, Miami, FL\",\n  \"originLat\": \"25.7617\",\n  \"originLng\": \"-80.1918\",\n  \"originContactName\": \"Jane Doe\",\n  \"originContactPhone\": \"+1-555-111-2222\",\n  \"destinationAddress\": \"500 N Orange Ave, Orlando, FL\",\n  \"destinationLat\": \"28.5383\",\n  \"destinationLng\": \"-81.3792\",\n  \"destinationContactName\": \"John Receiver\",\n  \"destinationContactPhone\": \"+1-555-333-4444\",\n  \"description\": \"Pallets de electrónica\",\n  \"weightKg\": \"1500.00\",\n  \"volumeM3\": \"12.50\",\n  \"pieces\": 24,\n  \"cargoType\": \"general\",\n  \"pickupAt\": \"2026-04-22T10:00:00Z\",\n  \"deliveryAt\": \"2026-04-23T18:00:00Z\",\n  \"price\": \"1250.00\",\n  \"currency\": \"USD\",\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar shipment (solo draft o cancelled)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar shipment (solo draft o cancelled)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener línea de tiempo del shipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/timeline",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "timeline"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener línea de tiempo del shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar estado del shipment (workflow validado)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pending_acceptance\",\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cambiar estado del shipment (workflow validado)"
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar truck/driver/route al shipment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "assign"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"routeId\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asignar truck/driver/route al shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar shipment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "cancel"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cliente cambió de opinión\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cancelar shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Aceptar un envío en pending_acceptance (solo carrier)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "accept"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autoAssign\": false,\n  \"notes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El carrier acepta una propuesta de envío del cliente. Cambia status a CONFIRMED y notifica al cliente. Solo válido cuando el envío está en pending_acceptance."
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar un envío en pending_acceptance (solo carrier)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "reject"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"No tenemos camiones disponibles para esa fecha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El carrier rechaza una propuesta. Cambia status a CANCELLED, guarda razón en rejection_reason y notifica al cliente."
+          },
+          "response": []
+        },
+        {
+          "name": "Subir POD (Proof of Delivery)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/pod",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "pod"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"podUrl\": \"https://s3.amazonaws.com/pods/shipment-123.pdf\",\n  \"podSignedBy\": \"John Receiver\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Subir POD (Proof of Delivery)"
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar shipment como completado",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shipments/:id/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shipments", ":id", "complete"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Marcar shipment como completado"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Crear suscripción gratuita",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/free",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", "free"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"00000000-0000-0000-0000-000000000000\",\n  \"planId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear suscripción gratuita"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar suscripciones por empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/company/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", "company", ":companyId"],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ]
+            },
+            "description": "Listar suscripciones por empresa"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar suscripción",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "cancel"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Cancelar suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Upgrade de suscripción",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/upgrade",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "upgrade"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPlanId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Upgrade de suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Downgrade de suscripción",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/downgrade",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "downgrade"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPlanId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Downgrade de suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Suspender suscripción",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/suspend",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "suspend"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Suspender suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar addons de una suscripción",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/addons",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "addons"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Listar addons de una suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar addon a suscripción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/:id/addons",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", ":id", "addons"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addon_type\": \"extra_users\",\n  \"quantity\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Agregar addon a suscripción"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener addon por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/addons/:addonId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", "addons", ":addonId"],
+              "variable": [
+                {
+                  "key": "addonId",
+                  "value": "",
+                  "description": "Path variable: addonId"
+                }
+              ]
+            },
+            "description": "Obtener addon por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar cantidad de un addon",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/addons/:addonId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "subscriptions", "addons", ":addonId"],
+              "variable": [
+                {
+                  "key": "addonId",
+                  "value": "",
+                  "description": "Path variable: addonId"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar cantidad de un addon"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar addon de una suscripción",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/addons/:addonId/delete",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "subscriptions",
+                "addons",
+                ":addonId",
+                "delete"
+              ],
+              "variable": [
+                {
+                  "key": "addonId",
+                  "value": "",
+                  "description": "Path variable: addonId"
+                }
+              ]
+            },
+            "description": "Eliminar addon de una suscripción"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "item": [
+        {
+          "name": "Consultar puntos de tracking (filtrable)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/points",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "points"],
+              "query": [
+                {
+                  "key": "shipmentId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 500,
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Consultar puntos de tracking (filtrable)"
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar un punto de tracking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/points",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "points"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentId\": \"string\",\n  \"truckId\": \"string\",\n  \"driverId\": \"string\",\n  \"lat\": \"25.7617\",\n  \"lng\": \"-80.1918\",\n  \"speed\": \"85.50\",\n  \"heading\": \"180.00\",\n  \"altitude\": \"12.50\",\n  \"accuracy\": \"5.20\",\n  \"event\": \"pickup\",\n  \"capturedAt\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar un punto de tracking"
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar puntos en lote (hasta 500)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/points/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "points", "bulk"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": [\n    {\n      \"shipmentId\": \"string\",\n      \"truckId\": \"string\",\n      \"driverId\": \"string\",\n      \"lat\": \"25.7617\",\n      \"lng\": \"-80.1918\",\n      \"speed\": \"85.50\",\n      \"heading\": \"180.00\",\n      \"altitude\": \"12.50\",\n      \"accuracy\": \"5.20\",\n      \"event\": \"pickup\",\n      \"capturedAt\": \"string\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar puntos en lote (hasta 500)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener último punto de un shipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/shipments/:id/latest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "shipments", ":id", "latest"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener último punto de un shipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener último punto de un truck",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/trucks/:id/latest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "trucks", ":id", "latest"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener último punto de un truck"
+          },
+          "response": []
+        },
+        {
+          "name": "Estadísticas (distancia, vel. promedio, vel. máx) de un rango",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tracking/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tracking", "stats"],
+              "query": [
+                {
+                  "key": "shipmentId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "truckId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "string",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 500,
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Estadísticas (distancia, vel. promedio, vel. máx) de un rango"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Trucks",
+      "item": [
+        {
+          "name": "Listar camiones (paginado y filtrable)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por placa, marca o modelo",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "string",
+                  "description": "Filtrar por tipo de camión",
+                  "disabled": true
+                },
+                {
+                  "key": "driverId",
+                  "value": "string",
+                  "description": "Filtrar por driver asignado",
+                  "disabled": true
+                },
+                {
+                  "key": "companyId",
+                  "value": "string",
+                  "description": "Filtrar por empresa (solo super_admin)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "plate",
+                  "description": "Ordenar por campo",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar camiones (paginado y filtrable)"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear camión en la flota",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"ABC-1234\",\n  \"vin\": \"1HGCM82633A004352\",\n  \"make\": \"Volvo\",\n  \"model\": \"VNL 760\",\n  \"year\": 2022,\n  \"color\": \"White\",\n  \"type\": \"flatbed\",\n  \"capacityKg\": \"20000.00\",\n  \"capacityVolumeM3\": \"80.50\",\n  \"status\": \"available\",\n  \"currentDriverId\": \"11111111-1111-1111-1111-111111111111\",\n  \"insuranceExpiresAt\": \"2026-12-31\",\n  \"registrationExpiresAt\": \"2026-12-31\",\n  \"lastMaintenanceAt\": \"2026-04-01\",\n  \"nextMaintenanceAt\": \"2026-10-01\",\n  \"odometerKm\": 125000,\n  \"notes\": \"Camión asignado a la ruta Norte\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear camión en la flota"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener camión por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener camión por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar datos del camión",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"ABC-1234\",\n  \"vin\": \"1HGCM82633A004352\",\n  \"make\": \"Volvo\",\n  \"model\": \"VNL 760\",\n  \"year\": 2022,\n  \"color\": \"White\",\n  \"type\": \"flatbed\",\n  \"capacityKg\": \"20000.00\",\n  \"capacityVolumeM3\": \"80.50\",\n  \"status\": \"available\",\n  \"currentDriverId\": \"11111111-1111-1111-1111-111111111111\",\n  \"insuranceExpiresAt\": \"2026-12-31\",\n  \"registrationExpiresAt\": \"2026-12-31\",\n  \"lastMaintenanceAt\": \"2026-04-01\",\n  \"nextMaintenanceAt\": \"2026-10-01\",\n  \"odometerKm\": 125000,\n  \"notes\": \"Camión asignado a la ruta Norte\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar datos del camión"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar camión (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Eliminar camión (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener última ubicación conocida del camión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id/location",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id", "location"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Obtener última ubicación conocida del camión"
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar estado del camión",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"available\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cambiar estado del camión"
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar driver al camión",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id/assign-driver",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id", "assign-driver"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": {},\n  \"truckId\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asignar driver al camión"
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar driver del camión",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trucks/:id/unassign-driver",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trucks", ":id", "unassign-driver"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Quitar driver del camión"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (Team)",
+      "item": [
+        {
+          "name": "Listar usuarios de la empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "string",
+                  "description": "Buscar por nombre o email",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "super_admin",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending_verification",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar usuarios de la empresa"
+          },
+          "response": []
+        },
+        {
+          "name": "Invitar usuario al equipo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/invite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "invite"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria@example.com\",\n  \"role\": \"dispatcher\",\n  \"firstName\": \"María\",\n  \"lastName\": \"García\",\n  \"phone\": \"+1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Invitar usuario al equipo"
+          },
+          "response": []
+        },
+        {
+          "name": "Aceptar invitación (público, con token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/accept-invite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "accept-invite"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\",\n  \"firstName\": \"María\",\n  \"lastName\": \"García\",\n  \"password\": \"MyP@ssw0rd!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Aceptar invitación (público, con token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle de usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Detalle de usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar datos de usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"María\",\n  \"lastName\": \"García\",\n  \"phone\": \"+1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Actualizar datos de usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Desactivar usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Desactivar usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar rol de usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id", "role"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cambiar rol de usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivar usuario",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id", "reactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Reactivar usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Verifications",
+      "item": [
+        {
+          "name": "List all active verification tiers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/tiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "tiers"]
+            },
+            "description": "List all active verification tiers"
+          },
+          "response": []
+        },
+        {
+          "name": "Create a verification tier (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/tiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "tiers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"price\": 0,\n  \"validityDays\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a verification tier (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create a new verification request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"string\",\n  \"tierId\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a new verification request"
+          },
+          "response": []
+        },
+        {
+          "name": "List verifications for a company",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/company/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "company", ":companyId"],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ]
+            },
+            "description": "List verifications for a company"
+          },
+          "response": []
+        },
+        {
+          "name": "Get verification by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Get verification by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit verification for review",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/:id/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", ":id", "submit"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Submit verification for review"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve or reject a verification (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/:id/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", ":id", "review"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approved\",\n  \"reason\": \"string\",\n  \"reviewNotes\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Approve or reject a verification (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "List documents for a verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/:id/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", ":id", "documents"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "List documents for a verification"
+          },
+          "response": []
+        },
+        {
+          "name": "Add a document to a verification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/:id/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", ":id", "documents"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Path variable: id"
+                }
+              ]
+            },
+            "description": "Add a document to a verification"
+          },
+          "response": []
+        },
+        {
+          "name": "Snapshot de cumplimiento (MV-002) para una empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/compliance/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "verifications",
+                "compliance",
+                ":companyId"
+              ],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ]
+            },
+            "description": "Devuelve el tier requerido según serviceType, el tier vigente actual y, si la empresa NO puede operar, el motivo y los documentos faltantes."
+          },
+          "response": []
+        },
+        {
+          "name": "Wizard de onboarding personalizado para la empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/onboarding/:companyId",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "verifications",
+                "onboarding",
+                ":companyId"
+              ],
+              "variable": [
+                {
+                  "key": "companyId",
+                  "value": "",
+                  "description": "Path variable: companyId"
+                }
+              ]
+            },
+            "description": "Devuelve la lista ordenada de pasos según serviceType + businessModel, marcando cuáles ya están completos y un porcentaje agregado."
+          },
+          "response": []
+        },
+        {
+          "name": "Preview pública del wizard (sin estado) por serviceType",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/onboarding",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "onboarding"],
+              "query": [
+                {
+                  "key": "serviceType",
+                  "value": "freight",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "businessModel",
+                  "value": "independent",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Preview pública del wizard (sin estado) por serviceType"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

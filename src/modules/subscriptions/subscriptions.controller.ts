@@ -11,14 +11,21 @@ import {
   ApiTags,
   ApiOperation,
   ApiParam,
-  ApiBody,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { Plan } from './decorators/plan.decorator';
 import { PlanGuard } from './guards/plan.guard';
+import {
+  CreateFreeSubscriptionDto,
+  ChangePlanDto,
+  AddAddonDto,
+  UpdateAddonQuantityDto,
+} from './dto';
 
 @ApiTags('Subscriptions')
+@ApiBearerAuth()
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
@@ -33,12 +40,7 @@ export class SubscriptionsController {
   @ApiResponse({ status: 201, description: 'Suscripción gratuita creada' })
   @ApiResponse({ status: 400, description: 'Parámetros inválidos' })
   @ApiResponse({ status: 409, description: 'Ya tiene suscripción activa' })
-  @ApiBody({
-    schema: {
-      properties: { companyId: { type: 'string' }, planId: { type: 'string' } },
-    },
-  })
-  async createFree(@Body() body: { companyId: string; planId: string }) {
+  async createFree(@Body() body: CreateFreeSubscriptionDto) {
     this.logRequest('POST /subscriptions/free', body);
     return this.subscriptionsService.createFreeSubscription(
       body.companyId,
@@ -75,8 +77,7 @@ export class SubscriptionsController {
   @ApiResponse({ status: 400, description: 'Plan inválido o no compatible' })
   @ApiResponse({ status: 404, description: 'Suscripción no encontrada' })
   @ApiParam({ name: 'id', type: 'string' })
-  @ApiBody({ schema: { properties: { newPlanId: { type: 'string' } } } })
-  async upgrade(@Param('id') id: string, @Body() body: { newPlanId: string }) {
+  async upgrade(@Param('id') id: string, @Body() body: ChangePlanDto) {
     this.logRequest('PATCH /subscriptions/:id/upgrade', { id, ...body });
     return this.subscriptionsService.upgradeSubscription(id, body.newPlanId);
   }
@@ -87,11 +88,7 @@ export class SubscriptionsController {
   @ApiResponse({ status: 400, description: 'Plan inválido o no compatible' })
   @ApiResponse({ status: 404, description: 'Suscripción no encontrada' })
   @ApiParam({ name: 'id', type: 'string' })
-  @ApiBody({ schema: { properties: { newPlanId: { type: 'string' } } } })
-  async downgrade(
-    @Param('id') id: string,
-    @Body() body: { newPlanId: string },
-  ) {
+  async downgrade(@Param('id') id: string, @Body() body: ChangePlanDto) {
     this.logRequest('PATCH /subscriptions/:id/downgrade', { id, ...body });
     return this.subscriptionsService.downgradeSubscription(id, body.newPlanId);
   }
@@ -114,17 +111,9 @@ export class SubscriptionsController {
   @ApiResponse({ status: 400, description: 'Parámetros inválidos' })
   @ApiResponse({ status: 404, description: 'Suscripción no encontrada' })
   @ApiParam({ name: 'id', type: 'string' })
-  @ApiBody({
-    schema: {
-      properties: {
-        addon_type: { type: 'string' },
-        quantity: { type: 'number' },
-      },
-    },
-  })
   async addAddon(
     @Param('id') subscriptionId: string,
-    @Body() body: { addon_type: string; quantity: number },
+    @Body() body: AddAddonDto,
   ) {
     this.logRequest('POST /subscriptions/:id/addons', {
       subscriptionId,
@@ -143,10 +132,9 @@ export class SubscriptionsController {
   @ApiResponse({ status: 404, description: 'Addon no encontrado' })
   @ApiResponse({ status: 400, description: 'Cantidad inválida' })
   @ApiParam({ name: 'addonId', type: 'string' })
-  @ApiBody({ schema: { properties: { quantity: { type: 'number' } } } })
   async updateAddon(
     @Param('addonId') addonId: string,
-    @Body() body: { quantity: number },
+    @Body() body: UpdateAddonQuantityDto,
   ) {
     this.logRequest('PATCH /subscriptions/addons/:addonId', {
       addonId,

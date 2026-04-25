@@ -31,6 +31,12 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
+    if (process.env.OPENAPI_GEN === '1') {
+      // Skip Supabase anon client during OpenAPI generation (sockets keep
+      // event loop alive, blocking NestFactory.create resolution).
+      this.anonClient = {} as SupabaseClient;
+      return;
+    }
     // Anon client for user-facing auth operations (login, signup)
     const url = this.configService.get<string>('supabase.url')!;
     const anonKey = this.configService.get<string>('supabase.anonKey')!;

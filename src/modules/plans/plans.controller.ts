@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { PlansService } from './plans.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -25,6 +26,7 @@ import { PermissionGuard } from '../../common/guards/permission.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 
 @ApiTags('Plans')
+@ApiBearerAuth()
 @Controller('plans')
 export class PlansController {
   constructor(private readonly plansService: PlansService) {}

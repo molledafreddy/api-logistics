@@ -17,6 +17,12 @@ export class FilesService {
 
   constructor(private readonly config: ConfigService) {
     this.bucket = this.config.get<string>('S3_BUCKET', 'logistics-files');
+    if (process.env.OPENAPI_GEN === '1') {
+      // S3Client opens HTTP keep-alive sockets that block the event loop
+      // during NestFactory.create() under OPENAPI_GEN=1.
+      this.s3 = {} as S3Client;
+      return;
+    }
     this.s3 = new S3Client({
       region: this.config.get<string>('S3_REGION', 'us-east-1'),
       endpoint: this.config.get<string>('S3_ENDPOINT'),

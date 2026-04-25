@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["scripts/openapi/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"],
+  "compilerOptions": {
+    "outDir": "./dist/scripts",
+    "rootDir": "./scripts",
+    "noEmit": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo-scripts",
+    "declaration": false,
+    "sourceMap": false
+  }
+}
