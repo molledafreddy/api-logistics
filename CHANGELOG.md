@@ -8,6 +8,30 @@ y versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Unreleased]
 
+### Added — E2E Testing Foundation
+
+- **E2E infrastructure** (`docker-compose.test.yml`): Postgres 13 en :5433 +
+  Redis 6.2 en :6380 para tests aislados.
+- **Jest E2E config** (`jest.config.e2e.cjs`):
+  - Serial execution (`maxWorkers: 1`) para evitar exhaustión del pool
+  - Timeout 60s para app bootstrap
+  - `setupFiles` ejecuta mocks + env setup antes de compilar tests
+  - `forceExit: true` limpia handles al terminar
+- **Global setup files**:
+  - `test/setup-e2e-mocks.ts`: `jest.mock('jwks-rsa')` con JwksClient dummy
+  - `test/setup-e2e.ts`: fuerza `E2E_TEST=true`, `NODE_ENV=test`
+- **Test helpers** (`test/helpers/test-app.helper.ts`):
+  - `createTestApp()`: instancia NestJS con AppModule + validación global
+  - `getAccessToken()`: obtiene JWT válido vía Supabase Auth
+  - `closeTestApp()`: cleanup de app + db connections
+- **Smoke test** (`test/app.e2e-spec.ts`): 2 tests para endpoints root + health
+- **4 suites E2E activas**:
+  - `test/modules/audit.e2e-spec.ts`: 3 tests (list + filters)
+  - `test/modules/plans.e2e-spec.ts`: 4 tests (CRUD + permissions)
+  - `test/modules/notifications.e2e-spec.ts`: 4 tests (push tokens + settings)
+  - **Total**: 13 tests passing, ~4.2s execution (serial)
+- **Documentation**: `docs/E2E-STATUS.md` con arquitectura + troubleshooting
+
 ### Added — DX / Quality gates
 
 - **Pre-push hook** (`.husky/pre-push`): ejecuta `pnpm test` + `env:check` +

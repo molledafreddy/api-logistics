@@ -1,11 +1,13 @@
 import request from 'supertest';
 import { INestApplication } from '@nestjs/common';
-import { createTestApp, getAccessToken } from '../helpers/test-app.helper';
-
-jest.setTimeout(60000);
+import {
+  createTestApp,
+  getAccessToken,
+  closeTestApp,
+} from '../helpers/test-app.helper';
 
 describe('Plans & Permissions (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
   let jwt: string;
   const uniqueSuffix = Date.now();
 
@@ -15,20 +17,20 @@ describe('Plans & Permissions (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeTestApp(app);
   });
 
-  it('/plans (GET) - requiere plans.read', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/plans')
+  it('GET /api/v1/plans - requiere plans.read', async () => {
+    const res = await request(app!.getHttpServer())
+      .get('/api/v1/plans')
       .set('Authorization', `Bearer ${jwt}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('/plans (POST) - requiere plans.write', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/plans')
+  it('POST /api/v1/plans - requiere plans.write', async () => {
+    const res = await request(app!.getHttpServer())
+      .post('/api/v1/plans')
       .set('Authorization', `Bearer ${jwt}`)
       .send({
         name: `E2E-${uniqueSuffix}`,
@@ -40,17 +42,17 @@ describe('Plans & Permissions (e2e)', () => {
     expect(res.body).toHaveProperty('id');
   });
 
-  it('/plans/permissions (GET) - requiere permissions.read', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/plans/permissions')
+  it('GET /api/v1/plans/permissions - requiere permissions.read', async () => {
+    const res = await request(app!.getHttpServer())
+      .get('/api/v1/plans/permissions')
       .set('Authorization', `Bearer ${jwt}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('/plans/permissions (POST) - requiere permissions.write', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/plans/permissions')
+  it('POST /api/v1/plans/permissions - requiere permissions.write', async () => {
+    const res = await request(app!.getHttpServer())
+      .post('/api/v1/plans/permissions')
       .set('Authorization', `Bearer ${jwt}`)
       .send({ code: `e2e.test.${uniqueSuffix}`, description: 'E2E test' });
     expect(res.status).toBe(201);

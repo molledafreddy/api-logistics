@@ -1,13 +1,14 @@
-jest.setTimeout(60000);
-
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { createTestApp, getAccessToken } from '../helpers/test-app.helper';
+import {
+  createTestApp,
+  closeTestApp,
+  getAccessToken,
+} from '../helpers/test-app.helper';
 
 describe('Notifications E2E', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
   let jwt: string;
-  let notificationId: string;
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -15,20 +16,20 @@ describe('Notifications E2E', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeTestApp(app);
   });
 
-  it('GET /notifications - should list my notifications (empty initially)', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/notifications')
+  it('GET /api/v1/notifications - should list my notifications (empty initially)', async () => {
+    const res = await request(app!.getHttpServer())
+      .get('/api/v1/notifications')
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('POST /notifications/push-tokens - should register a push token', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/notifications/push-tokens')
+  it('POST /api/v1/notifications/push-tokens - should register a push token', async () => {
+    const res = await request(app!.getHttpServer())
+      .post('/api/v1/notifications/push-tokens')
       .set('Authorization', `Bearer ${jwt}`)
       .send({
         token: `expo-token-${Date.now()}`,
@@ -40,25 +41,25 @@ describe('Notifications E2E', () => {
     expect(res.body.platform).toBe('ios');
   });
 
-  it('PATCH /notifications/read-all - should mark all as read', async () => {
-    const res = await request(app.getHttpServer())
-      .patch('/notifications/read-all')
+  it('PATCH /api/v1/notifications/read-all - should mark all as read', async () => {
+    const res = await request(app!.getHttpServer())
+      .patch('/api/v1/notifications/read-all')
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(res.body.success).toBe(true);
   });
 
-  it('DELETE /notifications/push-tokens/:token - should deactivate a push token', async () => {
+  it('DELETE /api/v1/notifications/push-tokens/:token - should deactivate a push token', async () => {
     const token = `expo-remove-${Date.now()}`;
     // Register first
-    await request(app.getHttpServer())
-      .post('/notifications/push-tokens')
+    await request(app!.getHttpServer())
+      .post('/api/v1/notifications/push-tokens')
       .set('Authorization', `Bearer ${jwt}`)
       .send({ token, platform: 'android' })
       .expect(201);
     // Remove
-    const res = await request(app.getHttpServer())
-      .delete(`/notifications/push-tokens/${token}`)
+    const res = await request(app!.getHttpServer())
+      .delete(`/api/v1/notifications/push-tokens/${token}`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(res.body.success).toBe(true);

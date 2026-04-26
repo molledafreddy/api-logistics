@@ -50,12 +50,23 @@ $ pnpm run start:prod
 # unit tests
 $ pnpm run test
 
-# e2e tests
+# unit test coverage
+$ pnpm run test:cov
+
+# e2e tests (requires docker-compose running)
+$ docker-compose -f docker-compose.test.yml up -d
 $ pnpm run test:e2e
 
-# test coverage
-$ pnpm run test:cov
+# e2e specific suite (e.g., audit)
+$ NODE_ENV=test pnpm exec jest --config jest.config.e2e.cjs --runInBand test/modules/audit.e2e-spec.ts
 ```
+
+**Documentation**:
+
+- [E2E Testing Status](./docs/E2E-STATUS.md) — Current suite status, architecture, troubleshooting
+- [E2E Implementation Plan](./docs/E2E-PLAN.md) — Roadmap for remaining suites
+- [OpenAPI Pipeline](./scripts/openapi/README.md) — API documentation generation
+- [Postman Collection](./docs/postman/README.md) — Pre-built API requests
 
 ## Deployment
 

@@ -1,12 +1,14 @@
-jest.setTimeout(60000);
-
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { createTestApp, getAccessToken } from '../helpers/test-app.helper';
+import {
+  createTestApp,
+  getAccessToken,
+  closeTestApp,
+} from '../helpers/test-app.helper';
 import dataSource from '../../src/database/data-source';
 
 describe('Audit E2E', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
   let jwt: string;
   let companyId: string;
 
@@ -31,12 +33,12 @@ describe('Audit E2E', () => {
 
   afterAll(async () => {
     if (dataSource.isInitialized) await dataSource.destroy();
-    await app.close();
+    await closeTestApp(app);
   });
 
-  it('GET /audit/company/:companyId - should list audit logs', async () => {
-    const res = await request(app.getHttpServer())
-      .get(`/audit/company/${companyId}`)
+  it('GET /api/v1/audit/company/:companyId - should list audit logs', async () => {
+    const res = await request(app!.getHttpServer())
+      .get(`/api/v1/audit/company/${companyId}`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -45,17 +47,17 @@ describe('Audit E2E', () => {
     expect(res.body[0]).toHaveProperty('entityType');
   });
 
-  it('GET /audit/:resourceType/:resourceId - should list logs for a resource', async () => {
-    const res = await request(app.getHttpServer())
-      .get(`/audit/company/${companyId}`)
+  it('GET /api/v1/audit/:resourceType/:resourceId - should list logs for a resource', async () => {
+    const res = await request(app!.getHttpServer())
+      .get(`/api/v1/audit/company/${companyId}`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('GET /audit/company/:companyId?page=1&limit=5 - should paginate', async () => {
-    const res = await request(app.getHttpServer())
-      .get(`/audit/company/${companyId}?page=1&limit=5`)
+  it('GET /api/v1/audit/company/:companyId?page=1&limit=5 - should paginate', async () => {
+    const res = await request(app!.getHttpServer())
+      .get(`/api/v1/audit/company/${companyId}?page=1&limit=5`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);

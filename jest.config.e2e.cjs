@@ -15,17 +15,28 @@ module.exports = {
   testMatch: ['<rootDir>/test/**/*.e2e-spec.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.spec.json',
+        // isolatedModules vive en tsconfig.spec.json (compilerOptions).
+      },
+    ],
   },
   transformIgnorePatterns: ['/node_modules/(?!jose).+\\.js$'],
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.spec.json',
-    },
-  },
+  // Setup global ANTES del framework:
+  //   1. setup-e2e-mocks.ts → jest.mock('jwks-rsa') con Jest context
+  //   2. setup-e2e.ts → process.env.E2E_TEST=true, NODE_ENV=test
+  setupFiles: [
+    '<rootDir>/test/setup-e2e-mocks.ts',
+    '<rootDir>/test/setup-e2e.ts',
+  ],
   // ─── Anti-pool-exhaustion ───
   maxWorkers: 1,
   testTimeout: 60_000,
+  // Cierra Jest aunque queden handles abiertos (TypeORM pool, BullMQ workers).
+  // TODO: limpiar handles correctamente en afterAll para quitar este flag.
+  forceExit: true,
   // Sprint 21: 9 suites e2e en cuarentena (.e2e-spec.ts.skip).
   // Ver docs/E2E-QUARANTINE.md. Permitimos 0 tests para no romper CI.
   passWithNoTests: true,
