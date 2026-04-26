@@ -40,4 +40,16 @@ module.exports = {
   // Sprint 21: 9 suites e2e en cuarentena (.e2e-spec.ts.skip).
   // Ver docs/E2E-QUARANTINE.md. Permitimos 0 tests para no romper CI.
   passWithNoTests: true,
+  // ─── Test Reporting ───
+  reporters: [
+    'default',
+    ['jest-junit', {
+      outputDirectory: './coverage',
+      outputName: 'e2e-test-results.xml',
+      classNameTemplate: '{classname}',
+      titleTemplate: '{title}',
+      ancestorSeparator: ' › ',
+      usePathAsClassName: true,
+    }],
+  ],
 };

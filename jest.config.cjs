@@ -35,4 +35,16 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'text-summary'],
+  // ─── Test Reporting ───
+  reporters: [
+    'default',
+    ['jest-junit', {
+      outputDirectory: './coverage',
+      outputName: 'test-results.xml',
+      classNameTemplate: '{classname}',
+      titleTemplate: '{title}',
+      ancestorSeparator: ' › ',
+      usePathAsClassName: true,
+    }],
+  ],
 };
