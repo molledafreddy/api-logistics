@@ -29,10 +29,6 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
       inject: [ConfigService],
       isGlobal: true,
       useFactory: async (config: ConfigService) => {
-        // Skip real Redis connection for offline tasks (e.g. OpenAPI gen).
-        if (process.env.OPENAPI_GEN === '1') {
-          return { ttl: 5 * 60 * 1000 }; // default in-memory store
-        }
         const host = config.get<string>('REDIS_HOST', 'localhost');
         const port = config.get<number>('REDIS_PORT', 6379);
         const password = config.get<string>('REDIS_PASSWORD', '') || undefined;

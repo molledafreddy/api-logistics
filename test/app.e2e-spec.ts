@@ -1,5 +1,12 @@
 /**
  * Smoke test E2E — el más simple posible.
+ *
+ * Solo valida que AppModule arranca con la nueva infra:
+ *   - Postgres local (Docker) en lugar de Supabase Pooler
+ *   - Mock global de jwks-rsa (vía __mocks__/jwks-rsa.js)
+ *   - E2E_TEST=true para bypass JWT en HTTP
+ *
+ * No requiere autenticación ni datos en BD: GET / es endpoint público.
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
@@ -14,6 +21,7 @@ describe('Root (e2e smoke)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
+
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
     await app.init();
