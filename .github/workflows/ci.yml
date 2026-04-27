@@ -83,6 +83,15 @@ jobs:
       SUPABASE_JWT_SECRET: test-supabase-secret-key-for-ci
       SUPABASE_URL: https://test-project.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: test-service-role-key-ci
+      # Dummy credentials for E2E testing (not real)
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QtcHJvamVjdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE5MDAwMDAwMDB9.test-anon-key-dummy
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      MAIL_HOST: localhost
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
 
     steps:
       - name: 📥 Checkout code
