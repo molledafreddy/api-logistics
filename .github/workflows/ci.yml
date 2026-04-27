@@ -104,11 +104,11 @@ jobs:
         run: pnpm run migration:run
 
       - name: 🧪 Run unit tests with coverage
-        run: pnpm test -- --coverage --passWithNoTests
+        run: pnpm test --coverage --passWithNoTests
         continue-on-error: false
 
       - name: 🚀 Run E2E tests with coverage
-        run: pnpm run test:e2e -- --coverage --passWithNoTests
+        run: pnpm run test:e2e --coverage --passWithNoTests
         continue-on-error: false
 
       - name: 📊 Upload test results
