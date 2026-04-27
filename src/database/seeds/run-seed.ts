@@ -11,11 +11,13 @@ const logger = new Logger('Seed');
 async function runSeed() {
   logger.log('🌱 Starting seed...');
 
+  const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+
   // Super admin user (skip in CI/CD if Supabase credentials missing)
   try {
     await seedSuperAdmin();
   } catch (error) {
-    if (process.env.NODE_ENV === 'test' && process.env.CI === 'true') {
+    if (isCI) {
       logger.warn(
         '⚠️  Skipping super admin seed (Supabase not configured in CI/CD)',
       );
@@ -27,17 +29,47 @@ async function runSeed() {
   // Planes y permisos mínimos para tests y desarrollo
   await seedPlansAndPermissions();
 
-  // Usuario de pruebas asociado a plan Business
-  await seedTestUser();
+  // Usuario de pruebas asociado a plan Business (skip in CI/CD)
+  try {
+    await seedTestUser();
+  } catch (error) {
+    if (isCI) {
+      logger.warn(
+        '⚠️  Skipping test user seed (Supabase not configured in CI/CD)',
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // Addons de suscripción de ejemplo
   await seedSubscriptionAddons();
 
   // Datos demo de logística (solo si SEED_DEMO=true)
-  await seedLogisticsDemo();
+  try {
+    await seedLogisticsDemo();
+  } catch (error) {
+    if (isCI) {
+      logger.warn(
+        '⚠️  Skipping logistics demo seed (Supabase not configured in CI/CD)',
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // Datos demo cross-empresa (solo si SEED_DEMO=true)
-  await seedCrossCompanyDemo();
+  try {
+    await seedCrossCompanyDemo();
+  } catch (error) {
+    if (isCI) {
+      logger.warn(
+        '⚠️  Skipping cross-company demo seed (Supabase not configured in CI/CD)',
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // TODO: Implement additional seeds in subsequent phases
   // - plans.seed.ts (Sprint 3)
