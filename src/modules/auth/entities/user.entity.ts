@@ -28,6 +28,14 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   email!: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'password_hash',
+  })
+  passwordHash!: string | null;
+
   @Column({ type: 'varchar', length: 30, nullable: true })
   phone!: string | null;
 

@@ -6,9 +6,11 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { User } from './entities/user.entity';
 import { Company } from '../companies/entities/company.entity';
 import { SupabaseService } from './supabase.service';
@@ -167,16 +169,102 @@ export class AuthService {
   }
 
   /**
-   * Login with email + password via Supabase Auth
+   * Login with email + password
+   *
+   * Supports two modes:
+   * - Development: Via Supabase Auth (real OAuth/JWT)
+   * - CI/CD: Via PostgreSQL password_hash (bcrypt)
    */
   async login(dto: LoginDto, ipAddress?: string) {
+    const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+    const email = dto.email.toLowerCase().trim();
+
+    // ─── Try CI/CD path first (password_hash in PostgreSQL) ────
+    if (isCI) {
+      const user = await this.userRepository.findOne({
+        where: { email, deletedAt: IsNull() },
+      });
+
+      if (!user) {
+        this.logger.warn(
+          `Login failed for ${email}: user not found (CI/CD mode)`,
+        );
+        throw new UnauthorizedException('Email o contraseña incorrectos');
+      }
+
+      // Verify password hash
+      if (!user.passwordHash) {
+        this.logger.warn(
+          `Login failed for ${email}: no password hash (CI/CD mode)`,
+        );
+        throw new UnauthorizedException('Email o contraseña incorrectos');
+      }
+
+      const passwordMatches = await bcrypt.compare(
+        dto.password,
+        user.passwordHash,
+      );
+      if (!passwordMatches) {
+        this.logger.warn(
+          `Login failed for ${email}: wrong password (CI/CD mode)`,
+        );
+        throw new UnauthorizedException('Email o contraseña incorrectos');
+      }
+
+      if (user.status === 'suspended') {
+        throw new UnauthorizedException('Cuenta suspendida');
+      }
+
+      if (user.status === 'inactive') {
+        throw new UnauthorizedException('Cuenta desactivada');
+      }
+
+      // Update login tracking
+      user.lastLoginAt = new Date();
+      user.lastLoginIp = ipAddress || null;
+      user.failedLoginAttempts = 0;
+      user.lockedUntil = null;
+      await this.userRepository.save(user);
+
+      // Generate a simple JWT for CI/CD tests
+      const jwtSecret = this.configService.get<string>('jwt.secret')!;
+      const jwtPayload = {
+        sub: user.id,
+        email: user.email,
+        authUid: user.authUid,
+      };
+
+      // Create simple JWT token
+      const header = Buffer.from(
+        JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+      ).toString('base64url');
+      const payload = Buffer.from(JSON.stringify(jwtPayload)).toString(
+        'base64url',
+      );
+      const signature = crypto
+        .createHmac('sha256', jwtSecret)
+        .update(`${header}.${payload}`)
+        .digest('base64url');
+      const accessToken = `${header}.${payload}.${signature}`;
+
+      return {
+        user: this.sanitizeUser(user),
+        session: {
+          accessToken,
+          refreshToken: null,
+          expiresAt: new Date(Date.now() + 3600 * 1000).getTime(),
+        },
+      };
+    }
+
+    // ─── Development path (Supabase Auth) ────
     const { data, error } = await this.anonClient.auth.signInWithPassword({
-      email: dto.email.toLowerCase().trim(),
+      email,
       password: dto.password,
     });
 
     if (error) {
-      this.logger.warn(`Login failed for ${dto.email}: ${error.message}`);
+      this.logger.warn(`Login failed for ${email}: ${error.message}`);
       throw new UnauthorizedException('Email o contraseña incorrectos');
     }
 

@@ -30,16 +30,32 @@ export async function createTestApp(): Promise<INestApplication> {
 }
 
 /**
- * Logs in via the real Supabase auth and returns the access token.
+ * Logs in via the real Supabase auth (dev) or local PostgreSQL (CI/CD).
+ *
+ * In CI/CD (NODE_ENV=test && CI=true), users are created directly in PostgreSQL
+ * without Supabase Auth, so login uses password_hash matching.
  */
 export async function getAccessToken(
   app: INestApplication,
-  email = process.env.TEST_USER_EMAIL || 'molledafreddy@gmail.com',
-  password = process.env.TEST_USER_PASSWORD || 'MyP@ssw0rd!',
+  email?: string,
+  password?: string,
 ): Promise<string> {
+  const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+
+  // Use CI test user credentials in CI/CD, otherwise use environment or dev defaults
+  const defaultEmail = isCI
+    ? 'test@test.com'
+    : process.env.TEST_USER_EMAIL || 'molledafreddy@gmail.com';
+  const defaultPassword = isCI
+    ? 'TestPassword123!'
+    : process.env.TEST_USER_PASSWORD || 'MyP@ssw0rd!';
+
+  const finalEmail = email || defaultEmail;
+  const finalPassword = password || defaultPassword;
+
   const res = await request(app.getHttpServer())
     .post('/api/v1/auth/login')
-    .send({ email, password });
+    .send({ email: finalEmail, password: finalPassword });
 
   const jwt = res.body?.session?.accessToken;
   if (!jwt) {

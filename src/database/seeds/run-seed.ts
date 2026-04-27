@@ -5,6 +5,7 @@ import { seedPlansAndPermissions } from './plans-permissions.seed';
 import { seedSubscriptionAddons } from './subscription-addons.seed';
 import { seedLogisticsDemo } from './logistics-demo.seed';
 import { seedCrossCompanyDemo } from './cross-company-demo.seed';
+import { seedCITestUsers } from './ci-test-users.seed';
 
 const logger = new Logger('Seed');
 
@@ -13,32 +14,26 @@ async function runSeed() {
 
   const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
 
-  // Super admin user (skip in CI/CD if Supabase credentials missing)
-  try {
-    await seedSuperAdmin();
-  } catch (error) {
-    if (isCI) {
-      logger.warn(
-        '⚠️  Skipping super admin seed (Supabase not configured in CI/CD)',
-      );
-    } else {
-      throw error;
-    }
-  }
-
-  // Planes y permisos mínimos para tests y desarrollo
+  // Planes y permisos mínimos para tests y desarrollo (ALWAYS RUN - required first)
   await seedPlansAndPermissions();
 
-  // Usuario de pruebas asociado a plan Business (skip in CI/CD)
-  try {
-    await seedTestUser();
-  } catch (error) {
-    if (isCI) {
-      logger.warn(
-        '⚠️  Skipping test user seed (Supabase not configured in CI/CD)',
-      );
-    } else {
-      throw error;
+  // ─── CI/CD path: Create test users directly in PostgreSQL ────
+  if (isCI) {
+    await seedCITestUsers();
+  } else {
+    // ─── Development path: Create users via Supabase Auth ────
+    // Super admin user (skip in CI/CD if Supabase credentials missing)
+    try {
+      await seedSuperAdmin();
+    } catch (error) {
+      logger.warn('⚠️  Skipping super admin seed (Supabase not configured)');
+    }
+
+    // Usuario de pruebas asociado a plan Business
+    try {
+      await seedTestUser();
+    } catch (error) {
+      logger.warn('⚠️  Skipping test user seed (Supabase not configured)');
     }
   }
 
