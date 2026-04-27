@@ -37,7 +37,7 @@ describe('Admin E2E', () => {
 
     // Ensure super admin role for test user
     await dataSource.query(
-      `UPDATE users SET role = 'super_admin' WHERE email = 'molledafreddy@gmail.com'`,
+      `UPDATE users SET role = 'super_admin' WHERE email = 'test@test.com' OR email = 'admin@test.com'`,
     );
   });
 

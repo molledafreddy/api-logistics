@@ -20,7 +20,7 @@ describe('Audit E2E', () => {
     companyId = res[0]?.id;
     // Ensure test user is super_admin for full access
     await dataSource.query(
-      `UPDATE users SET role = 'super_admin' WHERE email = 'molledafreddy@gmail.com'`,
+      `UPDATE users SET role = 'super_admin' WHERE email = 'test@test.com' OR email = 'admin@test.com'`,
     );
 
     // Seed an audit log entry for testing

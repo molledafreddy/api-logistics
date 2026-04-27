@@ -70,16 +70,12 @@ export async function seedCITestUsers(): Promise<void> {
 
     if (existingAdmin.length > 0) {
       const user = existingAdmin[0];
-      if (user.role === 'super_admin') {
-        logger.log(`✅ Super admin user already exists: ${superAdminEmail}`);
-      } else {
-        // Promote to super_admin
-        await dataSource.query(
-          `UPDATE users SET role = 'super_admin' WHERE id = $1`,
-          [user.id],
-        );
-        logger.log(`✅ User promoted to super_admin: ${superAdminEmail}`);
-      }
+      // Always update password_hash and role
+      await dataSource.query(
+        `UPDATE users SET role = 'super_admin', password_hash = $1 WHERE id = $2`,
+        [hashedPassword, user.id],
+      );
+      logger.log(`✅ Super admin user updated: ${superAdminEmail}`);
     } else {
       // Create new super_admin
       const superAdminUid = uuidv4();
@@ -109,7 +105,12 @@ export async function seedCITestUsers(): Promise<void> {
     );
 
     if (existingTestUser.length > 0) {
-      logger.log(`✅ Test user already exists: ${testUserEmail}`);
+      // Always update password_hash for existing test user
+      await dataSource.query(
+        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        [hashedPassword, existingTestUser[0].id],
+      );
+      logger.log(`✅ Test user updated: ${testUserEmail}`);
     } else {
       const testUserUid = uuidv4();
       await dataSource.query(

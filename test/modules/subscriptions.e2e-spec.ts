@@ -21,9 +21,19 @@ describe('Subscriptions E2E', () => {
     jwt = await getAccessToken(app);
     if (!dataSource.isInitialized) await dataSource.initialize();
 
-    // Get test company
-    const compRes = await dataSource.query(`SELECT id FROM companies LIMIT 1`);
+    // Get CI Test Company (where test user belongs)
+    const compRes = await dataSource.query(
+      `SELECT id FROM companies WHERE name = 'CI Test Company' LIMIT 1`,
+    );
     companyId = compRes[0]?.id;
+
+    // If CI Test Company not found, get any company
+    if (!companyId) {
+      const anyCompRes = await dataSource.query(
+        `SELECT id FROM companies LIMIT 1`,
+      );
+      companyId = anyCompRes[0]?.id;
+    }
 
     // Get Free plan
     const freePlanRes = await dataSource.query(
