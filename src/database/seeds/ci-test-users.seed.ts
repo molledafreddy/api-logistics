@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import dataSource from '../data-source';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 const logger = new Logger('CITestUsersSeed');
 
@@ -81,7 +82,7 @@ export async function seedCITestUsers(): Promise<void> {
       }
     } else {
       // Create new super_admin
-      const superAdminUid = `ci-super-admin-${Date.now()}`;
+      const superAdminUid = uuidv4();
       await dataSource.query(
         `INSERT INTO users (
           auth_uid, company_id, email, first_name, last_name, 
@@ -110,7 +111,7 @@ export async function seedCITestUsers(): Promise<void> {
     if (existingTestUser.length > 0) {
       logger.log(`✅ Test user already exists: ${testUserEmail}`);
     } else {
-      const testUserUid = `ci-test-user-${Date.now()}`;
+      const testUserUid = uuidv4();
       await dataSource.query(
         `INSERT INTO users (
           auth_uid, company_id, email, first_name, last_name, 
@@ -133,18 +134,22 @@ export async function seedCITestUsers(): Promise<void> {
     // ─── Create Subscription for Test User ────
     const subscription = await dataSource.query(
       `SELECT id FROM subscriptions 
-       WHERE company_id = $1 AND plan_id = $2 AND deleted_at IS NULL
+       WHERE company_id = $1 AND plan_id = $2
        LIMIT 1`,
       [companyId, businessPlanId],
     );
 
     if (subscription.length === 0) {
+      const now = new Date();
+      const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
+
       await dataSource.query(
         `INSERT INTO subscriptions (
-          company_id, plan_id, status, billing_cycle, 
+          company_id, plan_id, status,
+          current_period_start, current_period_end,
           created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-        [companyId, businessPlanId, 'active', 'monthly'],
+        ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+        [companyId, businessPlanId, 'active', now, periodEnd],
       );
       logger.log(`✅ Business subscription created for CI Test Company`);
     } else {

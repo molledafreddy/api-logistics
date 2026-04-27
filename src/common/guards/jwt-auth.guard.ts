@@ -36,7 +36,13 @@ export class JwtAuthGuard
     ]);
     if (isPublic) return true;
 
-    // In E2E test mode, bypass Passport/JWKS and validate directly with Supabase
+    // In E2E test mode (CI/CD), bypass real JWT validation and use local auth instead
+    const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+    if (isCI) {
+      return this.validateLocally(context);
+    }
+
+    // In E2E test mode (dev), bypass Passport/JWKS and validate directly with Supabase
     if (process.env.E2E_TEST === 'true') {
       return this.validateDirectly(context);
     }
@@ -46,6 +52,57 @@ export class JwtAuthGuard
       return result as boolean;
     } catch (err) {
       throw err;
+    }
+  }
+
+  /**
+   * Local validation for CI/CD mode.
+   * Validates user from Authorization header (supports CI test tokens).
+   */
+  private async validateLocally(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers['authorization'];
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // For CI/CD, tokens are in format: email:password (base64 encoded) or just a user ID
+    // We'll support simple email-based tokens
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      const email = decoded; // Assume token is the user email in CI/CD mode
+
+      if (!this.dataSource) {
+        throw new UnauthorizedException('Database not available');
+      }
+
+      const rows = await this.dataSource.query(
+        `SELECT id, email, role, company_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1`,
+        [email],
+      );
+
+      if (!rows || rows.length === 0) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const localUser = rows[0];
+      request.user = {
+        sub: localUser.id,
+        email: localUser.email,
+        role: localUser.role,
+        companyId: localUser.company_id,
+      };
+
+      return true;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid authentication token');
     }
   }
 

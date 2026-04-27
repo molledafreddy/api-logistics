@@ -53,6 +53,10 @@ export async function getAccessToken(
   const finalEmail = email || defaultEmail;
   const finalPassword = password || defaultPassword;
 
+  console.log(
+    `[getAccessToken] isCI=${isCI}, email=${finalEmail}, NODE_ENV=${process.env.NODE_ENV}, CI=${process.env.CI}`,
+  );
+
   const res = await request(app.getHttpServer())
     .post('/api/v1/auth/login')
     .send({ email: finalEmail, password: finalPassword });
