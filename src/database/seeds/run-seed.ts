@@ -11,8 +11,18 @@ const logger = new Logger('Seed');
 async function runSeed() {
   logger.log('🌱 Starting seed...');
 
-  // Super admin user
-  await seedSuperAdmin();
+  // Super admin user (skip in CI/CD if Supabase credentials missing)
+  try {
+    await seedSuperAdmin();
+  } catch (error) {
+    if (process.env.NODE_ENV === 'test' && process.env.CI === 'true') {
+      logger.warn(
+        '⚠️  Skipping super admin seed (Supabase not configured in CI/CD)',
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // Planes y permisos mínimos para tests y desarrollo
   await seedPlansAndPermissions();

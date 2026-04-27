@@ -68,6 +68,7 @@ jobs:
 
     env:
       NODE_ENV: test
+      CI: 'true'
       DB_HOST: localhost
       DB_PORT: 5433
       DB_USER: test
@@ -80,6 +81,8 @@ jobs:
       JWT_ACCESS_SECRET: test-access-secret-key-for-ci
       JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci
       SUPABASE_JWT_SECRET: test-supabase-secret-key-for-ci
+      SUPABASE_URL: https://test-project.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: test-service-role-key-ci
 
     steps:
       - name: 📥 Checkout code
