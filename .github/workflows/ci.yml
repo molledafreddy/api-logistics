@@ -78,16 +78,16 @@ jobs:
       REDIS_PORT: 6380
       JWT_ACCESS_SECRET: test-access-secret
       JWT_REFRESH_SECRET: test-refresh-secret
-      SUPABASE_URL: https://test.supabase.co
-      SUPABASE_ANON_KEY: test-anon-key
-      SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
-      SUPABASE_JWT_SECRET: test-jwt-secret
+      SUPABASE_URL: https://qnhuwcprctgyhsyyanek.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuaHV3Y3ByY3RneWhzeXlhbmVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODgwOTMsImV4cCI6MjA5MTE2NDA5M30._OsLKML2HWxTfGCX-sJ7Ijr0GjLxe6fACeVEIEEUHLo
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuaHV3Y3ByY3RneWhzeXlhbmVrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTU4ODA5MywiZXhwIjoyMDkxMTY0MDkzfQ.5SfXa1mINGcz69FJvn4-K56W4xbhnrS7JaheSdOT_24
+      SUPABASE_JWT_SECRET: z6tOLyMvj2lGzN27HrGS16mtNMAgtAdgCafvXcyM/sEC7gprAdMYKow5b1/hr8agUdcqMqz0OV/y1w6Qdp0heQ==
       S3_ENDPOINT: http://localhost:9000
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin
       S3_REGION: us-east-1
-      S3_BUCKET_AVATARS: test-avatars
-      S3_BUCKET_DOCUMENTS: test-documents
+      S3_BUCKET_AVATARS: logistics-avatars
+      S3_BUCKET_DOCUMENTS: logistics-documents
       MAIL_HOST: smtp.test.com
       MAIL_PORT: 587
       MAIL_USER: test@test.com
