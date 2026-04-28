@@ -36,9 +36,9 @@ export class JwtAuthGuard
     ]);
     if (isPublic) return true;
 
-    // In E2E test mode (CI/CD), bypass real JWT validation and use local auth instead
-    const isCI = process.env.CI === 'true';
-    if (isCI) {
+    // In E2E test mode (local or CI/CD), bypass real JWT validation and use local auth instead
+    const isE2ETest = process.env.E2E_TEST === 'true';
+    if (isE2ETest) {
       return this.validateLocally(context);
     }
 

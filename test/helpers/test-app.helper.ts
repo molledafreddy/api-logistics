@@ -40,15 +40,15 @@ export async function getAccessToken(
   email?: string,
   password?: string,
 ): Promise<string> {
-  // Only use CI test credentials if explicitly in CI/CD (CI=true)
-  // In unit/E2E tests run locally, CI is not set
-  const isCI = process.env.CI === 'true';
+  // In E2E test mode (E2E_TEST=true), always use test user credentials
+  // This applies to both local E2E tests and CI/CD
+  const isE2ETest = process.env.E2E_TEST === 'true';
 
-  // Use CI test user credentials in CI/CD, otherwise use environment or dev defaults
-  const defaultEmail = isCI
+  // Use test user credentials in E2E mode, otherwise use environment or dev defaults
+  const defaultEmail = isE2ETest
     ? 'test@test.com'
     : process.env.TEST_USER_EMAIL || 'molledafreddy@gmail.com';
-  const defaultPassword = isCI
+  const defaultPassword = isE2ETest
     ? 'TestPassword123!'
     : process.env.TEST_USER_PASSWORD || 'MyP@ssw0rd!';
 
@@ -56,7 +56,7 @@ export async function getAccessToken(
   const finalPassword = password || defaultPassword;
 
   console.log(
-    `[getAccessToken] isCI=${isCI}, email=${finalEmail}, NODE_ENV=${process.env.NODE_ENV}, CI=${process.env.CI}`,
+    `[getAccessToken] isE2ETest=${isE2ETest}, email=${finalEmail}, NODE_ENV=${process.env.NODE_ENV}, E2E_TEST=${process.env.E2E_TEST}`,
   );
 
   const res = await request(app.getHttpServer())

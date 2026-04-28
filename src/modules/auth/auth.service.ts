@@ -176,20 +176,20 @@ export class AuthService {
    * - CI/CD: Via PostgreSQL password_hash (bcrypt)
    */
   async login(dto: LoginDto, ipAddress?: string) {
-    // Only use CI/CD path if explicitly running in CI/CD (GitHub Actions sets CI=true)
-    // In unit tests, CI is not set, so they'll use Supabase path
-    const isCI = process.env.CI === 'true';
+    // Use password_hash authentication in E2E test environments (local or CI/CD)
+    // In production and unit tests, use Supabase
+    const isE2ETest = process.env.E2E_TEST === 'true';
     const email = dto.email.toLowerCase().trim();
 
-    // ─── Try CI/CD path first (password_hash in PostgreSQL) ────
-    if (isCI) {
+    // ─── Try E2E/Test path first (password_hash in PostgreSQL) ────
+    if (isE2ETest) {
       const user = await this.userRepository.findOne({
         where: { email, deletedAt: IsNull() },
       });
 
       if (!user) {
         this.logger.warn(
-          `Login failed for ${email}: user not found (CI/CD mode)`,
+          `Login failed for ${email}: user not found (E2E mode)`,
         );
         throw new UnauthorizedException('Email o contraseña incorrectos');
       }
