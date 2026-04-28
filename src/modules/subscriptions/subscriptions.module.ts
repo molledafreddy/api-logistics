@@ -23,7 +23,20 @@ import { SubscriptionRenewalModule } from './subscription-renewal.module';
     SubscriptionRenewalModule,
   ],
   controllers: [SubscriptionsController],
-  providers: [SubscriptionsService],
+  providers: [
+    SubscriptionsService,
+    ...(process.env.SKIP_BULL_SETUP === 'true'
+      ? [
+          {
+            provide: 'BullQueue_subscription-renewal',
+            useValue: {
+              add: async () => undefined,
+              close: async () => undefined,
+            },
+          },
+        ]
+      : []),
+  ],
   exports: [TypeOrmModule],
 })
 export class SubscriptionsModule {}

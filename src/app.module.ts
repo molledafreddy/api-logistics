@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PermissionsCacheService } from './common/cache/permissions-cache.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -161,6 +162,31 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_GUARD, useClass: CompanyOwnershipGuard },
+    ...(process.env.SKIP_BULL_SETUP === 'true'
+      ? [
+          {
+            provide: PermissionsCacheService,
+            useValue: {
+              // eslint-disable-next-line @typescript-eslint/require-await
+              async get() {
+                return undefined;
+              },
+              // eslint-disable-next-line @typescript-eslint/require-await
+              async set() {
+                return undefined;
+              },
+              // eslint-disable-next-line @typescript-eslint/require-await
+              async del() {
+                return undefined;
+              },
+              // eslint-disable-next-line @typescript-eslint/require-await
+              async reset() {
+                return undefined;
+              },
+            },
+          },
+        ]
+      : []),
   ],
 })
 export class AppModule implements NestModule {

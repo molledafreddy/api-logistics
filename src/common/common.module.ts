@@ -48,12 +48,19 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
         ]
       : []),
   ],
-  providers: [ServiceTypeGuard, BusinessModelGuard, PermissionsCacheService],
+  providers: [
+    ServiceTypeGuard,
+    BusinessModelGuard,
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [PermissionsCacheService]
+      : []),
+  ],
   exports: [
     ServiceTypeGuard,
     BusinessModelGuard,
-    PermissionsCacheService,
-    ...(process.env.SKIP_BULL_SETUP !== 'true' ? [CacheModule] : []),
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [PermissionsCacheService, CacheModule]
+      : []),
   ],
 })
 export class CommonModule {}

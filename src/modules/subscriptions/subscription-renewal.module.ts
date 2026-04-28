@@ -36,7 +36,21 @@ import { SubscriptionsService } from './subscriptions.service';
       Coupon,
     ]),
   ],
-  providers: [SubscriptionRenewalProcessor, SubscriptionsService],
+  providers: [
+    SubscriptionRenewalProcessor,
+    SubscriptionsService,
+    ...(process.env.SKIP_BULL_SETUP === 'true'
+      ? [
+          {
+            provide: 'BullQueue_subscription-renewal',
+            useValue: {
+              add: async () => undefined,
+              close: async () => undefined,
+            },
+          },
+        ]
+      : []),
+  ],
   exports: [
     ...(process.env.SKIP_BULL_SETUP !== 'true'
       ? [BullModule.registerQueue({ name: 'subscription-renewal' })]

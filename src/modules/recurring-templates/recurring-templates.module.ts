@@ -31,6 +31,17 @@ import { RecurringGeneratorScheduler } from './recurring-templates.scheduler';
     RecurringTemplatesService,
     RecurringGeneratorProcessor,
     RecurringGeneratorScheduler,
+    ...(process.env.SKIP_BULL_SETUP === 'true'
+      ? [
+          {
+            provide: 'BullQueue_recurring-generator',
+            useValue: {
+              add: async () => undefined,
+              close: async () => undefined,
+            },
+          },
+        ]
+      : []),
   ],
   exports: [RecurringTemplatesService],
 })
