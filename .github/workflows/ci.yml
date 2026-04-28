@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
+          cache-dependency-path: api/pnpm-lock.yaml
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -37,16 +37,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('api/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        working-directory: ./api
+        working-directory: api
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        working-directory: ./api
+        working-directory: api
         run: pnpm run lint:check
 
   test:
@@ -103,7 +103,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
+          cache-dependency-path: api/pnpm-lock.yaml
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -115,24 +115,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('api/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        working-directory: ./api
+        working-directory: api
         run: pnpm install --frozen-lockfile
 
       - name: Run migrations
-        working-directory: ./api
+        working-directory: api
         run: pnpm run migration:run
 
       - name: Run unit tests
-        working-directory: ./api
+        working-directory: api
         run: pnpm test -- --coverage --passWithNoTests
 
       - name: Run e2e tests
-        working-directory: ./api
+        working-directory: api
         run: pnpm run test:e2e -- --coverage --passWithNoTests --testPathIgnorePatterns='/(verifications|relationships|bullmq|sanity|_iso)\\.e2e-spec\\.ts$'
 
   build:
@@ -150,7 +150,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
+          cache-dependency-path: api/pnpm-lock.yaml
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -162,16 +162,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('api/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        working-directory: ./api
+        working-directory: api
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        working-directory: ./api
+        working-directory: api
         run: pnpm run build
 
   docker:
