@@ -22,7 +22,9 @@ import { RecurringGeneratorScheduler } from './recurring-templates.scheduler';
       Truck,
       Driver,
     ]),
-    BullModule.registerQueue({ name: 'recurring-generator' }),
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [BullModule.registerQueue({ name: 'recurring-generator' })]
+      : []),
   ],
   controllers: [RecurringTemplatesController],
   providers: [
