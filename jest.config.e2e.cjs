@@ -13,7 +13,16 @@ module.exports = {
   rootDir: '.',
   testEnvironment: 'node',
   testMatch: ['<rootDir>/test/**/*.e2e-spec.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    // Empty test files that don't have any tests defined
+    '/test/modules/verifications\\.e2e-spec\\.ts$',
+    '/test/modules/relationships\\.e2e-spec\\.ts$',
+    '/test/modules/bullmq\\.e2e-spec\\.ts$',
+    '/test/sanity\\.e2e-spec\\.ts$',
+    '/test/_iso\\.e2e-spec\\.ts$',
+  ],
   transform: {
     '^.+\\.(t|j)s$': [
       'ts-jest',
