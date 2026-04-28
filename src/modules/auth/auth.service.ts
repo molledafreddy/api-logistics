@@ -176,7 +176,9 @@ export class AuthService {
    * - CI/CD: Via PostgreSQL password_hash (bcrypt)
    */
   async login(dto: LoginDto, ipAddress?: string) {
-    const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+    // Only use CI/CD path if explicitly running in CI/CD (GitHub Actions sets CI=true)
+    // In unit tests, CI is not set, so they'll use Supabase path
+    const isCI = process.env.CI === 'true';
     const email = dto.email.toLowerCase().trim();
 
     // ─── Try CI/CD path first (password_hash in PostgreSQL) ────

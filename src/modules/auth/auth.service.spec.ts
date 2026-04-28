@@ -46,6 +46,7 @@ describe('AuthService', () => {
     lastLoginIp: null,
     failedLoginAttempts: 0,
     lockedUntil: null,
+    passwordHash: '$2b$10$abcdefghijklmnopqrstuvwxyz', // Mock bcrypt hash for CI/CD mode fallback
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
