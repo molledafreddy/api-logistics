@@ -102,10 +102,10 @@ jobs:
         run: pnpm run migration:run
 
       - name: Run unit tests
-        run: pnpm test -- --coverage --passWithNoTests
+        run: pnpm test --coverage --passWithNoTests
 
       - name: Run e2e tests
-        run: pnpm run test:e2e -- --coverage --passWithNoTests --testPathIgnorePatterns='/(verifications|relationships|bullmq|sanity|_iso)\\.e2e-spec\\.ts$'
+        run: pnpm run test:e2e --testPathIgnorePatterns='/(verifications|relationships|bullmq|sanity|_iso)\\.e2e-spec\\.ts$'
 
   build:
     name: Build
