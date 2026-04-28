@@ -24,24 +24,29 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Company]),
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      isGlobal: true,
-      useFactory: async (config: ConfigService) => {
-        const host = config.get<string>('REDIS_HOST', 'localhost');
-        const port = config.get<number>('REDIS_PORT', 6379);
-        const password = config.get<string>('REDIS_PASSWORD', '') || undefined;
-        const useTls = config.get<string>('REDIS_TLS') === 'true';
-        return {
-          store: await redisStore({
-            socket: { host, port, ...(useTls ? { tls: true } : {}) },
-            password,
-            ttl: 5 * 60 * 1000, // 5 min default (ms)
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [
+          CacheModule.registerAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            isGlobal: true,
+            useFactory: async (config: ConfigService) => {
+              const host = config.get<string>('REDIS_HOST', 'localhost');
+              const port = config.get<number>('REDIS_PORT', 6379);
+              const password =
+                config.get<string>('REDIS_PASSWORD', '') || undefined;
+              const useTls = config.get<string>('REDIS_TLS') === 'true';
+              return {
+                store: await redisStore({
+                  socket: { host, port, ...(useTls ? { tls: true } : {}) },
+                  password,
+                  ttl: 5 * 60 * 1000, // 5 min default (ms)
+                }),
+              };
+            },
           }),
-        };
-      },
-    }),
+        ]
+      : []),
   ],
   providers: [ServiceTypeGuard, BusinessModelGuard, PermissionsCacheService],
   exports: [

@@ -25,6 +25,14 @@ import { DataSource } from 'typeorm';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { AppModule } from '../../src/app.module';
 
+// ─── Stub Redis client ─────────────────────────────────────────────────────
+const stubRedis: any = new Proxy(
+  {},
+  {
+    get: () => async () => null,
+  },
+);
+
 // ─── Stub repository (chainable for QueryBuilder / Manager) ───────────────
 function stubChain(): any {
   const chain: any = new Proxy(
@@ -251,6 +259,9 @@ const killer = setTimeout(() => {
   process.exit(2);
 }, HARD_TIMEOUT_MS);
 killer.unref();
+
+// Set environment variable to skip Redis/BullMQ initialization
+process.env.SKIP_BULL_SETUP = 'true';
 
 generate().catch((err) => {
   console.error('❌ OpenAPI generation failed:', err);

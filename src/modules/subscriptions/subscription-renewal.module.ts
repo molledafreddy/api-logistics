@@ -12,17 +12,21 @@ import { SubscriptionsService } from './subscriptions.service';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        password: process.env.REDIS_PASSWORD || undefined,
-        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-      },
-    }),
-    BullModule.registerQueue({
-      name: 'subscription-renewal',
-    }),
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [
+          BullModule.forRoot({
+            connection: {
+              host: process.env.REDIS_HOST || 'localhost',
+              port: parseInt(process.env.REDIS_PORT || '6379', 10),
+              password: process.env.REDIS_PASSWORD || undefined,
+              tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+            },
+          }),
+          BullModule.registerQueue({
+            name: 'subscription-renewal',
+          }),
+        ]
+      : []),
     TypeOrmModule.forFeature([
       Subscription,
       SubscriptionAddon,
@@ -33,6 +37,10 @@ import { SubscriptionsService } from './subscriptions.service';
     ]),
   ],
   providers: [SubscriptionRenewalProcessor, SubscriptionsService],
-  exports: [BullModule.registerQueue({ name: 'subscription-renewal' })],
+  exports: [
+    ...(process.env.SKIP_BULL_SETUP !== 'true'
+      ? [BullModule.registerQueue({ name: 'subscription-renewal' })]
+      : []),
+  ],
 })
 export class SubscriptionRenewalModule {}
