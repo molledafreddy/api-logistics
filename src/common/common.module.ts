@@ -53,7 +53,7 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
     ServiceTypeGuard,
     BusinessModelGuard,
     PermissionsCacheService,
-    CacheModule,
+    ...(process.env.SKIP_BULL_SETUP !== 'true' ? [CacheModule] : []),
   ],
 })
 export class CommonModule {}
