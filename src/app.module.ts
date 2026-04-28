@@ -162,7 +162,8 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_GUARD, useClass: CompanyOwnershipGuard },
-    ...(process.env.SKIP_BULL_SETUP === 'true'
+    ...(process.env.SKIP_BULL_SETUP === 'true' ||
+    process.env.NODE_ENV === 'test'
       ? [
           {
             provide: PermissionsCacheService,

@@ -20,11 +20,15 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
  *
  * Marcado `@Global()` para evitar imports manuales en cada feature module.
  */
+
+const skipRedis =
+  process.env.SKIP_BULL_SETUP === 'true' || process.env.NODE_ENV === 'test';
+
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([Company]),
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
+    ...(!skipRedis
       ? [
           CacheModule.registerAsync({
             imports: [ConfigModule],
@@ -51,16 +55,12 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
   providers: [
     ServiceTypeGuard,
     BusinessModelGuard,
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
-      ? [PermissionsCacheService]
-      : []),
+    ...(!skipRedis ? [PermissionsCacheService] : []),
   ],
   exports: [
     ServiceTypeGuard,
     BusinessModelGuard,
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
-      ? [PermissionsCacheService, CacheModule]
-      : []),
+    ...(!skipRedis ? [PermissionsCacheService, CacheModule] : []),
   ],
 })
 export class CommonModule {}
