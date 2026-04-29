@@ -7,16 +7,19 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
+# Disable husky in CI/Docker (not needed for production builds)
+ENV HUSKY=0
+
 # Copy lockfile and package.json for dependency caching
 COPY pnpm-lock.yaml package.json ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code and build
 COPY . .
 RUN pnpm run build
 
 # Prune devDependencies
-RUN pnpm prune --prod
+RUN pnpm prune --prod --ignore-scripts
 
 # ═══════════════════════════════════════════
 # Stage 2: Production
