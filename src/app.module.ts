@@ -162,32 +162,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_GUARD, useClass: CompanyOwnershipGuard },
-    ...(process.env.SKIP_BULL_SETUP === 'true' ||
-    process.env.NODE_ENV === 'test'
-      ? [
-          {
-            provide: PermissionsCacheService,
-            useValue: {
-              // eslint-disable-next-line @typescript-eslint/require-await
-              async get() {
-                return undefined;
-              },
-              // eslint-disable-next-line @typescript-eslint/require-await
-              async set() {
-                return undefined;
-              },
-              // eslint-disable-next-line @typescript-eslint/require-await
-              async del() {
-                return undefined;
-              },
-              // eslint-disable-next-line @typescript-eslint/require-await
-              async reset() {
-                return undefined;
-              },
-            },
-          },
-        ]
-      : []),
+    // PermissionsCacheService ya está registrado globalmente en CommonModule (stub o real)
   ],
 })
 export class AppModule implements NestModule {

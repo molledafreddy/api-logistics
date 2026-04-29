@@ -12,7 +12,7 @@ const logger = new Logger('Seed');
 async function runSeed() {
   logger.log('🌱 Starting seed...');
 
-  const isCI = process.env.NODE_ENV === 'test' && process.env.CI === 'true';
+  const isCI = process.env.CI === 'true';
 
   // Planes y permisos mínimos para tests y desarrollo (ALWAYS RUN - required first)
   await seedPlansAndPermissions();
@@ -21,19 +21,33 @@ async function runSeed() {
   if (isCI) {
     await seedCITestUsers();
   } else {
-    // ─── Development path: Create users via Supabase Auth ────
-    // Super admin user (skip in CI/CD if Supabase credentials missing)
+    // ─── Development/local path: Create users via Supabase Auth (usa .env.test en local)
+    let supabaseFailed = false;
     try {
       await seedSuperAdmin();
     } catch (error) {
-      logger.warn('⚠️  Skipping super admin seed (Supabase not configured)');
+      logger.error(
+        '❌ Super admin seed failed, will fallback to local seed:',
+        error,
+      );
+      supabaseFailed = true;
     }
 
-    // Usuario de pruebas asociado a plan Business
     try {
       await seedTestUser();
     } catch (error) {
-      logger.warn('⚠️  Skipping test user seed (Supabase not configured)');
+      logger.error(
+        '❌ Test user seed failed, will fallback to local seed:',
+        error,
+      );
+      supabaseFailed = true;
+    }
+
+    if (supabaseFailed) {
+      logger.warn(
+        '⚠️  Fallback: Creating test users directly in DB (CI logic)',
+      );
+      await seedCITestUsers();
     }
   }
 

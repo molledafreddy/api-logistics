@@ -24,6 +24,32 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
 const skipRedis =
   process.env.SKIP_BULL_SETUP === 'true' || process.env.NODE_ENV === 'test';
 
+const permissionsCacheProvider = skipRedis
+  ? {
+      provide: PermissionsCacheService,
+      useValue: {
+        async get() {
+          return undefined;
+        },
+        async set() {
+          return undefined;
+        },
+        async del() {
+          return undefined;
+        },
+        async reset() {
+          return undefined;
+        },
+        async getOrLoad(_companyId: string, loader: () => Promise<string[]>) {
+          return loader();
+        },
+        async invalidate() {
+          return undefined;
+        },
+      },
+    }
+  : PermissionsCacheService;
+
 @Global()
 @Module({
   imports: [
@@ -52,15 +78,12 @@ const skipRedis =
         ]
       : []),
   ],
-  providers: [
-    ServiceTypeGuard,
-    BusinessModelGuard,
-    ...(!skipRedis ? [PermissionsCacheService] : []),
-  ],
+  providers: [ServiceTypeGuard, BusinessModelGuard, permissionsCacheProvider],
   exports: [
     ServiceTypeGuard,
     BusinessModelGuard,
-    ...(!skipRedis ? [PermissionsCacheService, CacheModule] : []),
+    PermissionsCacheService,
+    ...(skipRedis ? [] : [CacheModule]),
   ],
 })
 export class CommonModule {}
