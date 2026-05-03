@@ -1088,6 +1088,214 @@
         "tags": ["Plans"]
       }
     },
+    "/api/v1/plans/catalog": {
+      "get": {
+        "description": "Devuelve los planes con `code` definido (es decir, los planes Sprint A: `free_courier`, `pro_courier`, `free_passenger`, `pro_passenger`, `enterprise_fleet`). Los planes legacy quedan ocultos. No requiere autenticación.",
+        "operationId": "PlansController_getCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de planes publicables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Catálogo público de planes activos (verticales)",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/me/limits": {
+      "get": {
+        "description": "Resuelve la suscripción `active` de la empresa del usuario y devuelve el jsonb `plans.limits` materializado. Devuelve `{}` si no hay suscripción.",
+        "operationId": "PlansController_getMyLimits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Mapa de límites por vertical",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "global": {
+                      "maxShipmentsPerDay": 200,
+                      "maxStopsPerOptimization": 50
+                    },
+                    "trucking": {
+                      "max_trucks": 10
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Límites efectivos del plan activo del usuario actual",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/{id}/price": {
+      "patch": {
+        "description": "Endpoint dedicado para cambios de pricing sin tocar otros campos.",
+        "operationId": "PlansController_updatePlanPrice",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID del plan",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["price"],
+                "properties": {
+                  "price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 14990
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Precio actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Precio inválido (debe ser ≥ 0)"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Plan no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar el precio de un plan (admin)",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/{id}/limits": {
+      "patch": {
+        "description": "Sobrescribe `plans.limits`. Recordá que la fuente de verdad es la tabla `plan_limits`; este endpoint es útil para inicializar o sincronizar manualmente.",
+        "operationId": "PlansController_updatePlanLimitsJsonb",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID del plan",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "global": {
+                    "maxShipmentsPerDay": 200,
+                    "maxStopsPerOptimization": 50
+                  },
+                  "trucking": {
+                    "max_trucks": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Límites actualizados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "limits inválido"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Plan no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reemplazar el jsonb `limits` completo de un plan (admin)",
+        "tags": ["Plans"]
+      }
+    },
     "/api/v1/plans": {
       "post": {
         "operationId": "PlansController_createPlan",
@@ -1292,6 +1500,249 @@
           }
         ],
         "summary": "Eliminar un plan por ID",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/{planId}/limits": {
+      "post": {
+        "operationId": "PlansController_createPlanLimit",
+        "parameters": [
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "UUID del plan",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanLimitDto"
+              },
+              "examples": {
+                "trucking": {
+                  "summary": "Límite de camiones",
+                  "value": {
+                    "vertical": "trucking",
+                    "code": "max_trucks",
+                    "value": 10
+                  }
+                },
+                "delivery": {
+                  "summary": "Límite de conductores",
+                  "value": {
+                    "vertical": "delivery",
+                    "code": "max_drivers",
+                    "value": 5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Límite creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanLimitResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (vertical/code vacío, value < 0)"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Plan no encontrado"
+          },
+          "409": {
+            "description": "Ya existe un límite con ese vertical+code para este plan"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear un límite para un plan",
+        "tags": ["Plans"]
+      },
+      "get": {
+        "operationId": "PlansController_findPlanLimits",
+        "parameters": [
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "UUID del plan",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de límites del plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanLimitResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Plan no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar límites de un plan",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/limits/{id}": {
+      "patch": {
+        "operationId": "PlansController_updatePlanLimit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID del límite",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanLimitDto"
+              },
+              "examples": {
+                "updateValue": {
+                  "summary": "Actualizar sólo el valor",
+                  "value": {
+                    "value": 50
+                  }
+                },
+                "updateAll": {
+                  "summary": "Actualizar vertical, code y value",
+                  "value": {
+                    "vertical": "trucking",
+                    "code": "max_routes",
+                    "value": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Límite actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanLimitResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Límite no encontrado"
+          },
+          "409": {
+            "description": "Ya existe otro límite con ese vertical+code para este plan"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar un límite de plan",
+        "tags": ["Plans"]
+      },
+      "delete": {
+        "operationId": "PlansController_removePlanLimit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID del límite",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Límite eliminado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "deleted": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Sin permisos"
+          },
+          "404": {
+            "description": "Límite no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar un límite de plan",
         "tags": ["Plans"]
       }
     },
@@ -7827,6 +8278,441 @@
         "summary": "ETAs en vivo por stop (último GPS conocido del truck)",
         "tags": ["Optimization"]
       }
+    },
+    "/api/v1/geocoding/search": {
+      "get": {
+        "description": "Devuelve hasta 10 candidatos cacheados (Redis 24 h) usando el provider configurado (`GEOCODING_PROVIDER`). Pensado para integrarse con un autocomplete dropdown en operador/admin — el destinatario nunca captura su propia dirección. Rate-limit por defecto: 60 req/min por IP.",
+        "operationId": "GeocodingController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Texto libre a buscar. Mínimo 3 caracteres.",
+            "schema": {
+              "minLength": 3,
+              "maxLength": 200,
+              "example": "Av. Providencia 1208, Santiago",
+              "type": "string"
+            }
+          },
+          {
+            "name": "proximity",
+            "required": false,
+            "in": "query",
+            "description": "Sesgo de proximidad como `lat,lng` (WGS84). Útil para favorecer resultados cerca de la ubicación actual del usuario.",
+            "schema": {
+              "example": "-33.4378,-70.6504",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Máximo de candidatos a devolver (1-10).",
+            "schema": {
+              "minimum": 1,
+              "maximum": 10,
+              "default": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "country",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por país (ISO-3166-1 alpha-2). Default: GEOCODING_DEFAULT_COUNTRY.",
+            "schema": {
+              "example": "cl",
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "description": "Idioma preferido para los nombres formateados.",
+            "schema": {
+              "example": "es",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeSearchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "GEO-001: query < 3 chars"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "503": {
+            "description": "Provider externo no disponible"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Autocomplete de direcciones (Sprint C)",
+        "tags": ["Geocoding"]
+      }
+    },
+    "/api/v1/geocoding/reverse": {
+      "get": {
+        "description": "Convierte un par (lat,lng) capturado en mapa a una dirección legible. Útil cuando el operador arrastra un pin para fijar el punto exacto de pickup/dropoff.",
+        "operationId": "GeocodingController_reverse",
+        "parameters": [
+          {
+            "name": "lat",
+            "required": true,
+            "in": "query",
+            "description": "Latitud WGS84.",
+            "schema": {
+              "example": -33.4378,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "required": true,
+            "in": "query",
+            "description": "Longitud WGS84.",
+            "schema": {
+              "example": -70.6504,
+              "type": "number"
+            }
+          },
+          {
+            "name": "country",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por país (ISO-3166-1 alpha-2).",
+            "schema": {
+              "example": "cl",
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "es",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeSearchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "GEO-003: lat/lng fuera de rango"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse geocoding — pin drop a dirección formateada",
+        "tags": ["Geocoding"]
+      }
+    },
+    "/api/v1/geocoding/validate": {
+      "get": {
+        "description": "Devuelve `{ valid:false }` si no hay matches o `{ valid:true, feature }` con el mejor candidato. No es destructivo — el caller decide si guarda la dirección original o la del provider.",
+        "operationId": "GeocodingController_validate",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "query",
+            "description": "Dirección a validar. Devuelve el mejor match o `null`.",
+            "schema": {
+              "minLength": 3,
+              "maxLength": 200,
+              "example": "Av. Apoquindo 4501, Las Condes, Chile",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeValidateResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Valida y enriquece una dirección dada",
+        "tags": ["Geocoding"]
+      }
+    },
+    "/api/v1/saved-addresses": {
+      "post": {
+        "operationId": "SavedAddressesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Favorito creado"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "409": {
+            "description": "SAV-002: label duplicado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear dirección favorita",
+        "tags": ["Saved Addresses"]
+      },
+      "get": {
+        "operationId": "SavedAddressesController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Búsqueda parcial por label o formatted (ILIKE).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["depot", "customer", "dropoff", "pickup", "other"]
+            }
+          },
+          {
+            "name": "companyId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por compañía (solo SUPER_ADMIN).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar favoritos (paginado)",
+        "tags": ["Saved Addresses"]
+      }
+    },
+    "/api/v1/saved-addresses/{id}": {
+      "get": {
+        "operationId": "SavedAddressesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener favorito por ID",
+        "tags": ["Saved Addresses"]
+      },
+      "patch": {
+        "operationId": "SavedAddressesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavedAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar favorito",
+        "tags": ["Saved Addresses"]
+      },
+      "delete": {
+        "operationId": "SavedAddressesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Favorito eliminado"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Eliminar favorito (soft delete)",
+        "tags": ["Saved Addresses"]
+      }
     }
   },
   "info": {
@@ -8312,13 +9198,290 @@
         "type": "object",
         "properties": {}
       },
+      "PlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "object",
+            "example": "pro_courier",
+            "description": "Slug estable (snake_case). Único globalmente."
+          },
+          "name": {
+            "type": "string",
+            "example": "Pro Courier"
+          },
+          "description": {
+            "type": "object",
+            "example": "Plan para couriers individuales con optimización avanzada."
+          },
+          "audience": {
+            "type": "string",
+            "enum": ["courier", "passenger", "fleet", "any"],
+            "example": "courier"
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["free", "pro", "enterprise"],
+            "example": "pro"
+          },
+          "price": {
+            "type": "number",
+            "example": 9.99
+          },
+          "interval": {
+            "type": "string",
+            "example": "month"
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true
+          },
+          "limits": {
+            "type": "object",
+            "description": "Límites materializados (jsonb) — fuente de verdad: tabla plan_limits.",
+            "example": {
+              "global": {
+                "maxShipmentsPerDay": 200,
+                "maxStopsPerOptimization": 50
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "price",
+          "interval",
+          "is_active",
+          "limits",
+          "created_at",
+          "updated_at"
+        ]
+      },
       "CreatePlanDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pro Courier",
+            "description": "Nombre comercial del plan (mostrado al usuario).",
+            "maxLength": 50
+          },
+          "code": {
+            "type": "string",
+            "example": "pro_courier",
+            "description": "Slug estable en snake_case. Único globalmente. Si no se provee al crear, se requerirá antes del Sprint A final.",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 50
+          },
+          "audience": {
+            "type": "string",
+            "enum": ["courier", "passenger", "fleet", "any"],
+            "example": "courier",
+            "description": "Audiencia del plan."
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["free", "pro", "enterprise"],
+            "example": "pro",
+            "description": "Tier del plan dentro de su audience."
+          },
+          "limits": {
+            "type": "object",
+            "description": "Límites cuantitativos del plan (jsonb materializado). La fuente de verdad sigue siendo la tabla plan_limits.",
+            "example": {
+              "trucking": {
+                "max_trucks": 10
+              },
+              "global": {
+                "maxShipmentsPerDay": 200
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "example": "Plan para couriers individuales con optimización avanzada."
+          },
+          "price": {
+            "type": "number",
+            "example": 9.99,
+            "description": "Precio en la moneda del plan."
+          },
+          "interval": {
+            "type": "string",
+            "example": "month",
+            "description": "Periodicidad del cobro (month | year)."
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          }
+        },
+        "required": ["name", "price", "interval"]
       },
       "UpdatePlanDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pro Courier",
+            "description": "Nombre comercial del plan (mostrado al usuario).",
+            "maxLength": 50
+          },
+          "code": {
+            "type": "string",
+            "example": "pro_courier",
+            "description": "Slug estable en snake_case. Único globalmente. Si no se provee al crear, se requerirá antes del Sprint A final.",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 50
+          },
+          "audience": {
+            "type": "string",
+            "enum": ["courier", "passenger", "fleet", "any"],
+            "example": "courier",
+            "description": "Audiencia del plan."
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["free", "pro", "enterprise"],
+            "example": "pro",
+            "description": "Tier del plan dentro de su audience."
+          },
+          "limits": {
+            "type": "object",
+            "description": "Límites cuantitativos del plan (jsonb materializado). La fuente de verdad sigue siendo la tabla plan_limits.",
+            "example": {
+              "trucking": {
+                "max_trucks": 10
+              },
+              "global": {
+                "maxShipmentsPerDay": 200
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "example": "Plan para couriers individuales con optimización avanzada."
+          },
+          "price": {
+            "type": "number",
+            "example": 9.99,
+            "description": "Precio en la moneda del plan."
+          },
+          "interval": {
+            "type": "string",
+            "example": "month",
+            "description": "Periodicidad del cobro (month | year)."
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          }
+        }
+      },
+      "CreatePlanLimitDto": {
+        "type": "object",
+        "properties": {
+          "vertical": {
+            "type": "string",
+            "example": "trucking",
+            "description": "Vertical del límite (trucking, delivery, etc.)"
+          },
+          "code": {
+            "type": "string",
+            "example": "max_trucks",
+            "description": "Código identificador del límite"
+          },
+          "value": {
+            "type": "number",
+            "example": 10,
+            "description": "Valor numérico del límite (>= 0)"
+          }
+        },
+        "required": ["vertical", "code", "value"]
+      },
+      "PlanLimitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "fbd11d9b-a3e8-4c15-a283-635f9e932f06",
+            "description": "UUID del límite"
+          },
+          "planId": {
+            "type": "string",
+            "example": "89997dc0-d1f7-45a6-a9f8-b4d17954cead",
+            "description": "UUID del plan al que pertenece este límite"
+          },
+          "vertical": {
+            "type": "string",
+            "example": "trucking",
+            "description": "Vertical a la que aplica el límite (trucking, delivery, audit, etc.)"
+          },
+          "code": {
+            "type": "string",
+            "example": "max_trucks",
+            "description": "Código identificador del límite dentro de la vertical"
+          },
+          "value": {
+            "type": "number",
+            "example": 10,
+            "description": "Valor numérico del límite"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-30T00:00:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-30T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "vertical",
+          "code",
+          "value",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "UpdatePlanLimitDto": {
+        "type": "object",
+        "properties": {
+          "vertical": {
+            "type": "string",
+            "example": "delivery",
+            "description": "Vertical del límite"
+          },
+          "code": {
+            "type": "string",
+            "example": "max_drivers",
+            "description": "Código identificador del límite"
+          },
+          "value": {
+            "type": "number",
+            "example": 50,
+            "description": "Nuevo valor numérico del límite (>= 0)"
+          }
+        }
       },
       "CreateFreeSubscriptionDto": {
         "type": "object",
@@ -9109,6 +10272,17 @@
             "type": "string",
             "example": "-80.1918"
           },
+          "originPlaceId": {
+            "type": "string",
+            "description": "Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).",
+            "example": "address.4791064066081284",
+            "maxLength": 200
+          },
+          "originConfidence": {
+            "type": "string",
+            "description": "Sprint C — Score de confianza 0..1 reportado por el provider de geocoding (string numérico para compatibilidad con `numeric(3,2)` de Postgres).",
+            "example": "0.92"
+          },
           "originContactName": {
             "type": "string",
             "example": "Jane Doe",
@@ -9131,6 +10305,17 @@
           "destinationLng": {
             "type": "string",
             "example": "-81.3792"
+          },
+          "destinationPlaceId": {
+            "type": "string",
+            "description": "Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).",
+            "example": "address.7891234567890123",
+            "maxLength": 200
+          },
+          "destinationConfidence": {
+            "type": "string",
+            "description": "Sprint C — Score de confianza 0..1 reportado por el provider de geocoding (string numérico para compatibilidad con `numeric(3,2)` de Postgres).",
+            "example": "0.88"
           },
           "destinationContactName": {
             "type": "string",
@@ -9260,6 +10445,17 @@
             "type": "string",
             "example": "-80.1918"
           },
+          "originPlaceId": {
+            "type": "string",
+            "description": "Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).",
+            "example": "address.4791064066081284",
+            "maxLength": 200
+          },
+          "originConfidence": {
+            "type": "string",
+            "description": "Sprint C — Score de confianza 0..1 reportado por el provider de geocoding (string numérico para compatibilidad con `numeric(3,2)` de Postgres).",
+            "example": "0.92"
+          },
           "originContactName": {
             "type": "string",
             "example": "Jane Doe",
@@ -9282,6 +10478,17 @@
           "destinationLng": {
             "type": "string",
             "example": "-81.3792"
+          },
+          "destinationPlaceId": {
+            "type": "string",
+            "description": "Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).",
+            "example": "address.7891234567890123",
+            "maxLength": 200
+          },
+          "destinationConfidence": {
+            "type": "string",
+            "description": "Sprint C — Score de confianza 0..1 reportado por el provider de geocoding (string numérico para compatibilidad con `numeric(3,2)` de Postgres).",
+            "example": "0.88"
           },
           "destinationContactName": {
             "type": "string",
@@ -10144,6 +11351,223 @@
           }
         },
         "required": ["runId", "origin", "computedAt", "stops"]
+      },
+      "GeoPointDto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "example": -33.4378,
+            "description": "Latitud WGS84"
+          },
+          "lng": {
+            "type": "number",
+            "example": -70.6504,
+            "description": "Longitud WGS84"
+          }
+        },
+        "required": ["lat", "lng"]
+      },
+      "GeocodeFeatureDto": {
+        "type": "object",
+        "properties": {
+          "placeId": {
+            "type": "string",
+            "example": "address.4791064066081284",
+            "description": "ID estable del provider de geocoding."
+          },
+          "formatted": {
+            "type": "string",
+            "example": "Av. Providencia 1208, Providencia, Región Metropolitana, Chile",
+            "description": "Dirección formateada lista para guardar en BD."
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/GeoPointDto"
+          },
+          "confidence": {
+            "type": "number",
+            "example": 0.92,
+            "description": "Score de confianza 0..1 reportado por el provider."
+          },
+          "featureType": {
+            "type": "string",
+            "example": "address"
+          },
+          "country": {
+            "type": "string",
+            "example": "cl"
+          },
+          "region": {
+            "type": "string",
+            "example": "Región Metropolitana"
+          },
+          "locality": {
+            "type": "string",
+            "example": "Providencia"
+          },
+          "postcode": {
+            "type": "string",
+            "example": "7500000"
+          }
+        },
+        "required": ["placeId", "formatted", "coordinates", "confidence"]
+      },
+      "GeocodeSearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["mapbox", "mock"],
+            "example": "mock"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeocodeFeatureDto"
+            }
+          },
+          "cached": {
+            "type": "boolean",
+            "example": false,
+            "description": "true si el resultado vino de cache Redis."
+          }
+        },
+        "required": ["provider", "features", "cached"]
+      },
+      "GeocodeValidateResponseDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "example": true,
+            "description": "true si se encontró match."
+          },
+          "feature": {
+            "$ref": "#/components/schemas/GeocodeFeatureDto"
+          }
+        },
+        "required": ["valid"]
+      },
+      "CreateSavedAddressDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Depot Quilicura",
+            "description": "Nombre corto del favorito (único por compañía)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["depot", "customer", "dropoff", "pickup", "other"],
+            "default": "other",
+            "description": "Categoría libre para agrupar en UI."
+          },
+          "formatted": {
+            "type": "string",
+            "example": "Av. Providencia 1208, Providencia, Santiago, Chile"
+          },
+          "lat": {
+            "type": "number",
+            "example": -33.429138,
+            "description": "Latitud WGS84"
+          },
+          "lng": {
+            "type": "number",
+            "example": -70.621336,
+            "description": "Longitud WGS84"
+          },
+          "placeId": {
+            "type": "string",
+            "example": "address.4791064066081284",
+            "description": "placeId del provider de geocoding."
+          },
+          "confidence": {
+            "type": "string",
+            "example": "0.85",
+            "description": "Score 0..1 reportado por el provider (string para precisión)."
+          },
+          "country": {
+            "type": "string",
+            "example": "cl"
+          },
+          "region": {
+            "type": "string",
+            "example": "Región Metropolitana"
+          },
+          "locality": {
+            "type": "string",
+            "example": "Providencia"
+          },
+          "postcode": {
+            "type": "string",
+            "example": "7500000"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Tocar timbre del segundo piso. Horario 9-18."
+          }
+        },
+        "required": ["label", "formatted", "lat", "lng"]
+      },
+      "UpdateSavedAddressDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Depot Quilicura",
+            "description": "Nombre corto del favorito (único por compañía)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["depot", "customer", "dropoff", "pickup", "other"],
+            "default": "other",
+            "description": "Categoría libre para agrupar en UI."
+          },
+          "formatted": {
+            "type": "string",
+            "example": "Av. Providencia 1208, Providencia, Santiago, Chile"
+          },
+          "lat": {
+            "type": "number",
+            "example": -33.429138,
+            "description": "Latitud WGS84"
+          },
+          "lng": {
+            "type": "number",
+            "example": -70.621336,
+            "description": "Longitud WGS84"
+          },
+          "placeId": {
+            "type": "string",
+            "example": "address.4791064066081284",
+            "description": "placeId del provider de geocoding."
+          },
+          "confidence": {
+            "type": "string",
+            "example": "0.85",
+            "description": "Score 0..1 reportado por el provider (string para precisión)."
+          },
+          "country": {
+            "type": "string",
+            "example": "cl"
+          },
+          "region": {
+            "type": "string",
+            "example": "Región Metropolitana"
+          },
+          "locality": {
+            "type": "string",
+            "example": "Providencia"
+          },
+          "postcode": {
+            "type": "string",
+            "example": "7500000"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Tocar timbre del segundo piso. Horario 9-18."
+          }
+        }
       }
     }
   }

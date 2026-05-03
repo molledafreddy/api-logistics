@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 
@@ -6,19 +6,31 @@ import type { Cache } from 'cache-manager';
  * OptimizationReoptCacheService
  * Guarda el número de reoptimizaciones por día y empresa en Redis.
  * Clave: optimization:reopt:{companyId}:{date}
+ *
+ * `CACHE_MANAGER` es opcional: si no está disponible (ej. script
+ * openapi:generate sin Redis), todas las operaciones son no-op.
  */
 @Injectable()
 export class OptimizationReoptCacheService {
   private readonly logger = new Logger(OptimizationReoptCacheService.name);
   private readonly defaultTtlSec = 24 * 60 * 60; // 1 día
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
+  constructor(
+    @Optional() @Inject(CACHE_MANAGER) private readonly cache: Cache | null,
+  ) {
+    if (!this.cache) {
+      this.logger.warn(
+        'CACHE_MANAGER no disponible — reopt counter sin cache (no-op).',
+      );
+    }
+  }
 
   private key(companyId: string, date: string): string {
     return `optimization:reopt:${companyId}:${date}`;
   }
 
   async get(companyId: string, date: string): Promise<number> {
+    if (!this.cache) return 0;
     try {
       const value = await this.cache.get<number>(this.key(companyId, date));
       return value ?? 0;
@@ -32,11 +44,13 @@ export class OptimizationReoptCacheService {
     const key = this.key(companyId, date);
     let value = await this.get(companyId, date);
     value++;
+    if (!this.cache) return value;
     await this.cache.set(key, value, this.defaultTtlSec);
     return value;
   }
 
   async reset(companyId: string, date: string): Promise<void> {
+    if (!this.cache) return;
     await this.cache.del(this.key(companyId, date));
   }
 }

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -16,8 +16,9 @@ import type {
  * Estrategia:
  *   - Clave normalizada: hash sha1(`{kind}|{provider}|{lang}|{country}|{payload}`)
  *   - TTL configurable (`GEOCODING_CACHE_TTL_SEC`, default 24 h).
- *   - Falla silenciosa: si Redis está caído, devolvemos `null` y el caller
- *     consulta al provider (no rompemos el request).
+ *   - Falla silenciosa: si Redis está caído o `CACHE_MANAGER` no está
+ *     registrado (ej. script openapi:generate sin Redis), devolvemos `null`
+ *     y el caller consulta al provider (no rompemos el bootstrap).
  */
 @Injectable()
 export class GeocodingCacheService {
@@ -25,10 +26,15 @@ export class GeocodingCacheService {
   private readonly ttlSec: number;
 
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    @Optional() @Inject(CACHE_MANAGER) private readonly cache: Cache | null,
     private readonly config: ConfigService,
   ) {
     this.ttlSec = this.config.get<number>('GEOCODING_CACHE_TTL_SEC', 86400);
+    if (!this.cache) {
+      this.logger.warn(
+        'CACHE_MANAGER no disponible — geocoding sin cache (no-op).',
+      );
+    }
   }
 
   // ─── Public API ────────────────────────────
@@ -122,6 +128,7 @@ export class GeocodingCacheService {
   }
 
   private async read(key: string): Promise<GeocodeFeature[] | null> {
+    if (!this.cache) return null;
     try {
       const value = await this.cache.get<GeocodeFeature[]>(key);
       return value ?? null;
@@ -134,6 +141,7 @@ export class GeocodingCacheService {
   }
 
   private async write(key: string, features: GeocodeFeature[]): Promise<void> {
+    if (!this.cache) return;
     try {
       // cache-manager v5+ usa ms; cache-manager v4 usa s. CommonModule fija
       // el default en ms (`5 * 60 * 1000`), así que aquí también ms.
