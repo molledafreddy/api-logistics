@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added — Sprint C.6: Tests automatizados de Geocoding + SavedAddresses + Mapbox Optimizer (2026-05-03)
+
+- **53 unit tests nuevos** distribuidos en 6 specs (sin red, sin BD, `global.fetch` mockeado donde aplica).
+- **`geocoding-cache.service.spec.ts` (8)** — normalización de query (case + diacríticos + spaces), cuantización reverse a 5 decimales, TTL en ms, tolerancia a Redis ausente o caído (no-op silencioso).
+- **`mock.provider.spec.ts` (6)** — determinismo, respeto de `limit` (cap 5), coords plausibles en Santiago, override de `country`.
+- **`mapbox.provider.spec.ts` (10)** — armado de URL (q/country/limit/language/proximity/types), mapeo de `match_code.confidence` (`exact|high|medium|low|inaccurate` → `1.0..0.2`), reintentos solo en 5xx, `ServiceUnavailableException` sin token o tras retries.
+- **`geocoding.service.spec.ts` (8)** — GEO-001/002/003, hit/miss de cache, `defaultCountry` aplicado, `validate()` devolviendo primer match o `null`.
+- **`mapbox.optimizer.spec.ts` (7)** — OPT-MB-001/002/003 (fallback con `provider='mapbox' + fellBackToHaversine=true`), parser de respuesta real (reordena por `waypoint_index`, suma legs), URL con `source=first/destination=last/roundtrip=false`. Usa `HaversineOptimizer` real para validar el fallback E2E.
+- **`saved-addresses.service.spec.ts` (12)** — SAV-001 (tenant mismatch → 403), SAV-002 (label duplicado en create + update → 409), SAV-003 (softRemove), SUPER_ADMIN bypass, `findAll` con filtros tenant/kind/q.
+- **Resultado total**: `78 suites · 730 tests · 7.8 s` (antes 72 / 677). E2E suite diferida (requiere setup Supabase Auth + Redis en CI, ya hay 4 e2e marcadas `.skip` por la misma razón).
+
+### Fixed — Migración `FixPlansAddCodeColumnAndIndexes` idempotente en BD limpia (2026-05-03)
+
+- La migración `1680000009999-FixPlansAddCodeColumnAndIndexes` (timestamp menor que `1702400000001-CreatePlansAndPermissionsTables`) crasheaba en CI con `relation "plans" does not exist` porque corre antes de que la tabla sea creada.
+- Envuelta en `DO $$ IF EXISTS plans $$` (up + down) — no-op en BD limpia, sigue siendo el hotfix histórico para entornos productivos donde `plans` ya existía. La migración `1709000000001-ExtendPlansForVerticalsAndLimits` añade las mismas columnas más adelante de forma idempotente.
+
 ### Added — Sprint C.5: Saved Addresses (favoritos por compañía) (2026-05-03)
 
 - **Nuevo módulo `saved-addresses/`** — libro de direcciones favoritas por compañía (warehouses, clientes recurrentes, dropoffs).

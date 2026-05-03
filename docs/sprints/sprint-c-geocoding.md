@@ -1,8 +1,8 @@
 # Sprint C — Geocoding utility + direcciones embebidas (Modelo C)
 
 **Fecha**: 2026-05-02 → 2026-05-03
-**Estado**: � EN PROGRESO — entregadas C.1, C.2, C.3, **C.4** y **C.5**
-**Tests**: pendientes (C.6)
+**Estado**: 🟢 COMPLETO — C.1, C.2, C.3, **C.4**, **C.5** y **C.6** entregadas
+**Tests**: ✅ 53 unit nuevos (cache, providers, service, optimizer, saved-addresses) — 730 totales en suite
 
 ---
 
@@ -102,7 +102,7 @@ api/src/database/migrations/
 
 - ✅ **C.4** — `MapboxOptimizationProvider` (Mapbox Optimization API v1) — entregado 2026-05-03
 - ✅ **C.5** — `saved_addresses` + 5 endpoints CRUD (favoritos por company) — entregado 2026-05-03
-- ❌ **C.6** — Tests unit (~20) + e2e (~8)
+- ✅ **C.6** — Tests unit (53) — entregado 2026-05-03
 
 ---
 
@@ -250,8 +250,8 @@ curl -X POST http://localhost:3000/v1/delivery-runs/$RUN_ID/optimize \
 - [x] Migración con `down()` y aplicada en dev (idempotente vía `IF NOT EXISTS`)
 - [x] OpenAPI: `@ApiTags`, `@ApiOperation`, `@ApiResponse`, DTOs con `@ApiProperty`
 - [x] `CHANGELOG.md` (pendiente — mover entry de `Plan-implementacion-logistics.md`)
-- [ ] Tests unit (~20) — diferidos a C.6
-- [ ] Tests e2e (~8) — diferidos a C.6
+- [x] Tests unit (53) — entregados en C.6
+- [ ] Tests e2e (~8) — diferidos a un sprint posterior (requieren setup de Supabase Auth en CI)
 - [x] Sin breaking changes en endpoints existentes
 
 ---
@@ -389,3 +389,68 @@ api/src/database/migrations/
 | `DELETE` válido                     | `204` (body vacío) ✅   |
 | `DELETE` id inexistente             | `404` ✅                |
 | Cualquier endpoint con JWT expirado | `401` ✅                |
+
+---
+
+## 13. Sprint C.6 — Tests automatizados (2026-05-03)
+
+### 13.1 Objetivo
+
+Cerrar la deuda técnica de tests del Sprint C: cubrir cache, providers, service,
+optimizer Mapbox y SavedAddresses con unit tests rápidos (sin red, sin BD).
+
+### 13.2 Archivos nuevos (6 specs · 53 tests)
+
+```
+api/src/modules/geocoding/
+  geocoding-cache.service.spec.ts             (8 tests)
+  geocoding.service.spec.ts                   (8 tests)
+  providers/
+    mock.provider.spec.ts                     (6 tests)
+    mapbox.provider.spec.ts                  (10 tests, fetch mockeado)
+api/src/modules/optimization/strategies/
+  mapbox.optimizer.spec.ts                    (7 tests, fetch mockeado, fallback real a Haversine)
+api/src/modules/saved-addresses/
+  saved-addresses.service.spec.ts            (12 tests)
+```
+
+### 13.3 Cobertura por reglas de negocio
+
+| Regla         | Spec                              | Casos cubiertos                                 |
+| ------------- | --------------------------------- | ----------------------------------------------- |
+| GEO-001       | `geocoding.service.spec.ts`       | query < 3 chars rechazada                       |
+| GEO-002       | `geocoding.service.spec.ts`       | `validate()` devuelve null si no hay matches    |
+| GEO-003       | `geocoding.service.spec.ts`       | lat/lng fuera de rango (NaN, ±999) → 400        |
+| Cache TTL     | `geocoding-cache.service.spec.ts` | TTL configurable, ms vs s                       |
+| Cache norm.   | `geocoding-cache.service.spec.ts` | case + diacríticos + spaces comparten clave     |
+| Cache resil   | `geocoding-cache.service.spec.ts` | Redis ausente o errores read/write → no propaga |
+| Mapbox conf   | `mapbox.provider.spec.ts`         | exact/high/medium/low/inaccurate → 1.0..0.2     |
+| Mapbox URL    | `mapbox.provider.spec.ts`         | q, country, limit, language, proximity, types   |
+| Mapbox 5xx    | `mapbox.provider.spec.ts`         | reintenta 1 vez, luego ServiceUnavailable       |
+| Mapbox 4xx    | `mapbox.provider.spec.ts`         | NO reintenta                                    |
+| OPT-MB-001    | `mapbox.optimizer.spec.ts`        | sin token → fallback a Haversine                |
+| OPT-MB-002    | `mapbox.optimizer.spec.ts`        | HTTP error / timeout / code≠Ok → fallback       |
+| OPT-MB-003    | `mapbox.optimizer.spec.ts`        | > 12 coords → fallback                          |
+| Mapbox parse  | `mapbox.optimizer.spec.ts`        | reordena por waypoint_index, suma legs          |
+| SAV-001       | `saved-addresses.service.spec.ts` | tenant mismatch → 403                           |
+| SAV-002       | `saved-addresses.service.spec.ts` | label duplicado en create + update → 409        |
+| SAV-003       | `saved-addresses.service.spec.ts` | softRemove                                      |
+| Tenant bypass | `saved-addresses.service.spec.ts` | SUPER_ADMIN puede leer cualquier compañía       |
+
+### 13.4 Resultados
+
+```text
+Test Suites: 78 passed, 78 total   (+6 vs 72 previas)
+Tests:       730 passed, 730 total (+53 vs 677 previos)
+Time:        7.8 s
+```
+
+Sin red. Sin BD. `global.fetch` mockeado para los providers. `HaversineOptimizer`
+real dentro del spec del optimizer (verifica que el fallback produce una secuencia
+válida de extremo a extremo).
+
+### 13.5 Diferido
+
+- e2e suite (geocoding + saved-addresses + optimize 422) → requiere setup de
+  Supabase Auth + cache redis en CI; se planifica junto con el endurecimiento
+  general de la suite e2e (ya marcadas como `.skip` 4 suites preexistentes).
