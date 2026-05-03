@@ -2,11 +2,14 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OptimizationService } from './optimization.service';
 import { HaversineOptimizer } from './strategies/haversine.optimizer';
 import { GoogleRoutesOptimizer } from './strategies/google-routes.optimizer';
+import { MapboxOptimizationProvider } from './strategies/mapbox.optimizer';
+import { NearestNeighborTwoOptOptimizer } from './strategies/nearest-neighbor-2opt.optimizer';
 import { DeliveryRunStatus } from '../../common/enums/delivery-run-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -17,6 +20,8 @@ describe('OptimizationService', () => {
   let shipmentRepo: any;
   let haversine: HaversineOptimizer;
   let googleRoutes: any;
+  let mapbox: any;
+  let nn2opt: any;
   let config: any;
   let emitter: EventEmitter2;
 
@@ -42,6 +47,8 @@ describe('OptimizationService', () => {
     shipmentRepo = { find: jest.fn() };
     haversine = new HaversineOptimizer();
     googleRoutes = { providerName: 'google_routes', optimize: jest.fn() };
+    mapbox = { providerName: 'mapbox', optimize: jest.fn() };
+    nn2opt = { providerName: 'nn_2opt', optimize: jest.fn() };
     config = { get: jest.fn().mockReturnValue(undefined) };
     emitter = new EventEmitter2();
 
@@ -50,6 +57,8 @@ describe('OptimizationService', () => {
       shipmentRepo,
       haversine,
       googleRoutes as GoogleRoutesOptimizer,
+      mapbox as MapboxOptimizationProvider,
+      nn2opt as NearestNeighborTwoOptOptimizer,
       config,
       emitter,
     );
@@ -103,9 +112,18 @@ describe('OptimizationService', () => {
       { id: 's1', destinationLat: null, destinationLng: null },
       { id: 's2', destinationLat: null, destinationLng: null },
     ]);
-    await expect(service.optimizeRun('r1', {}, userManager())).rejects.toThrow(
-      /OPT-002/,
-    );
+    // Sprint C: ahora 422 con código en el body, no en el mensaje.
+    await expect(
+      service.optimizeRun('r1', {}, userManager()),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+    try {
+      await service.optimizeRun('r1', {}, userManager());
+    } catch (e: any) {
+      expect(e.getResponse()).toMatchObject({
+        code: 'OPT-002',
+        missingShipments: expect.any(Array),
+      });
+    }
   });
 
   it('haversine default: optimiza, persiste y emite evento', async () => {

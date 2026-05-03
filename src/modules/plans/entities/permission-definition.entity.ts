@@ -11,13 +11,13 @@ export class PermissionDefinition {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true, length: 100 })
+  @Column({ type: 'varchar', unique: true, length: 100 })
   code: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   feature?: string;
 
   @CreateDateColumn({ type: 'timestamptz' })

@@ -1,5 +1,92 @@
 # Changelog
 
+## [Unreleased]
+
+### Added — Sprint C.5: Saved Addresses (favoritos por compañía) (2026-05-03)
+
+- **Nuevo módulo `saved-addresses/`** — libro de direcciones favoritas por compañía (warehouses, clientes recurrentes, dropoffs).
+- **Tabla `saved_addresses`** — FK a `companies`, `kind` ∈ `depot|customer|dropoff|pickup|other`, coords `numeric` con `place_id` + `confidence`, soft delete (`deleted_at`).
+- **Migración `1710000000002-CreateSavedAddresses`** — crea tabla + índice geo + **índice único parcial** `(company_id, label) WHERE deleted_at IS NULL` (permite reutilizar label tras soft delete).
+- **5 endpoints REST** bajo `/v1/saved-addresses` (POST/GET list/GET one/PATCH/DELETE) — DELETE devuelve `204` y soft-deletes vía `softRemove`.
+- **Reglas de negocio**:
+  - `SAV-001` Tenancy estricta (SUPER_ADMIN bypass).
+  - `SAV-002` Label duplicado → `409 Conflict`.
+  - `SAV-003` Soft delete libera el label para reutilización.
+- **Roles**: lectura abierta a cualquier user con companyId; mutaciones limitadas a OWNER/ADMIN/MANAGER/DISPATCHER + SUPER_ADMIN.
+- **Swagger**: `@ApiTags('Saved Addresses')`, `@ApiBearerAuth`, responses 201/204/409 documentados.
+- **Validado end-to-end** con curl: 201 OK, 409 dup-label, 204 delete, 404 not-found, 401 JWT expirado.
+
+### Added — Sprint C.4: MapboxOptimizationProvider (2026-05-03)
+
+- **Nueva strategy `MapboxOptimizationProvider`** (`api/src/modules/optimization/strategies/mapbox.optimizer.ts`) implementando `IRouteOptimizer`.
+- Llama a **Mapbox Optimization API v1** (`/optimized-trips/v1/{profile}/{coords}`) con `source=first`, `destination=last`, `roundtrip=false`, profile default `mapbox/driving-traffic` (incluye tráfico real-time).
+- **Reglas de negocio**:
+  - `OPT-MB-001` Sin `MAPBOX_TOKEN` → fallback transparente a Haversine.
+  - `OPT-MB-002` Error HTTP / timeout (`AbortController`) / `code != "Ok"` → fallback Haversine, `fellBackToHaversine=true` auditable en evento `delivery_run.optimized`.
+  - `OPT-MB-003` Mapbox v1 admite máx **12 coords** (origen + 11 stops); excedido → fallback.
+  - `OPT-MB-004` `source=first` fija el warehouse; `destination=last` permite a la API elegir el último stop.
+- **`OptimizationService.pickOptimizer('mapbox')`** ya no hace warning "no implementado" — delega real al nuevo provider.
+- **2 env vars nuevas**: `MAPBOX_OPTIMIZATION_PROFILE` (default `mapbox/driving-traffic`), `MAPBOX_OPTIMIZATION_TIMEOUT_MS` (default `15000`).
+- Sin cambios en el contrato del endpoint `POST /v1/delivery-runs/:id/optimize` — Swagger ya cubría `provider ∈ haversine|google_routes|mapbox` desde Sprint 7.
+- Build TypeScript verde (`tsc --noEmit` exit 0).
+
+### Added — Sprint C (parcial: C.1 + C.2 + C.3): Geocoding utility + direcciones embebidas (2026-05-02)
+
+> **Hito**: base lista para `pro_courier` con optimización Mapbox (C.4 siguiente). Modelo C confirmado (sin tabla central `addresses`; coordenadas + `place_id` + `confidence` embebidas en `shipments`).
+
+- **Nuevo módulo `geocoding/`** con interfaz `IGeocodingProvider` intercambiable. Providers entregados:
+  - `MapboxGeocodingProvider` — Mapbox Geocoding API v6 (forward + reverse), timeout 4 s, 1 retry en 5xx.
+  - `MockGeocodingProvider` — fixtures determinísticos centrados en Santiago, útil sin `MAPBOX_TOKEN`.
+- **`GeocodingCacheService`** sobre Redis (cache-manager global): clave normalizada con sha1(payload), TTL `GEOCODING_CACHE_TTL_SEC` (default 24 h), falla silenciosa si Redis cae.
+- **3 endpoints REST** (rate-limited via `@Throttle`):
+  - `GET /v1/geocoding/search?q=...&proximity=lat,lng&country=cl&limit=5` — autocomplete.
+  - `GET /v1/geocoding/reverse?lat=...&lng=...` — drop-pin → dirección.
+  - `GET /v1/geocoding/validate?address=...` — confirma/enriquece una dirección dada.
+- **Migración `1710000000001-AddCoordsToShipments`** (idempotente, `IF NOT EXISTS`) — agrega `origin_place_id`, `origin_confidence`, `destination_place_id`, `destination_confidence` (`numeric(3,2)`) a `shipments`.
+- **`Shipment` entity** + **`CreateShipmentDto`** extendidos (campos opcionales, no breaking).
+- **`OptimizationService.optimizeRun()`** ahora lanza **422** con `missingShipments[]` cuando faltan coords (antes: `400` genérico). Permite al frontend abrir directamente el flujo de geocoding.
+- **5 env vars nuevas**: `GEOCODING_PROVIDER`, `MAPBOX_TOKEN`, `GEOCODING_DEFAULT_COUNTRY`, `GEOCODING_CACHE_TTL_SEC`, `GEOCODING_RATE_LIMIT_PER_MIN`.
+- Documentación: `docs/sprints/sprint-c-geocoding.md`.
+
+> **Diferido**: C.6 tests unit + e2e.
+
+### Added — Sprint A: Catálogo de planes verticalizado (2026-04-30)
+
+> **Estrategia adoptada: ADITIVA híbrida** (variación al plan original "reemplazo total").
+> Los 4 planes legacy (Free / Basic / Business / Enterprise) **conviven** con los
+> 5 planes nuevos. La columna `code` permanece _nullable_; sólo los planes con
+> `code IS NOT NULL` aparecen en `/plans/catalog`. Las migraciones destructivas
+> 2 y 3 del Anexo V3 quedan diferidas hasta el corte de legacy (post Sprint E).
+
+- **Entidad `Plan`**: nuevas columnas `code` (snake_case, único parcial), `audience` (`courier|passenger|fleet|any`), `tier` (`free|pro|enterprise`), `limits jsonb` materializado.
+- **Arquitectura híbrida**: la tabla `plan_limits` sigue siendo _fuente de verdad_ (auditable, CRUD admin) y `plans.limits` (jsonb) es la _materialización_ para lecturas O(1) en guards (Sprint B).
+- **Sync hook automático** (`PlansService.syncPlanLimitsJsonb`): se invoca tras `createPlanLimit / updatePlanLimit / removePlanLimit` y reagrupa la tabla → jsonb.
+- **5 planes nuevos** (sembrados de forma idempotente en `plans-v2.seed.ts`):
+  - `free_courier` (CLP 0, 15 envíos/día, 10 stops/optim)
+  - `pro_courier` (CLP 9.990, 200 envíos/día, 50 stops/optim)
+  - `free_passenger` (CLP 0, 10 viajes/día)
+  - `pro_passenger` (CLP 14.990, 100 viajes/día, 30 stops/optim)
+  - `enterprise_fleet` (CLP 99.990, 1000 trucks, 500 stops/optim)
+- **7 permisos nuevos**: `optimization.basic|advanced|vrp|reoptimize`, `routes.multi_driver`, `passenger.recurring`, `tracking.public_link`.
+- **4 endpoints nuevos**:
+  - `GET /v1/plans/catalog` — público (`@Public()`), sólo planes con `code`
+  - `GET /v1/plans/me/limits` — auth, deriva sub activa → `plan.limits`
+  - `PATCH /v1/plans/:id/price` — admin, sólo precio
+  - `PATCH /v1/plans/:id/limits` — admin, sobrescribe jsonb completo
+- **DTO**: `PlanResponseDto` (Swagger schema) + `CreatePlanDto` con `@Matches(/^[a-z][a-z0-9_]*$/)`, `@IsIn(ALL_PLAN_AUDIENCES)`, `@IsIn(ALL_PLAN_TIERS)`, `@IsObject` para limits, `@Min(0)` para price. `UpdatePlanDto` migrado de `@nestjs/mapped-types` a `@nestjs/swagger`.
+- **Tests**: 9 unit nuevos (sync hook, getCatalog, updatePrice, updatePlanLimits, getEffectiveLimits con/sin sub) + 6 e2e nuevos (catálogo público, materialización, /me/limits con/sin auth, PATCH price, PATCH limits) → **677 unit + 45 e2e PASS**.
+- **Swagger**: 4 endpoints nuevos visibles en `/docs`, `PlanResponseDto` registrado en `components.schemas`.
+
+#### Conocido / pendiente
+
+- `/plans/catalog` aparece con `security: [bearer]` en el spec OpenAPI por el `@ApiBearerAuth()` global del controller; funciona como público pero la doc puede confundir. Se limpiará con un decorador `@PublicSwagger()` futuro.
+- Migrations 2 (RemoveLegacyPlansAndSeedNew) y 3 (MakeCodeNotNullUnique) del Anexo V3 quedan diferidas para no romper `ci-test-users.seed.ts` (usa `'Business'`) ni los mocks `plans-permissions.seed.mock.spec.ts`.
+
+### Fixed — Sprint 0: Hotfix permisos
+
+- **plans.service.ts:** El método `getEffectivePermissions` ahora obtiene los permisos efectivos de la empresa consultando la suscripción activa y el plan asociado, alineando la lógica con el PermissionGuard. Esto corrige el bug donde empresas con plan activo podían recibir permisos vacíos si el companyId no coincidía con un plan.
+- **Tests:** Se ajustaron los tests unitarios para mockear correctamente el acceso a la base de datos y asegurar cobertura y no regresión.
+
 Todos los cambios notables del proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y versionado semántico ([SemVer](https://semver.org/lang/es/)).

@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Plan } from './entities/plan.entity';
 import { PermissionDefinition } from './entities/permission-definition.entity';
 import { PlanPermission } from './entities/plan-permission.entity';
+import { PlanLimit } from './entities/plan-limit.entity';
 import { Repository } from 'typeorm';
 import { PermissionsCacheService } from './permissions-cache.service';
 
@@ -18,6 +19,7 @@ describe('PlansService', () => {
   let planRepo: Repository<Plan>;
   let permDefRepo: Repository<PermissionDefinition>;
   let planPermRepo: Repository<PlanPermission>;
+  let planLimitRepo: Repository<PlanLimit>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -48,6 +50,16 @@ describe('PlansService', () => {
           useValue: { create: jest.fn(), save: jest.fn() },
         },
         {
+          provide: getRepositoryToken(PlanLimit),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+            findOne: jest.fn(),
+            delete: jest.fn(),
+          },
+        },
+        {
           provide: PermissionsCacheService,
           useValue: {
             get: jest.fn(),
@@ -64,6 +76,7 @@ describe('PlansService', () => {
     planRepo = module.get(getRepositoryToken(Plan));
     permDefRepo = module.get(getRepositoryToken(PermissionDefinition));
     planPermRepo = module.get(getRepositoryToken(PlanPermission));
+    planLimitRepo = module.get(getRepositoryToken(PlanLimit));
   });
 
   it('should be defined', () => {
@@ -197,6 +210,224 @@ describe('PlansService', () => {
       } as any),
     ).rejects.toThrow('Plan or Permission not found');
   });
+
+  // --- PlanLimit CRUD ---
+  describe('PlanLimit CRUD', () => {
+    const planId = 'plan-uuid';
+    const limitId = 'limit-uuid';
+    const mockPlan = { id: planId, name: 'Free' };
+    const mockLimit = {
+      id: limitId,
+      planId,
+      vertical: 'trucking',
+      code: 'max_trucks',
+      value: 5,
+    };
+    const dto = { vertical: 'trucking', code: 'max_trucks', value: 5 };
+
+    it('createPlanLimit — crea el límite correctamente', async () => {
+      (planRepo.findOne as jest.Mock).mockResolvedValue(mockPlan);
+      (planLimitRepo.create as jest.Mock).mockReturnValue(mockLimit);
+      (planLimitRepo.save as jest.Mock).mockResolvedValue(mockLimit);
+      // sync hook: lee la tabla y materializa jsonb
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([mockLimit]);
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      const result = await service.createPlanLimit(planId, dto as any);
+
+      expect(planRepo.findOne).toHaveBeenCalledWith({ where: { id: planId } });
+      expect(planLimitRepo.create).toHaveBeenCalledWith({
+        plan: mockPlan,
+        planId,
+        vertical: dto.vertical,
+        code: dto.code,
+        value: dto.value,
+      });
+      expect(planLimitRepo.save).toHaveBeenCalledWith(mockLimit);
+      // sync hook materializa el jsonb agrupado por vertical
+      expect(planRepo.update).toHaveBeenCalledWith(planId, {
+        limits: { trucking: { max_trucks: 5 } },
+      });
+      expect(result).toEqual(mockLimit);
+    });
+
+    it('createPlanLimit — lanza NotFoundException si el plan no existe', async () => {
+      (planRepo.findOne as jest.Mock).mockResolvedValue(null);
+      await expect(service.createPlanLimit(planId, dto as any)).rejects.toThrow(
+        'Plan not found',
+      );
+    });
+
+    it('findPlanLimits — retorna los límites del plan', async () => {
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([mockLimit]);
+
+      const result = await service.findPlanLimits(planId);
+
+      expect(planLimitRepo.find).toHaveBeenCalledWith({ where: { planId } });
+      expect(result).toEqual([mockLimit]);
+    });
+
+    it('findPlanLimits — retorna array vacío si no hay límites', async () => {
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([]);
+      const result = await service.findPlanLimits(planId);
+      expect(result).toEqual([]);
+    });
+
+    it('updatePlanLimit — actualiza el límite correctamente', async () => {
+      const updated = { ...mockLimit, value: 10 };
+      (planLimitRepo.findOne as jest.Mock).mockResolvedValue({ ...mockLimit });
+      (planLimitRepo.save as jest.Mock).mockResolvedValue(updated);
+      // sync hook
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([updated]);
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      const result = await service.updatePlanLimit(limitId, {
+        value: 10,
+      } as any);
+
+      expect(planLimitRepo.findOne).toHaveBeenCalledWith({
+        where: { id: limitId },
+      });
+      expect(planLimitRepo.save).toHaveBeenCalled();
+      expect(planRepo.update).toHaveBeenCalledWith(planId, {
+        limits: { trucking: { max_trucks: 10 } },
+      });
+      expect(result).toEqual(updated);
+    });
+
+    it('updatePlanLimit — lanza NotFoundException si el límite no existe', async () => {
+      (planLimitRepo.findOne as jest.Mock).mockResolvedValue(null);
+      await expect(
+        service.updatePlanLimit(limitId, { value: 10 } as any),
+      ).rejects.toThrow('PlanLimit not found');
+    });
+
+    it('removePlanLimit — elimina el límite correctamente', async () => {
+      (planLimitRepo.findOne as jest.Mock).mockResolvedValue({ ...mockLimit });
+      (planLimitRepo.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+      // sync hook después del delete: tabla queda vacía
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([]);
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      const result = await service.removePlanLimit(limitId);
+      expect(planLimitRepo.delete).toHaveBeenCalledWith(limitId);
+      expect(planRepo.update).toHaveBeenCalledWith(planId, { limits: {} });
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('removePlanLimit — lanza NotFoundException si el límite no existe', async () => {
+      (planLimitRepo.findOne as jest.Mock).mockResolvedValue(null);
+      await expect(service.removePlanLimit(limitId)).rejects.toThrow(
+        'PlanLimit not found',
+      );
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // Sprint A — Catálogo verticalizado + jsonb materializado
+  // ─────────────────────────────────────────────────────────────
+  describe('Sprint A: catálogo y límites efectivos', () => {
+    it('syncPlanLimitsJsonb — agrupa filas por vertical y materializa jsonb', async () => {
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([
+        { vertical: 'global', code: 'maxShipmentsPerDay', value: 200 },
+        { vertical: 'global', code: 'maxStopsPerOptimization', value: 50 },
+        { vertical: 'trucking', code: 'max_trucks', value: 10 },
+      ]);
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      const map = await service.syncPlanLimitsJsonb('plan-x');
+
+      expect(map).toEqual({
+        global: { maxShipmentsPerDay: 200, maxStopsPerOptimization: 50 },
+        trucking: { max_trucks: 10 },
+      });
+      expect(planRepo.update).toHaveBeenCalledWith('plan-x', { limits: map });
+    });
+
+    it('syncPlanLimitsJsonb — devuelve {} si no hay filas', async () => {
+      (planLimitRepo.find as jest.Mock).mockResolvedValue([]);
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      const map = await service.syncPlanLimitsJsonb('plan-y');
+      expect(map).toEqual({});
+      expect(planRepo.update).toHaveBeenCalledWith('plan-y', { limits: {} });
+    });
+
+    it('getCatalog — usa createQueryBuilder filtrando is_active y code IS NOT NULL', async () => {
+      const fakePlan = { id: 'p1', code: 'pro_courier' };
+      const qb: any = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([fakePlan]),
+      };
+      (planRepo as any).createQueryBuilder = jest.fn().mockReturnValue(qb);
+
+      const result = await service.getCatalog();
+      expect(result).toEqual([fakePlan]);
+      expect(qb.where).toHaveBeenCalledWith('p.is_active = true');
+      expect(qb.andWhere).toHaveBeenCalledWith('p.code IS NOT NULL');
+    });
+
+    it('updatePrice — actualiza price y devuelve el plan', async () => {
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (planRepo.findOne as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        price: 12345,
+      });
+      const result = await service.updatePrice('p1', 12345);
+      expect(planRepo.update).toHaveBeenCalledWith('p1', { price: 12345 });
+      expect(result).toEqual({ id: 'p1', price: 12345 });
+    });
+
+    it('updatePrice — rechaza price negativo', async () => {
+      await expect(service.updatePrice('p1', -1)).rejects.toThrow(
+        'price debe ser ≥ 0',
+      );
+    });
+
+    it('updatePlanLimits — sobrescribe el jsonb completo', async () => {
+      const limits = { global: { maxShipmentsPerDay: 500 } };
+      (planRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (planRepo.findOne as jest.Mock).mockResolvedValue({ id: 'p1', limits });
+
+      const result = await service.updatePlanLimits('p1', limits);
+      expect(planRepo.update).toHaveBeenCalledWith('p1', { limits });
+      expect(result).toEqual({ id: 'p1', limits });
+    });
+
+    it('updatePlanLimits — rechaza valores no-objeto', async () => {
+      await expect(service.updatePlanLimits('p1', null as any)).rejects.toThrow(
+        'limits debe ser un objeto PlanLimitsMap',
+      );
+      await expect(service.updatePlanLimits('p1', [] as any)).rejects.toThrow(
+        'limits debe ser un objeto PlanLimitsMap',
+      );
+    });
+
+    it('getEffectiveLimits — devuelve los limits del plan activo', async () => {
+      const limits = { global: { maxShipmentsPerDay: 200 } };
+      const mgrQuery = jest.fn().mockResolvedValue([{ limits }]);
+      Object.defineProperty(planRepo, 'manager', {
+        configurable: true,
+        value: { query: mgrQuery },
+      });
+      const result = await service.getEffectiveLimits('company-1');
+      expect(result).toEqual(limits);
+      expect(mgrQuery).toHaveBeenCalled();
+    });
+
+    it('getEffectiveLimits — devuelve {} si no hay suscripción activa', async () => {
+      const mgrQuery = jest.fn().mockResolvedValue([]);
+      Object.defineProperty(planRepo, 'manager', {
+        configurable: true,
+        value: { query: mgrQuery },
+      });
+      const result = await service.getEffectiveLimits('company-2');
+      expect(result).toEqual({});
+    });
+  });
 });
 
 describe('PlansService (cache flow)', () => {
@@ -207,10 +438,15 @@ describe('PlansService (cache flow)', () => {
   let cacheService: any;
 
   beforeEach(async () => {
+    // Mock manager.query para soportar la consulta directa
+    const mockManager = { query: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PlansService,
-        { provide: getRepositoryToken(Plan), useValue: { findOne: jest.fn() } },
+        {
+          provide: getRepositoryToken(Plan),
+          useValue: { findOne: jest.fn(), manager: mockManager },
+        },
         {
           provide: getRepositoryToken(PermissionDefinition),
           useValue: { findOne: jest.fn() },
@@ -218,6 +454,16 @@ describe('PlansService (cache flow)', () => {
         {
           provide: getRepositoryToken(PlanPermission),
           useValue: { create: jest.fn(), save: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(PlanLimit),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+            findOne: jest.fn(),
+            delete: jest.fn(),
+          },
         },
         { provide: PermissionsCacheService, useFactory: mockCacheService },
       ],
@@ -227,6 +473,8 @@ describe('PlansService (cache flow)', () => {
     permDefRepo = module.get(getRepositoryToken(PermissionDefinition));
     planPermRepo = module.get(getRepositoryToken(PlanPermission));
     cacheService = module.get(PermissionsCacheService);
+    // Inyectar el mock de manager aunque sea readonly
+    Object.defineProperty(planRepo, 'manager', { value: mockManager });
   });
 
   it('debe invalidar el cache al asignar un permiso', async () => {
@@ -255,10 +503,8 @@ describe('PlansService (cache flow)', () => {
 
   it('debe calcular y cachear si no hay cache', async () => {
     cacheService.getPermissionsCache.mockResolvedValue(null);
-    planRepo.findOne.mockResolvedValue({
-      id: 'plan1',
-      planPermissions: [{ permission: { code: 'perm.code' } }],
-    });
+    // Simular respuesta de la query directa
+    planRepo.manager.query.mockResolvedValue([{ code: 'perm.code' }]);
     cacheService.setPermissionsCache.mockResolvedValue(undefined);
     const perms = await service.getEffectivePermissions('plan1');
     expect(perms).toEqual(['perm.code']);

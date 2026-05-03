@@ -33,7 +33,7 @@ export interface OptimizedStop {
 }
 
 export interface OptimizationResult {
-  provider: 'haversine' | 'google_routes' | 'mapbox';
+  provider: 'haversine' | 'google_routes' | 'mapbox' | 'nn_2opt';
   totalDistanceKm: number;
   totalDurationMin: number;
   sequence: OptimizedStop[];

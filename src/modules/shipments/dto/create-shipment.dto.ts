@@ -11,6 +11,7 @@ import {
   MaxLength,
   MinLength,
   Min,
+  Matches,
 } from 'class-validator';
 import { ShipmentStatus } from '../../../common/enums/shipment-status.enum';
 import {
@@ -84,6 +85,30 @@ export class CreateShipmentDto {
   @IsOptional()
   originLng?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).',
+    example: 'address.4791064066081284',
+    maxLength: 200,
+  })
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  originPlaceId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Sprint C — Score de confianza 0..1 reportado por el provider de geocoding ' +
+      '(string numérico para compatibilidad con `numeric(3,2)` de Postgres).',
+    example: '0.92',
+  })
+  @IsNumberString()
+  @Matches(/^(0(\.\d{1,2})?|1(\.0{1,2})?)$/, {
+    message: 'originConfidence debe ser un número entre 0 y 1',
+  })
+  @IsOptional()
+  originConfidence?: string;
+
   @ApiPropertyOptional({ example: 'Jane Doe', maxLength: 100 })
   @IsString()
   @MaxLength(100)
@@ -111,6 +136,30 @@ export class CreateShipmentDto {
   @IsNumberString()
   @IsOptional()
   destinationLng?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Sprint C — ID estable del provider de geocoding (ej. Mapbox `address.123456789`).',
+    example: 'address.7891234567890123',
+    maxLength: 200,
+  })
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  destinationPlaceId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Sprint C — Score de confianza 0..1 reportado por el provider de geocoding ' +
+      '(string numérico para compatibilidad con `numeric(3,2)` de Postgres).',
+    example: '0.88',
+  })
+  @IsNumberString()
+  @Matches(/^(0(\.\d{1,2})?|1(\.0{1,2})?)$/, {
+    message: 'destinationConfidence debe ser un número entre 0 y 1',
+  })
+  @IsOptional()
+  destinationConfidence?: string;
 
   @ApiPropertyOptional({ example: 'John Receiver', maxLength: 100 })
   @IsString()

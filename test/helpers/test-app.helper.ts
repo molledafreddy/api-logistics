@@ -4,12 +4,17 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
 import { TestAuthGuard } from './test-auth.guard';
 import request from 'supertest';
+import {
+  GlobalExceptionFilter,
+  TypeormExceptionFilter,
+} from '../../src/common/filters';
 
 /**
  * Creates a NestJS test application with:
  *   - jwks-rsa mocked vía setup-e2e.ts (antes de cualquier import)
  *   - E2E_TEST=true para bypass JWT real en JwtAuthGuard.validateDirectly()
  *   - setGlobalPrefix('api/v1') para coincidir con producción
+ *   - Mismos filtros globales que main.ts (TypeormExceptionFilter, etc.)
  */
 export async function createTestApp(): Promise<INestApplication> {
   // Set flag so AppModule can detect test mode if needed
@@ -22,6 +27,11 @@ export async function createTestApp(): Promise<INestApplication> {
   const app = moduleFixture.createNestApplication();
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+  );
+  // Mismos filtros que producción para que los e2e reciban los status codes correctos
+  app.useGlobalFilters(
+    new GlobalExceptionFilter(),
+    new TypeormExceptionFilter(),
   );
   // Mismo prefix que producción → todas las rutas se sirven en /api/v1/*
   app.setGlobalPrefix('api/v1');

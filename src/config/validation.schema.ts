@@ -105,6 +105,31 @@ export const validationSchema = Joi.object({
   // E2E_TEST=true bypasses real Supabase JWT verification (uses HS256 stub).
   E2E_TEST: Joi.boolean().default(false),
 
+  // ─── Geocoding (Sprint C) ─────────────────
+  // Provider activo. 'mapbox' requiere MAPBOX_TOKEN; 'mock' devuelve fixtures
+  // determinísticos (útil en dev/test sin cuenta).
+  GEOCODING_PROVIDER: Joi.string().valid('mapbox', 'mock').default('mock'),
+  // Token Mapbox (cuenta Free alcanza para arrancar). Dejar vacío con provider=mock.
+  MAPBOX_TOKEN: Joi.string().allow('').default(''),
+  // País por defecto para sesgar autocomplete (ISO 3166-1 alpha-2). Chile = 'cl'.
+  GEOCODING_DEFAULT_COUNTRY: Joi.string().length(2).lowercase().default('cl'),
+  // TTL del cache de resultados de geocoding en segundos. Mapbox permite cachear 30 días;
+  // 24 h es un balance razonable entre frescura y consumo de cuota.
+  GEOCODING_CACHE_TTL_SEC: Joi.number().integer().min(60).default(86400),
+  // Rate limit de llamadas al provider externo por IP/usuario por minuto.
+  GEOCODING_RATE_LIMIT_PER_MIN: Joi.number().integer().min(1).default(60),
+
+  // ─── Mapbox Optimization (Sprint C.4) ─────
+  // Profile de routing: 'mapbox/driving-traffic' (default), 'mapbox/driving',
+  // 'mapbox/walking', 'mapbox/cycling'.
+  MAPBOX_OPTIMIZATION_PROFILE: Joi.string().default('mapbox/driving-traffic'),
+  // Timeout para la llamada a Mapbox Optimization v1 (ms). Si se excede,
+  // fallback transparente a Haversine.
+  MAPBOX_OPTIMIZATION_TIMEOUT_MS: Joi.number()
+    .integer()
+    .min(1000)
+    .default(15000),
+
   // ─── Legacy / optional ────────────────────
   // Solo usado por src/seeds/seed.ts (script TypeORM CLI antiguo).
   DATABASE_URL: Joi.string().uri().allow('').optional(),

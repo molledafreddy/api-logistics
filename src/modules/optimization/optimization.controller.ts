@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Param, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
+import { OptimizationLimitsGuard } from './optimization-limits.guard';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -24,6 +25,7 @@ export class OptimizationController {
   ) {}
 
   @Post(':id/optimize')
+  @UseGuards(OptimizationLimitsGuard)
   @ApiOperation({
     summary: 'Optimiza la secuencia de stops del run (Sprint 7)',
     description:

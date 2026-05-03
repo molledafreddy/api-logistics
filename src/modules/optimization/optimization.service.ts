@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,6 +16,8 @@ import { Shipment } from '../shipments/entities/shipment.entity';
 
 import { HaversineOptimizer } from './strategies/haversine.optimizer';
 import { GoogleRoutesOptimizer } from './strategies/google-routes.optimizer';
+import { MapboxOptimizationProvider } from './strategies/mapbox.optimizer';
+import { NearestNeighborTwoOptOptimizer } from './strategies/nearest-neighbor-2opt.optimizer';
 import {
   IRouteOptimizer,
   LatLng,
@@ -55,6 +58,8 @@ export class OptimizationService {
     private readonly shipmentRepo: Repository<Shipment>,
     private readonly haversine: HaversineOptimizer,
     private readonly googleRoutes: GoogleRoutesOptimizer,
+    private readonly mapbox: MapboxOptimizationProvider,
+    private readonly nn2opt: NearestNeighborTwoOptOptimizer,
     private readonly config: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -93,6 +98,26 @@ export class OptimizationService {
       throw new BadRequestException(
         'OPT-002: run requires at least 2 shipments to optimize',
       );
+    }
+
+    // Sprint C — validación blanda: si algún shipment del run no tiene
+    // coordenadas, devolvemos 422 con la lista exacta para que el frontend
+    // pueda guiar al operador a completarlas (autocomplete o drop-pin).
+    const missingCoords = shipments.filter(
+      (s) => !s.destinationLat || !s.destinationLng,
+    );
+    if (missingCoords.length > 0) {
+      throw new UnprocessableEntityException({
+        code: 'OPT-002',
+        message:
+          'Algunos shipments del run no tienen coordenadas de destino. ' +
+          'Use /v1/geocoding/search o /v1/geocoding/reverse para completarlas.',
+        missingShipments: missingCoords.map((s) => ({
+          id: s.id,
+          trackingCode: s.trackingCode,
+          destinationAddress: s.destinationAddress,
+        })),
+      });
     }
 
     const stops = this.buildStops(shipments);
@@ -168,9 +193,9 @@ export class OptimizationService {
       case 'google_routes':
         return this.googleRoutes;
       case 'mapbox':
-        // Mapbox aún no implementado: cae a haversine.
-        this.logger.warn('Mapbox optimizer no implementado, usando haversine');
-        return this.haversine;
+        return this.mapbox;
+      case 'nn_2opt':
+        return this.nn2opt;
       case 'haversine':
       default:
         return this.haversine;

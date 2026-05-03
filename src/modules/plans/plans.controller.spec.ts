@@ -26,6 +26,10 @@ describe('PlansController', () => {
             updatePermission: jest.fn(),
             removePermission: jest.fn(),
             assignPermissionToPlan: jest.fn(),
+            createPlanLimit: jest.fn(),
+            findPlanLimits: jest.fn(),
+            updatePlanLimit: jest.fn(),
+            removePlanLimit: jest.fn(),
           },
         },
         {
@@ -113,6 +117,55 @@ describe('PlansController', () => {
     expect(service.assignPermissionToPlan).toHaveBeenCalledWith({
       planId: 'pid',
       permissionId: 'permid',
+    });
+  });
+
+  // --- Plan Limits ---
+  describe('PlanLimit endpoints', () => {
+    const planId = 'plan-uuid';
+    const limitId = 'limit-uuid';
+    const mockLimit = {
+      id: limitId,
+      planId,
+      vertical: 'trucking',
+      code: 'max_trucks',
+      value: 5,
+    };
+    const createDto = { vertical: 'trucking', code: 'max_trucks', value: 5 };
+
+    it('createPlanLimit — delega al servicio con planId y dto', async () => {
+      (service.createPlanLimit as jest.Mock).mockResolvedValue(mockLimit);
+      const result = await controller.createPlanLimit(planId, createDto as any);
+      expect(service.createPlanLimit).toHaveBeenCalledWith(planId, createDto);
+      expect(result).toEqual(mockLimit);
+    });
+
+    it('findPlanLimits — delega al servicio con planId', async () => {
+      (service.findPlanLimits as jest.Mock).mockResolvedValue([mockLimit]);
+      const result = await controller.findPlanLimits(planId);
+      expect(service.findPlanLimits).toHaveBeenCalledWith(planId);
+      expect(result).toEqual([mockLimit]);
+    });
+
+    it('updatePlanLimit — delega al servicio con id y dto', async () => {
+      const updated = { ...mockLimit, value: 20 };
+      (service.updatePlanLimit as jest.Mock).mockResolvedValue(updated);
+      const result = await controller.updatePlanLimit(limitId, {
+        value: 20,
+      } as any);
+      expect(service.updatePlanLimit).toHaveBeenCalledWith(limitId, {
+        value: 20,
+      });
+      expect(result).toEqual(updated);
+    });
+
+    it('removePlanLimit — delega al servicio con id', async () => {
+      (service.removePlanLimit as jest.Mock).mockResolvedValue({
+        deleted: true,
+      });
+      const result = await controller.removePlanLimit(limitId);
+      expect(service.removePlanLimit).toHaveBeenCalledWith(limitId);
+      expect(result).toEqual({ deleted: true });
     });
   });
 });

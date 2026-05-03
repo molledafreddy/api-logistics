@@ -99,6 +99,24 @@ export class Shipment extends BaseEntity {
   })
   originLng!: string | null;
 
+  // ─── Sprint C · Geocoding metadata (origin) ─
+  @Column({
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+    name: 'origin_place_id',
+  })
+  originPlaceId!: string | null;
+
+  @Column({
+    type: 'numeric',
+    precision: 3,
+    scale: 2,
+    nullable: true,
+    name: 'origin_confidence',
+  })
+  originConfidence!: string | null;
+
   @Column({
     type: 'varchar',
     length: 100,
@@ -136,6 +154,24 @@ export class Shipment extends BaseEntity {
     name: 'destination_lng',
   })
   destinationLng!: string | null;
+
+  // ─── Sprint C · Geocoding metadata (destination) ─
+  @Column({
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+    name: 'destination_place_id',
+  })
+  destinationPlaceId!: string | null;
+
+  @Column({
+    type: 'numeric',
+    precision: 3,
+    scale: 2,
+    nullable: true,
+    name: 'destination_confidence',
+  })
+  destinationConfidence!: string | null;
 
   @Column({
     type: 'varchar',

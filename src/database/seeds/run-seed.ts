@@ -6,6 +6,8 @@ import { seedSubscriptionAddons } from './subscription-addons.seed';
 import { seedLogisticsDemo } from './logistics-demo.seed';
 import { seedCrossCompanyDemo } from './cross-company-demo.seed';
 import { seedCITestUsers } from './ci-test-users.seed';
+import { seedPlansLimits } from './plans-limits.seed';
+import { seedPlansV2 } from './plans-v2.seed';
 
 const logger = new Logger('Seed');
 
@@ -16,6 +18,10 @@ async function runSeed() {
 
   // Planes y permisos mínimos para tests y desarrollo (ALWAYS RUN - required first)
   await seedPlansAndPermissions();
+  // Límites de planes por vertical
+  await seedPlansLimits();
+  // Sprint A — catálogo verticalizado (additivo, no rompe legacy)
+  await seedPlansV2();
 
   // ─── CI/CD path: Create test users directly in PostgreSQL ────
   if (isCI) {

@@ -48,6 +48,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { DeliveryRunsModule } from './modules/delivery-runs/delivery-runs.module';
 import { RecurringTemplatesModule } from './modules/recurring-templates/recurring-templates.module';
 import { OptimizationModule } from './modules/optimization/optimization.module';
+import { GeocodingModule } from './modules/geocoding/geocoding.module';
+import { SavedAddressesModule } from './modules/saved-addresses/saved-addresses.module';
 
 // Gateways (WebSockets)
 import { GatewaysModule } from './gateways/gateways.module';
@@ -151,6 +153,8 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     DeliveryRunsModule,
     RecurringTemplatesModule,
     OptimizationModule,
+    GeocodingModule,
+    SavedAddressesModule,
     GatewaysModule,
   ],
   controllers: [HealthController, RootController],
