@@ -39,6 +39,29 @@ export class Subscription {
   @Column({ type: 'timestamptz', nullable: true })
   trial_end?: Date;
 
+  // ─── Pagos (Sprint E) ───────────────────
+  /** 'free' | 'mercadopago' | 'stripe' (futuro). */
+  @Column({ type: 'varchar', length: 20, default: 'free' })
+  provider: string;
+
+  /** Id de preapproval/subscription del provider externo. */
+  @Column({
+    type: 'varchar',
+    length: 120,
+    nullable: true,
+    name: 'provider_subscription_id',
+  })
+  provider_subscription_id?: string | null;
+
+  /** Token de idempotencia que viaja al checkout y vuelve en el webhook. */
+  @Column({
+    type: 'varchar',
+    length: 80,
+    nullable: true,
+    name: 'external_reference',
+  })
+  external_reference?: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

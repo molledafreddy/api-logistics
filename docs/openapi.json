@@ -8713,6 +8713,72 @@
         "summary": "Eliminar favorito (soft delete)",
         "tags": ["Saved Addresses"]
       }
+    },
+    "/api/v1/payments/checkout": {
+      "post": {
+        "description": "Devuelve `initPoint` (URL del provider) para redirigir al usuario. El `externalReference` queda persistido en la subscription para amarrar el webhook posterior.",
+        "operationId": "PaymentsController_createCheckout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout creado"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Subscription no encontrada"
+          },
+          "503": {
+            "description": "Provider no configurado o caído (PAY-MP-001 / PAY-MP-003)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear checkout de pago para una subscription",
+        "tags": ["Payments"]
+      }
+    },
+    "/api/v1/payments/{provider}/webhook": {
+      "post": {
+        "description": "Recibe notificaciones del provider (firma HMAC verificada). Idempotente: eventos duplicados devuelven 200 sin efectos secundarios.",
+        "operationId": "PaymentsController_webhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Procesado o no-op (idempotente)"
+          },
+          "401": {
+            "description": "Firma inválida"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "summary": "Webhook del provider de pagos",
+        "tags": ["Payments"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -11568,6 +11634,36 @@
             "example": "Tocar timbre del segundo piso. Horario 9-18."
           }
         }
+      },
+      "CreateCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "string",
+            "description": "UUID de la subscription a pagar.",
+            "example": "b3c1f1d2-1234-4567-89ab-cdef01234567"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Monto en la unidad menor de la moneda (CLP no usa decimales).",
+            "example": 12990
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["CLP", "USD"],
+            "default": "CLP"
+          },
+          "itemTitle": {
+            "type": "string",
+            "description": "Texto que verá el usuario en la pasarela.",
+            "example": "Plan Pro Mensual — Carrier"
+          },
+          "payerEmail": {
+            "type": "string",
+            "description": "Email del payer (mejora conversion en MercadoPago)."
+          }
+        },
+        "required": ["subscriptionId", "amount", "itemTitle"]
       }
     }
   }

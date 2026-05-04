@@ -130,6 +130,29 @@ export const validationSchema = Joi.object({
     .min(1000)
     .default(15000),
 
+  // ─── Payments (Sprint E) ──────────────────
+  // Provider activo. 'mercadopago' requiere MERCADOPAGO_ACCESS_TOKEN; 'mock'
+  // devuelve URLs determinísticas (útil en dev/test sin cuenta).
+  PAYMENTS_PROVIDER: Joi.string().valid('mercadopago', 'mock').default('mock'),
+  // Access token de MercadoPago (Bearer). Dev: TEST-...; Prod: APP_USR-...
+  MERCADOPAGO_ACCESS_TOKEN: Joi.string().allow('').default(''),
+  // Secret para verificar firma HMAC del webhook (panel MP → Webhooks → Secret).
+  MERCADOPAGO_WEBHOOK_SECRET: Joi.string().allow('').default(''),
+  // URL pública del webhook (debe ser https en prod).
+  MERCADOPAGO_NOTIFICATION_URL: Joi.string().uri().allow('').default(''),
+  // back_urls del checkout
+  MERCADOPAGO_SUCCESS_URL: Joi.string()
+    .uri()
+    .default('http://localhost:3001/billing/success'),
+  MERCADOPAGO_FAILURE_URL: Joi.string()
+    .uri()
+    .default('http://localhost:3001/billing/failure'),
+  MERCADOPAGO_PENDING_URL: Joi.string()
+    .uri()
+    .default('http://localhost:3001/billing/pending'),
+  // Timeout HTTP para llamadas a la API de MP (ms).
+  MERCADOPAGO_TIMEOUT_MS: Joi.number().integer().min(1000).default(8000),
+
   // ─── Legacy / optional ────────────────────
   // Solo usado por src/seeds/seed.ts (script TypeORM CLI antiguo).
   DATABASE_URL: Joi.string().uri().allow('').optional(),

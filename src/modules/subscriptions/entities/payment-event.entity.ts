@@ -25,6 +25,15 @@ export class PaymentEvent {
   @Column({ type: 'jsonb', nullable: true })
   metadata?: any;
 
+  // ─── Sprint E — idempotencia por provider ─────
+  /** 'mercadopago' | 'stripe' | 'manual' | etc. */
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  provider?: string | null;
+
+  /** Id del payment/event en el provider externo (para deduplicar webhooks). */
+  @Column({ type: 'varchar', length: 120, nullable: true, name: 'external_id' })
+  external_id?: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

@@ -50,6 +50,7 @@ import { RecurringTemplatesModule } from './modules/recurring-templates/recurrin
 import { OptimizationModule } from './modules/optimization/optimization.module';
 import { GeocodingModule } from './modules/geocoding/geocoding.module';
 import { SavedAddressesModule } from './modules/saved-addresses/saved-addresses.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 // Gateways (WebSockets)
 import { GatewaysModule } from './gateways/gateways.module';
@@ -155,6 +156,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     OptimizationModule,
     GeocodingModule,
     SavedAddressesModule,
+    PaymentsModule,
     GatewaysModule,
   ],
   controllers: [HealthController, RootController],

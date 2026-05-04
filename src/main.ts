@@ -64,7 +64,17 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'public'), { prefix: '/public/' });
 
   // ─── Límites de tamaño de payload ─────
-  app.use(json({ limit: bodySizeLimit }));
+  // `verify` preserva el rawBody en `req.rawBody` para que módulos que
+  // verifican firmas HMAC (Sprint E — MercadoPago webhook) puedan validar
+  // sin re-stringify (que rompe la firma por orden de keys / espacios).
+  app.use(
+    json({
+      limit: bodySizeLimit,
+      verify: (req: any, _res, buf) => {
+        if (buf?.length) req.rawBody = buf.toString('utf8');
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: bodySizeLimit }));
 
   // ─── Seguridad: cabeceras (Helmet) ────

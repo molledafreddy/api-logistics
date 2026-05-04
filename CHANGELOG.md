@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Added — Sprint E: MercadoPago Chile (Checkout Pro) — Producto monetizable (2026-05-03)
+
+- **Nuevo módulo `payments/`** con arquitectura provider-agnostic (`IPaymentProvider` + DI token `PAYMENT_PROVIDER_TOKEN`) — selección de provider via `PAYMENTS_PROVIDER` env (`mercadopago` | `mock`).
+- **`MercadoPagoProvider`** — Checkout Pro single-payment (Preference API).
+  - `POST /checkout/preferences` con `Authorization: Bearer`, `X-Idempotency-Key`, `back_urls`, `notification_url` y `external_reference` único por checkout.
+  - **Verificación HMAC-SHA256 del webhook**: header `x-signature: ts=...,v1=...`, manifest `id:{data.id};request-id:{x-request-id};ts:{ts};`, comparación con `timingSafeEqual`.
+  - `resolveWebhookEvent()` hace `GET /v1/payments/{id}` para obtener detalle (status/amount/external_reference) ya que MP solo envía el id en el webhook.
+  - `mapStatus()` normaliza MP → eventos: `approved → payment.approved`, `rejected → payment.rejected`, `cancelled → payment.cancelled`, `refunded|charged_back → payment.refunded`, `in_process|pending|authorized → payment.pending`, otros → `unknown`.
+  - Timeout configurable (`MERCADOPAGO_TIMEOUT_MS`, default 8000) con `AbortController`. Fallos HTTP → `ServiceUnavailableException` con códigos `PAY-MP-001` (sin token) / `PAY-MP-003` (HTTP/timeout).
+- **`MockPaymentProvider`** — URLs determinísticas para dev sin token y tests E2E (acepta firma vacía o `mock-signature`).
+- **`PaymentsService`** — orquestador con reglas:
+  - `PAY-002` Idempotencia: `payment_events.UNIQUE(provider, external_id)` evita doble-procesamiento de webhooks.
+  - `PAY-003` `payment.approved` → `subscription.status='active'` + `invoice.status='paid'`.
+  - `PAY-004` `payment.rejected|cancelled` → `subscription.status='pending_payment'` + `invoice.status='void'` (preserva ventana de gracia).
+  - `PAY-005` `payment.refunded` → `subscription.status='canceled'` + `invoice.status='refunded'`.
+- **`PaymentsController`** (2 endpoints):
+  - `POST /v1/payments/checkout` (auth) — crea preference, persiste `external_reference` y `provider_subscription_id` en la subscription.
+  - `POST /v1/payments/:provider/webhook` (`@Public()`) — verifica firma HMAC (401 `PAY-001` si inválida), procesa idempotente.
+- **`main.ts`** — `json({ verify })` callback preserva `req.rawBody` (esencial para HMAC: re-stringify rompe la firma).
+- **Migración `1715000000000-AddPaymentProviderToSubscriptions`** — añade `subscriptions.provider`, `provider_subscription_id`, `external_reference UNIQUE`; añade `payment_events.provider`, `external_id` con índice **único parcial** `(provider, external_id) WHERE external_id IS NOT NULL`. Idempotente (`DO $$ IF EXISTS table $$`).
+- **8 env vars nuevas** (validation.schema): `PAYMENTS_PROVIDER` (default `mock`), `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `MERCADOPAGO_NOTIFICATION_URL`, `MERCADOPAGO_SUCCESS_URL`, `MERCADOPAGO_FAILURE_URL`, `MERCADOPAGO_PENDING_URL`, `MERCADOPAGO_TIMEOUT_MS`.
+- **29 unit tests nuevos** (4 specs): `mock.provider.spec.ts` (6), `mercadopago.provider.spec.ts` (11 incl. HMAC válido/manipulado, mapStatus de 7 estados), `payments.service.spec.ts` (8 incl. idempotencia + PAY-003/004/005 + huérfano), `payments.controller.spec.ts` (4 incl. 401 firma inválida + lowercase headers + rawBody fallback).
+- **Resultado total**: `82 suites · 759 tests · 9.0 s` (antes 78 / 730).
+- **OpenAPI**: 196 operations, 0 errors, 2 warnings (pre-existentes en `/plans/{id}/price` y `/plans/{id}/limits`). Tag `Payments` con 2 endpoints.
+- **Doc**: `docs/sprints/sprint-e-mercadopago.md` con runbook completo (configuración del panel MP, URLs, firma, smoke test).
+
 ### Added — Sprint C.6: Tests automatizados de Geocoding + SavedAddresses + Mapbox Optimizer (2026-05-03)
 
 - **53 unit tests nuevos** distribuidos en 6 specs (sin red, sin BD, `global.fetch` mockeado donde aplica).
