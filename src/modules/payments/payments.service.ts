@@ -105,10 +105,11 @@ export class PaymentsService {
       );
     }
 
-    // Persistir el evento (idempotencia futura)
+    // Persistir el evento (idempotencia futura). subscription_id queda NULL
+    // si el evento es huérfano (sin sub matching) — auditoría y dedupe siguen.
     await this.eventRepo.save(
       this.eventRepo.create({
-        subscription_id: sub?.id ?? '',
+        subscription_id: sub?.id ?? null,
         event_type: evt.type,
         amount: evt.amount,
         event_date: new Date(),

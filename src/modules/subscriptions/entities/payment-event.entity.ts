@@ -10,8 +10,9 @@ export class PaymentEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  subscription_id: string;
+  /** Sprint E: nullable para soportar webhooks huérfanos (sin sub matching). */
+  @Column({ type: 'uuid', nullable: true })
+  subscription_id?: string | null;
 
   @Column({ type: 'varchar', length: 32 })
   event_type: string;
