@@ -1,15 +1,15 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-05-04T04:41:04.720Z_
+_Generated: 2026-05-04T22:03:19.500Z_
 
 ## 📊 Summary
 
-- Total operations: **196**
-- With `summary`: 196 / 196 (100.0%)
-- With `description`: 15 / 196 (7.7%)
-- With `tags`: 196 / 196 (100.0%)
-- With `security`: 189 / 196 (96.4%)
-- With 2xx response: 196 / 196 (100.0%)
+- Total operations: **197**
+- With `summary`: 197 / 197 (100.0%)
+- With `description`: 16 / 197 (8.1%)
+- With `tags`: 197 / 197 (100.0%)
+- With `security`: 190 / 197 (96.4%)
+- With 2xx response: 197 / 197 (100.0%)
 
 - 🔴 Errors: **0**
 - 🟡 Warnings: **2**
@@ -51,6 +51,7 @@ _Generated: 2026-05-04T04:41:04.720Z_
 | Reports            | 4          |
 | Files              | 3          |
 | Geocoding          | 3          |
+| Payments           | 2          |
 | Audit              | 2          |
 | Optimization       | 2          |
-| Payments           | 2          |
+| billing            | 1          |

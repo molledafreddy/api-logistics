@@ -62,6 +62,19 @@ export class Subscription {
   })
   external_reference?: string | null;
 
+  // ─── Renovación automática (Sprint F.1) ─────
+  /** Hasta cuándo aceptamos pago atrasado antes de marcar canceled. */
+  @Column({ type: 'timestamptz', nullable: true })
+  grace_period_until?: Date | null;
+
+  /** Último timestamp en que el scan de renovación intentó cobrar esta sub. */
+  @Column({ type: 'timestamptz', nullable: true })
+  last_renewal_attempt_at?: Date | null;
+
+  /** Init point del checkout pendiente (para que el frontend muestre "Renovar"). */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  last_renewal_init_point?: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

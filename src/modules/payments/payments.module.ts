@@ -2,31 +2,28 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { Plan } from '../plans/entities/plan.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { Invoice } from '../subscriptions/entities/invoice.entity';
 import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
 
+import { BillingController } from './billing.controller';
+import { BillingService } from './billing.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { PAYMENT_PROVIDER_TOKEN } from './payments.types';
 import { MockPaymentProvider } from './providers/mock.provider';
 import { MercadoPagoProvider } from './providers/mercadopago.provider';
 
-/**
- * Sprint E — PaymentsModule.
- *
- * Selecciona el provider activo en bootstrap mediante `PAYMENTS_PROVIDER`:
- *   - 'mercadopago' → MercadoPagoProvider (requiere MERCADOPAGO_ACCESS_TOKEN)
- *   - 'mock'        → MockPaymentProvider (default, dev/test sin red)
- */
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent]),
+    TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent, Plan]),
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, BillingController],
   providers: [
     PaymentsService,
+    BillingService,
     MockPaymentProvider,
     MercadoPagoProvider,
     {
@@ -44,6 +41,6 @@ import { MercadoPagoProvider } from './providers/mercadopago.provider';
       },
     },
   ],
-  exports: [PaymentsService, PAYMENT_PROVIDER_TOKEN],
+  exports: [PaymentsService, BillingService, PAYMENT_PROVIDER_TOKEN],
 })
 export class PaymentsModule {}
