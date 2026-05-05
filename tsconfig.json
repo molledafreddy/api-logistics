@@ -21,7 +21,7 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "test/**/*.ts"],
+  "include": ["src/**/*", "test/**/*.ts", "scripts/**/*.ts"],
   "ts-node": {
     "esm": false,
     "compilerOptions": {

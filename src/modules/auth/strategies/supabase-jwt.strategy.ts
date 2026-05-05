@@ -74,7 +74,11 @@ export class SupabaseJwtStrategy extends PassportStrategy(
     req: Request,
     payload: SupabaseJwtPayload,
   ): Promise<IUserPayload> {
-    this.logger.log('[SUPABASE_JWT] validate() INICIO', { payload });
+    // Sprint G: logs en DEBUG y sin imprimir el token completo ni el payload
+    // crudo (que incluye email, session_id y metadata personal).
+    this.logger.debug(
+      `[SUPABASE_JWT] validate() sub=${payload?.sub ?? 'n/a'} sid=${payload?.session_id ?? 'n/a'}`,
+    );
     try {
       const { sub: authUid } = payload;
 
@@ -85,12 +89,15 @@ export class SupabaseJwtStrategy extends PassportStrategy(
 
       // Verify the session is still active in Supabase
       const accessToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
-      this.logger.log('[SUPABASE_JWT] accessToken extraído', { accessToken });
       if (accessToken) {
         const isSessionValid = await this.verifySessionActive(accessToken);
-        this.logger.log('[SUPABASE_JWT] isSessionValid', { isSessionValid });
+        this.logger.debug(
+          `[SUPABASE_JWT] session active sub=${authUid} valid=${isSessionValid}`,
+        );
         if (!isSessionValid) {
-          this.logger.warn('[SUPABASE_JWT] Session has been revoked');
+          this.logger.warn(
+            `[SUPABASE_JWT] Session has been revoked sub=${authUid}`,
+          );
           throw new UnauthorizedException('Session has been revoked');
         }
       }
@@ -98,29 +105,30 @@ export class SupabaseJwtStrategy extends PassportStrategy(
       const user = await this.userRepository.findOne({
         where: { authUid, deletedAt: undefined },
       });
-      this.logger.log('[SUPABASE_JWT] user encontrado', { user });
 
       if (!user) {
-        this.logger.warn('[SUPABASE_JWT] User not found');
+        this.logger.warn(`[SUPABASE_JWT] User not found authUid=${authUid}`);
         throw new UnauthorizedException('User not found');
       }
 
       if (user.status === 'suspended') {
-        this.logger.warn('[SUPABASE_JWT] Account suspended');
+        this.logger.warn(`[SUPABASE_JWT] Account suspended user=${user.id}`);
         throw new UnauthorizedException('Account suspended');
       }
 
       if (user.status === 'inactive') {
-        this.logger.warn('[SUPABASE_JWT] Account deactivated');
+        this.logger.warn(`[SUPABASE_JWT] Account deactivated user=${user.id}`);
         throw new UnauthorizedException('Account deactivated');
       }
 
       if (user.isLocked) {
-        this.logger.warn('[SUPABASE_JWT] Account temporarily locked');
+        this.logger.warn(`[SUPABASE_JWT] Account locked user=${user.id}`);
         throw new UnauthorizedException('Account temporarily locked');
       }
 
-      this.logger.log('[SUPABASE_JWT] Usuario autenticado OK', { user });
+      this.logger.debug(
+        `[SUPABASE_JWT] OK user=${user.id} company=${user.companyId} role=${user.role}`,
+      );
       return {
         sub: user.id,
         email: user.email,
@@ -128,7 +136,9 @@ export class SupabaseJwtStrategy extends PassportStrategy(
         companyId: user.companyId,
       };
     } catch (err) {
-      this.logger.error('[SUPABASE_JWT] ERROR en validate', err);
+      this.logger.error(
+        `[SUPABASE_JWT] ERROR en validate sub=${payload?.sub ?? 'n/a'}: ${(err as Error).message}`,
+      );
       throw err;
     }
   }
@@ -138,9 +148,8 @@ export class SupabaseJwtStrategy extends PassportStrategy(
    * Uses the admin client to get the user, then checks if the token can retrieve the user.
    */
   private async verifySessionActive(accessToken: string): Promise<boolean> {
-    this.logger.log('[SUPABASE_JWT] verifySessionActive() INICIO', {
-      accessToken,
-    });
+    // Sprint G: no logueamos el accessToken (es bearer válido) ni el body
+    // completo de Supabase. Solo metadatos no sensibles.
     try {
       const supabaseUrl =
         process.env.SUPABASE_URL ||
@@ -161,10 +170,9 @@ export class SupabaseJwtStrategy extends PassportStrategy(
         } as Record<string, string>,
       });
       const data = await response.json();
-      this.logger.log('[SUPABASE_JWT] Resultado fetch /auth/v1/user', {
-        status: response.status,
-        data,
-      });
+      this.logger.debug(
+        `[SUPABASE_JWT] /auth/v1/user status=${response.status} hasUser=${Boolean(data?.id || data?.user?.id)}`,
+      );
 
       // GoTrue's GET /auth/v1/user returns the user object directly at the root
       // (e.g. { id, email, aud, role, ... }), NOT wrapped in a `user` property.
