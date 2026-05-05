@@ -7,7 +7,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
  *
  * Para desasignar enviar `null` explícitamente.
  */
-export class AssignDriverDto {
+export class AssignRunDriverDto {
   @ApiPropertyOptional({
     format: 'uuid',
     nullable: true,

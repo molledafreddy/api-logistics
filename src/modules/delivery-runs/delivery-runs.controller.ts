@@ -20,7 +20,7 @@ import { DeliveryRunsService } from './delivery-runs.service';
 import {
   CreateDeliveryRunDto,
   UpdateDeliveryRunDto,
-  AssignDriverDto,
+  AssignRunDriverDto,
   ShipmentIdsDto,
   ReorderDto,
   CancelDeliveryRunDto,
@@ -104,7 +104,7 @@ export class DeliveryRunsController {
   })
   assignDriver(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AssignDriverDto,
+    @Body() dto: AssignRunDriverDto,
     @CurrentUser() user: IUserPayload,
   ) {
     return this.service.assignDriver(id, dto, user);

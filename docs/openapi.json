@@ -2294,6 +2294,201 @@
         "tags": ["billing"]
       }
     },
+    "/api/v1/billing/me/retry": {
+      "post": {
+        "description": "Solo aplicable a suscripciones en `pending_payment` o `suspended`. Throttle de 5 minutos entre intentos.",
+        "operationId": "BillingController_retry",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Checkout generado"
+          },
+          "400": {
+            "description": "Retry too soon o plan no cobrable"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Sin suscripción retriable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reintenta el cobro generando un nuevo checkout",
+        "tags": ["billing"]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findMine",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications for current user"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my notifications (paginated)",
+        "tags": ["Notifications"]
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markAsRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Notification not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a single notification as read",
+        "tags": ["Notifications"]
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "patch": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "All unread notifications marked as read"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark all unread notifications as read for current user",
+        "tags": ["Notifications"]
+      }
+    },
+    "/api/v1/notifications/push-tokens": {
+      "post": {
+        "operationId": "NotificationsController_registerPushToken",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Push token registered"
+          },
+          "400": {
+            "description": "Invalid token format"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a push notification token for mobile app",
+        "tags": ["Notifications"]
+      }
+    },
+    "/api/v1/notifications/push-tokens/{token}": {
+      "delete": {
+        "operationId": "NotificationsController_removePushToken",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Push token deactivated"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Push token not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unregister/deactivate a push notification token",
+        "tags": ["Notifications"]
+      }
+    },
     "/api/v1/verifications/tiers": {
       "get": {
         "operationId": "VerificationsController_findAllTiers",
@@ -3200,170 +3395,6 @@
         ],
         "summary": "Get audit logs for a specific resource (e.g., company, verification, subscription)",
         "tags": ["Audit"]
-      }
-    },
-    "/api/v1/notifications": {
-      "get": {
-        "operationId": "NotificationsController_findMine",
-        "parameters": [
-          {
-            "name": "page",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of notifications for current user"
-          },
-          "401": {
-            "description": "Unauthorized — JWT inválido o ausente"
-          },
-          "403": {
-            "description": "Forbidden — sin permisos suficientes"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List my notifications (paginated)",
-        "tags": ["Notifications"]
-      }
-    },
-    "/api/v1/notifications/{id}/read": {
-      "patch": {
-        "operationId": "NotificationsController_markAsRead",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notification marked as read"
-          },
-          "401": {
-            "description": "Unauthorized — JWT inválido o ausente"
-          },
-          "403": {
-            "description": "Forbidden — sin permisos suficientes"
-          },
-          "404": {
-            "description": "Notification not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Mark a single notification as read",
-        "tags": ["Notifications"]
-      }
-    },
-    "/api/v1/notifications/read-all": {
-      "patch": {
-        "operationId": "NotificationsController_markAllRead",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "All unread notifications marked as read"
-          },
-          "401": {
-            "description": "Unauthorized — JWT inválido o ausente"
-          },
-          "403": {
-            "description": "Forbidden — sin permisos suficientes"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Mark all unread notifications as read for current user",
-        "tags": ["Notifications"]
-      }
-    },
-    "/api/v1/notifications/push-tokens": {
-      "post": {
-        "operationId": "NotificationsController_registerPushToken",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Push token registered"
-          },
-          "400": {
-            "description": "Invalid token format"
-          },
-          "401": {
-            "description": "Unauthorized — JWT inválido o ausente"
-          },
-          "403": {
-            "description": "Forbidden — sin permisos suficientes"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Register a push notification token for mobile app",
-        "tags": ["Notifications"]
-      }
-    },
-    "/api/v1/notifications/push-tokens/{token}": {
-      "delete": {
-        "operationId": "NotificationsController_removePushToken",
-        "parameters": [
-          {
-            "name": "token",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Push token deactivated"
-          },
-          "401": {
-            "description": "Unauthorized — JWT inválido o ausente"
-          },
-          "403": {
-            "description": "Forbidden — sin permisos suficientes"
-          },
-          "404": {
-            "description": "Push token not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Unregister/deactivate a push notification token",
-        "tags": ["Notifications"]
       }
     },
     "/api/v1/admin/dashboard": {

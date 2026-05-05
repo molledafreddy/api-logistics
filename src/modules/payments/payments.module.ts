@@ -25,9 +25,12 @@ import { MercadoPagoProvider } from './providers/mercadopago.provider';
  *   - 'mercadopago' → MercadoPagoProvider (requiere MERCADOPAGO_ACCESS_TOKEN)
  *   - 'mock'        → MockPaymentProvider (default, dev/test sin red)
  *
- * F.1: BillingController + BillingService (estado de renovación al frontend).
- * F.2: BillingNotificationsService (listener de eventos de dominio billing
- *       → crea Notification para owners/admins) y POST /v1/billing/me/retry.
+ * Sprint F.1: agrega `BillingController` para exponer estado de renovación
+ * al frontend y `BillingService` que lee Subscription + Plan.
+ *
+ * Sprint F.2: agrega `BillingNotificationsService` (listener de eventos de
+ * dominio billing → crea Notification para owners/admins) y endpoint
+ * `POST /v1/billing/me/retry` para retry manual del cobro.
  */
 @Module({
   imports: [

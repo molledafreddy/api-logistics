@@ -173,6 +173,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestIdMiddleware).forRoutes('*');
+    // NestJS 11 / path-to-regexp v6: usar parámetro nombrado `*path` en vez de `*`.
+    consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
   }
 }

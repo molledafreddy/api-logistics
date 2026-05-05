@@ -22,7 +22,7 @@ import {
   CreateTruckDto,
   UpdateTruckDto,
   QueryTruckDto,
-  AssignDriverDto,
+  AssignTruckDriverDto,
   UpdateTruckStatusDto,
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -132,7 +132,7 @@ export class TrucksController {
   @ApiResponse({ status: 200, description: 'Driver asignado' })
   assignDriver(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AssignDriverDto,
+    @Body() dto: AssignTruckDriverDto,
     @CurrentUser() user: IUserPayload,
   ) {
     return this.trucksService.assignDriver(id, dto.driverId, user);

@@ -17,7 +17,7 @@ import { Driver } from '../drivers/entities/driver.entity';
 import {
   CreateDeliveryRunDto,
   UpdateDeliveryRunDto,
-  AssignDriverDto,
+  AssignRunDriverDto,
   ShipmentIdsDto,
   ReorderDto,
   CancelDeliveryRunDto,
@@ -203,7 +203,7 @@ export class DeliveryRunsService {
   // ═══════════════════════════════════════════════════════════
   async assignDriver(
     id: string,
-    dto: AssignDriverDto,
+    dto: AssignRunDriverDto,
     user: IUserPayload,
   ): Promise<DeliveryRun> {
     const run = await this.getOpenRun(id, user);
