@@ -3993,7 +3993,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssignDriverDto"
+                "$ref": "#/components/schemas/AssignTruckDriverDto"
               }
             }
           }
@@ -7600,7 +7600,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssignDriverDto"
+                "$ref": "#/components/schemas/AssignRunDriverDto"
               }
             }
           }
@@ -9998,22 +9998,15 @@
         },
         "required": ["status"]
       },
-      "AssignDriverDto": {
+      "AssignTruckDriverDto": {
         "type": "object",
         "properties": {
           "driverId": {
-            "type": "object",
-            "format": "uuid",
-            "nullable": true,
-            "description": "UUID del driver, o null para desasignar"
-          },
-          "truckId": {
-            "type": "object",
-            "format": "uuid",
-            "nullable": true,
-            "description": "UUID del truck, o null para desasignar"
+            "type": "string",
+            "description": "Driver UUID to assign to the truck"
           }
-        }
+        },
+        "required": ["driverId"]
       },
       "CreateDriverDto": {
         "type": "object",
@@ -11136,6 +11129,23 @@
           "startTime": {
             "type": "string",
             "example": "07:30"
+          }
+        }
+      },
+      "AssignRunDriverDto": {
+        "type": "object",
+        "properties": {
+          "driverId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true,
+            "description": "UUID del driver, o null para desasignar"
+          },
+          "truckId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true,
+            "description": "UUID del truck, o null para desasignar"
           }
         }
       },
