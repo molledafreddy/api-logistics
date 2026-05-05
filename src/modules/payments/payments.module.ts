@@ -6,24 +6,40 @@ import { Plan } from '../plans/entities/plan.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { Invoice } from '../subscriptions/entities/invoice.entity';
 import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
+import { User } from '../auth/entities/user.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
+import { BillingNotificationsService } from './billing-notifications.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { PAYMENT_PROVIDER_TOKEN } from './payments.types';
 import { MockPaymentProvider } from './providers/mock.provider';
 import { MercadoPagoProvider } from './providers/mercadopago.provider';
 
+/**
+ * Sprint E + F.1 + F.2 — PaymentsModule.
+ *
+ * Selecciona el provider activo en bootstrap mediante `PAYMENTS_PROVIDER`:
+ *   - 'mercadopago' → MercadoPagoProvider (requiere MERCADOPAGO_ACCESS_TOKEN)
+ *   - 'mock'        → MockPaymentProvider (default, dev/test sin red)
+ *
+ * F.1: BillingController + BillingService (estado de renovación al frontend).
+ * F.2: BillingNotificationsService (listener de eventos de dominio billing
+ *       → crea Notification para owners/admins) y POST /v1/billing/me/retry.
+ */
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent, Plan]),
+    TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent, Plan, User]),
+    NotificationsModule,
   ],
   controllers: [PaymentsController, BillingController],
   providers: [
     PaymentsService,
     BillingService,
+    BillingNotificationsService,
     MockPaymentProvider,
     MercadoPagoProvider,
     {
