@@ -1,10 +1,13 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { Invoice } from '../subscriptions/entities/invoice.entity';
 import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
+import { Plan } from '../plans/entities/plan.entity';
+import { BILLING_EVENTS } from '../subscriptions/billing-events';
 
 import {
   CheckoutInput,
@@ -40,6 +43,9 @@ export class PaymentsService {
     private readonly invoiceRepo: Repository<Invoice>,
     @InjectRepository(PaymentEvent)
     private readonly eventRepo: Repository<PaymentEvent>,
+    @InjectRepository(Plan)
+    private readonly planRepo: Repository<Plan>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // ─── Public API ────────────────────────────
@@ -134,8 +140,30 @@ export class PaymentsService {
   ): Promise<void> {
     switch (evt.type) {
       case 'payment.approved': {
-        // PAY-003: emitimos invoice paid + subscription active
+        // PAY-003 + Sprint F.2: si la sub venía de pending_payment o suspended,
+        // reactivamos completamente: extender período, cerrar gracia, limpiar
+        // init_point y emitir evento de reactivación.
+        const wasInactive =
+          sub.status === 'pending_payment' || sub.status === 'suspended';
+        const now = new Date();
+
+        if (wasInactive) {
+          // Extender período: nuevo inicio = max(current_period_end, now); +1 mes.
+          const newStart =
+            sub.current_period_end.getTime() > now.getTime()
+              ? new Date(sub.current_period_end)
+              : now;
+          const newEnd = new Date(newStart);
+          newEnd.setMonth(newEnd.getMonth() + 1);
+          sub.current_period_start = newStart;
+          sub.current_period_end = newEnd;
+          sub.reactivated_at = now;
+        }
+
         sub.status = 'active';
+        sub.grace_period_until = null;
+        sub.grace_warning_sent_at = null;
+        sub.last_renewal_init_point = null;
         await this.subRepo.save(sub);
         await this.invoiceRepo.save(
           this.invoiceRepo.create({
@@ -147,6 +175,22 @@ export class PaymentsService {
             paid_at: new Date(),
           }),
         );
+
+        if (wasInactive) {
+          // Resolver nombre del plan para enriquecer la notificación.
+          const plan = await this.planRepo.findOne({
+            where: { id: sub.plan_id },
+          });
+          this.eventEmitter.emit(BILLING_EVENTS.SUBSCRIPTION_REACTIVATED, {
+            subscriptionId: sub.id,
+            companyId: sub.company_id,
+            planName: plan?.name ?? 'tu plan',
+            meta: {
+              reactivatedAt: now.toISOString(),
+              currentPeriodEnd: sub.current_period_end.toISOString(),
+            },
+          });
+        }
         break;
       }
       case 'payment.rejected':

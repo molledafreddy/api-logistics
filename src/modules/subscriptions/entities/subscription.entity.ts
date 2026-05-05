@@ -75,6 +75,19 @@ export class Subscription {
   @Column({ type: 'varchar', length: 500, nullable: true })
   last_renewal_init_point?: string | null;
 
+  // ─── Lifecycle suspended/reactivado (Sprint F.2) ─────
+  /** Momento en que la sub pasó a `suspended` por gracia agotada. */
+  @Column({ type: 'timestamptz', nullable: true })
+  suspended_at?: Date | null;
+
+  /** Momento del último pago aprobado tras `pending_payment` o `suspended`. */
+  @Column({ type: 'timestamptz', nullable: true })
+  reactivated_at?: Date | null;
+
+  /** Idempotencia: cuándo se envió la notificación "tu gracia vence en 24h". */
+  @Column({ type: 'timestamptz', nullable: true })
+  grace_warning_sent_at?: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

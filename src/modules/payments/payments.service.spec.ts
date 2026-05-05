@@ -1,10 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaymentsService } from './payments.service';
 import { IPaymentProvider, NormalizedPaymentEvent } from './payments.types';
+import { BILLING_EVENTS } from '../subscriptions/billing-events';
 import type { Subscription } from '../subscriptions/entities/subscription.entity';
 import type { Invoice } from '../subscriptions/entities/invoice.entity';
 import type { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
+import type { Plan } from '../plans/entities/plan.entity';
 
 function repoMock<T extends object>() {
   return {
@@ -34,6 +37,8 @@ describe('PaymentsService', () => {
   let subRepo: jest.Mocked<Repository<Subscription>>;
   let invoiceRepo: jest.Mocked<Repository<Invoice>>;
   let eventRepo: jest.Mocked<Repository<PaymentEvent>>;
+  let planRepo: jest.Mocked<Repository<Plan>>;
+  let eventEmitter: jest.Mocked<EventEmitter2>;
   let svc: PaymentsService;
 
   beforeEach(() => {
@@ -46,7 +51,18 @@ describe('PaymentsService', () => {
     subRepo = repoMock<Subscription>();
     invoiceRepo = repoMock<Invoice>();
     eventRepo = repoMock<PaymentEvent>();
-    svc = new PaymentsService(provider, subRepo, invoiceRepo, eventRepo);
+    planRepo = repoMock<Plan>();
+    eventEmitter = {
+      emit: jest.fn(),
+    } as unknown as jest.Mocked<EventEmitter2>;
+    svc = new PaymentsService(
+      provider,
+      subRepo,
+      invoiceRepo,
+      eventRepo,
+      planRepo,
+      eventEmitter,
+    );
   });
 
   describe('createCheckout', () => {
@@ -108,7 +124,7 @@ describe('PaymentsService', () => {
 
   describe('processWebhook (PAY-003 approved)', () => {
     it('aprueba sub + crea invoice paid', async () => {
-      const sub = makeSub();
+      const sub = makeSub({ status: 'active' });
       provider.resolveWebhookEvent.mockResolvedValue({
         type: 'payment.approved',
         externalId: 'pay-9',
@@ -131,6 +147,79 @@ describe('PaymentsService', () => {
         }),
       );
       expect(eventRepo.save).toHaveBeenCalled();
+      // Sub ya estaba active → no reactivación → no evento
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('Sprint F.2: reactiva desde pending_payment (extiende periodo, cierra gracia, emite evento)', async () => {
+      const periodEnd = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // venció hace 2d
+      const sub = makeSub({
+        status: 'pending_payment',
+        current_period_end: periodEnd,
+        grace_period_until: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        last_renewal_init_point: 'https://mp/old',
+      });
+      provider.resolveWebhookEvent.mockResolvedValue({
+        type: 'payment.approved',
+        externalId: 'pay-react',
+        externalReference: sub.external_reference ?? undefined,
+        amount: 9900,
+        raw: {},
+      });
+      eventRepo.findOne.mockResolvedValue(null);
+      subRepo.findOne.mockResolvedValue(sub);
+      planRepo.findOne.mockResolvedValue({
+        id: 'plan-1',
+        name: 'Pro',
+      } as Plan);
+
+      await svc.processWebhook({});
+
+      expect(sub.status).toBe('active');
+      expect(sub.grace_period_until).toBeNull();
+      expect(sub.last_renewal_init_point).toBeNull();
+      expect(sub.reactivated_at).toBeInstanceOf(Date);
+      // Período extendido +1 mes desde now (porque current_period_end ya pasó)
+      expect(sub.current_period_end.getTime()).toBeGreaterThan(
+        periodEnd.getTime(),
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        BILLING_EVENTS.SUBSCRIPTION_REACTIVATED,
+        expect.objectContaining({
+          subscriptionId: 'sub-1',
+          planName: 'Pro',
+        }),
+      );
+    });
+
+    it('Sprint F.2: reactiva desde suspended', async () => {
+      const sub = makeSub({
+        status: 'suspended',
+        current_period_end: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        suspended_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      });
+      provider.resolveWebhookEvent.mockResolvedValue({
+        type: 'payment.approved',
+        externalId: 'pay-react-2',
+        externalReference: sub.external_reference ?? undefined,
+        amount: 9900,
+        raw: {},
+      });
+      eventRepo.findOne.mockResolvedValue(null);
+      subRepo.findOne.mockResolvedValue(sub);
+      planRepo.findOne.mockResolvedValue({
+        id: 'plan-1',
+        name: 'Pro',
+      } as Plan);
+
+      await svc.processWebhook({});
+
+      expect(sub.status).toBe('active');
+      expect(sub.reactivated_at).toBeInstanceOf(Date);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        BILLING_EVENTS.SUBSCRIPTION_REACTIVATED,
+        expect.any(Object),
+      );
     });
   });
 

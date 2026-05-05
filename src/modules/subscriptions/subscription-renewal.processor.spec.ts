@@ -1,7 +1,9 @@
 import type { Repository } from 'typeorm';
 import { Job, Queue } from 'bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { SubscriptionRenewalProcessor } from './subscription-renewal.processor';
+import { BILLING_EVENTS } from './billing-events';
 import type { Subscription } from './entities/subscription.entity';
 import type { Plan } from '../plans/entities/plan.entity';
 import type { PaymentsService } from '../payments/payments.service';
@@ -51,6 +53,7 @@ describe('SubscriptionRenewalProcessor', () => {
   let planRepo: jest.Mocked<Repository<Plan>>;
   let paymentsService: jest.Mocked<PaymentsService>;
   let queue: jest.Mocked<Queue>;
+  let eventEmitter: jest.Mocked<EventEmitter2>;
   let proc: SubscriptionRenewalProcessor;
 
   beforeEach(() => {
@@ -60,11 +63,15 @@ describe('SubscriptionRenewalProcessor', () => {
       createCheckout: jest.fn(),
     } as unknown as jest.Mocked<PaymentsService>;
     queue = { close: jest.fn() } as unknown as jest.Mocked<Queue>;
+    eventEmitter = {
+      emit: jest.fn(),
+    } as unknown as jest.Mocked<EventEmitter2>;
     proc = new SubscriptionRenewalProcessor(
       subRepo,
       planRepo,
       paymentsService,
       queue,
+      eventEmitter,
     );
   });
 
@@ -133,20 +140,87 @@ describe('SubscriptionRenewalProcessor', () => {
     expect(sub.grace_period_until!.getTime()).toBeGreaterThan(Date.now());
   });
 
-  it('REN-005: cancela cuando la gracia ya expiró', async () => {
+  it('REN-005: suspende cuando la gracia ya expiró (Sprint F.2)', async () => {
     const sub = makeSub({
       status: 'pending_payment',
       current_period_end: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
       grace_period_until: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });
     subRepo.findOne.mockResolvedValue(sub);
+    planRepo.findOne.mockResolvedValue(makePlan());
 
     const r = await proc.process(makeJob());
 
-    expect(r.status).toBe('canceled');
-    expect(sub.status).toBe('canceled');
-    expect(sub.canceled_at).toBeInstanceOf(Date);
+    expect(r.status).toBe('suspended');
+    expect(sub.status).toBe('suspended');
+    expect(sub.suspended_at).toBeInstanceOf(Date);
     expect(paymentsService.createCheckout).not.toHaveBeenCalled();
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      BILLING_EVENTS.SUBSCRIPTION_SUSPENDED,
+      expect.objectContaining({
+        subscriptionId: 'sub-1',
+        companyId: 'co-1',
+        planName: 'Pro',
+      }),
+    );
+  });
+
+  it('REN-009 (F.2): emite RENEWAL_SCHEDULED en renovación normal', async () => {
+    const sub = makeSub({
+      current_period_end: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+    });
+    subRepo.findOne.mockResolvedValue(sub);
+    planRepo.findOne.mockResolvedValue(makePlan());
+    paymentsService.createCheckout.mockResolvedValue({
+      initPoint: 'https://mp/x',
+      providerCheckoutId: 'p',
+      externalReference: 'r',
+    });
+
+    await proc.process(makeJob());
+
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      BILLING_EVENTS.RENEWAL_SCHEDULED,
+      expect.objectContaining({ subscriptionId: 'sub-1' }),
+    );
+  });
+
+  it('REN-010 (F.2): emite GRACE_STARTED al abrir gracia', async () => {
+    const sub = makeSub({
+      current_period_end: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      grace_period_until: null,
+    });
+    subRepo.findOne.mockResolvedValue(sub);
+    planRepo.findOne.mockResolvedValue(makePlan());
+    paymentsService.createCheckout.mockResolvedValue({
+      initPoint: 'https://mp/x',
+      providerCheckoutId: 'p',
+      externalReference: 'r',
+    });
+
+    await proc.process(makeJob());
+
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      BILLING_EVENTS.GRACE_STARTED,
+      expect.objectContaining({ subscriptionId: 'sub-1' }),
+    );
+  });
+
+  it('REN-011 (F.2): emite RENEWAL_FAILED si checkout falla', async () => {
+    const sub = makeSub({
+      current_period_end: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+    });
+    subRepo.findOne.mockResolvedValue(sub);
+    planRepo.findOne.mockResolvedValue(makePlan());
+    paymentsService.createCheckout.mockRejectedValue(new Error('MP down'));
+
+    await expect(proc.process(makeJob())).rejects.toThrow('MP down');
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      BILLING_EVENTS.RENEWAL_FAILED,
+      expect.objectContaining({
+        meta: expect.objectContaining({ error: 'MP down' }),
+      }),
+    );
   });
 
   it('REN-007: plan free auto-renueva sin checkout', async () => {
