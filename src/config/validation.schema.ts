@@ -63,15 +63,18 @@ export const validationSchema = Joi.object({
   MAIL_FROM: Joi.string().email().default('noreply@api-logistics.com'),
   MAIL_FROM_NAME: Joi.string().default('API Logistics'),
 
-  // ─── Stripe ───────────────────────────────
-  STRIPE_SECRET_KEY: Joi.string().required(),
-  STRIPE_WEBHOOK_SECRET: Joi.string().required(),
-  STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
+  // ─── Stripe (no activo — provider es MercadoPago) ───
+  STRIPE_SECRET_KEY: Joi.string().allow('').default(''),
+  STRIPE_WEBHOOK_SECRET: Joi.string().allow('').default(''),
+  STRIPE_PUBLISHABLE_KEY: Joi.string().allow('').default(''),
 
   // ─── Firebase ─────────────────────────────
+  // Opción A: credenciales explícitas (recomendado para producción sin GCP).
   FIREBASE_PROJECT_ID: Joi.string().allow('').default(''),
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').default(''),
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').default(''),
+  // Opción B: path al JSON de service account (applicationDefault fallback).
+  GOOGLE_APPLICATION_CREDENTIALS: Joi.string().allow('').default(''),
 
   // ─── Rate Limiting (3 buckets) ────────────
   THROTTLE_SHORT_TTL: Joi.number().default(1000),

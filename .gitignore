@@ -47,3 +47,6 @@ decode-jwt.js
 fetch-jwks.js
 manual-curl-endpoints.md
 .git-commit-msg.tmp
+
+# Credentials / secrets
+credentials/

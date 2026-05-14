@@ -6,6 +6,7 @@ import { Notification } from './entities/notification.entity';
 import { PushToken } from './entities/push-token.entity';
 import { NotificationType } from '../../common/enums/notification-type.enum';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
+import { PushSenderService } from './push-sender.service';
 
 @Injectable()
 export class NotificationsService {
@@ -17,6 +18,7 @@ export class NotificationsService {
     @InjectRepository(PushToken)
     private readonly pushTokenRepo: Repository<PushToken>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly pushSender: PushSenderService,
   ) {}
 
   async create(data: {
@@ -36,6 +38,10 @@ export class NotificationsService {
     const saved = await this.notifRepo.save(notif);
     // Notifica vía WebSocket de manera best-effort
     this.eventEmitter.emit(INTERNAL_EVENTS.NOTIFICATION_CREATED, saved);
+    // Enviar push real (best-effort, no bloquear)
+    this.pushSender.sendPushToUser(saved.userId, saved).catch((err) => {
+      this.logger.warn(`Error enviando push real: ${err?.message || err}`);
+    });
     return saved;
   }
 

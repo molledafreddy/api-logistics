@@ -28,7 +28,8 @@ describe('PaymentsController', () => {
       providerCheckoutId: 'p1',
       externalReference: 'r1',
     });
-    const out = await ctrl.createCheckout({
+    const user = { sub: 'u1', companyId: 'c1', email: 'a@test.com' } as any;
+    const out = await ctrl.createCheckout(user, {
       subscriptionId: 's1',
       amount: 9900,
       itemTitle: 'Pro',

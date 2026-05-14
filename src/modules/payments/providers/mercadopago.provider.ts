@@ -104,7 +104,9 @@ export class MercadoPagoProvider implements IPaymentProvider {
         failure: this.failureUrl,
         pending: this.pendingUrl,
       },
-      auto_return: 'approved' as const,
+      ...(this.successUrl && !this.successUrl.includes('localhost')
+        ? { auto_return: 'approved' as const }
+        : {}),
       notification_url: this.notificationUrl || undefined,
       metadata: {
         subscription_id: input.subscriptionId,

@@ -13,9 +13,11 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RegisterPushTokenDto } from './dto/register-push-token.dto';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -65,17 +67,18 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Register a push notification token for mobile app',
   })
+  @ApiBody({ type: RegisterPushTokenDto })
   @ApiResponse({ status: 201, description: 'Push token registered' })
   @ApiResponse({ status: 400, description: 'Invalid token format' })
   registerPushToken(
     @CurrentUser() user: any,
-    @Body() body: { token: string; platform: string; deviceName?: string },
+    @Body() dto: RegisterPushTokenDto,
   ) {
     return this.service.registerPushToken(
       user.sub,
-      body.token,
-      body.platform,
-      body.deviceName,
+      dto.token,
+      dto.platform,
+      dto.deviceName,
     );
   }
 

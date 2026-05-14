@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FCM Web Token</title>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-messaging-compat.js"></script>
+  </head>
+  <body>
+    <h1>FCM Web Token</h1>
+    <pre id="token"></pre>
+    <script>
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyAMFSxdcJms7KV5sJQctN1KoapNu3fLU6E",
+        authDomain: "api-logistics-b40cd.firebaseapp.com",
+        projectId: "api-logistics-b40cd",
+        storageBucket: "api-logistics-b40cd.appspot.com",
+        messagingSenderId: "991718957681",
+        appId: "1:991718957681:web:45d1f0e5dacea5a5fb71d0",
+        measurementId: "G-5CBS9J6D4Q"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const messaging = firebase.messaging();
+
+      // Tu VAPID key pública
+      const vapidKey = "BMvdpTPB9i6Qo6rOH_VWzvfUgHJOMEXzwGjHUf7Fo7ZDJ0X_RwE9EKZEW4T5SwA3ptRuN74XNxWvYa4IhFqOwvw";
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('firebase-messaging-sw.js')
+          .then(function(registration) {
+            messaging.getToken({ vapidKey, serviceWorkerRegistration: registration })
+              .then((currentToken) => {
+                if (currentToken) {
+                  document.getElementById("token").textContent = currentToken;
+                } else {
+                  document.getElementById("token").textContent = "No token available";
+                }
+              })
+              .catch((err) => {
+                document.getElementById("token").textContent = "Error: " + err;
+              });
+          })
+          .catch(function(err) {
+            document.getElementById("token").textContent = "SW registration failed: " + err;
+          });
+      } else {
+        document.getElementById("token").textContent = "Service workers are not supported in this browser.";
+      }
+    </script>
+  </body>
+</html>

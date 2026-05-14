@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   HttpCode,
+  Inject,
   Logger,
   Post,
   Req,
@@ -9,17 +10,21 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiHeader,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import type { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { PaymentsService } from './payments.service';
 import { IPaymentProvider, PAYMENT_PROVIDER_TOKEN } from './payments.types';
-import { Inject } from '@nestjs/common';
 
 /**
  * Sprint E — Endpoints del módulo de pagos.
@@ -54,14 +59,20 @@ export class PaymentsController {
     status: 503,
     description: 'Provider no configurado o caído (PAY-MP-001 / PAY-MP-003)',
   })
-  async createCheckout(@Body() dto: CreateCheckoutDto) {
+  async createCheckout(
+    @CurrentUser() user: IUserPayload,
+    @Body() dto: CreateCheckoutDto,
+  ) {
+    if (!user?.companyId) {
+      throw new UnauthorizedException('Usuario sin company asociada');
+    }
     return this.paymentsService.createCheckout({
       subscriptionId: dto.subscriptionId,
-      companyId: '', // resuelto desde sub interna en service (cubierto en futura iteración)
+      companyId: user.companyId,
       amount: dto.amount,
       currency: dto.currency ?? 'CLP',
       itemTitle: dto.itemTitle,
-      payerEmail: dto.payerEmail,
+      payerEmail: dto.payerEmail ?? user.email,
     });
   }
 
@@ -74,7 +85,55 @@ export class PaymentsController {
     summary: 'Webhook del provider de pagos',
     description:
       'Recibe notificaciones del provider (firma HMAC verificada). ' +
-      'Idempotente: eventos duplicados devuelven 200 sin efectos secundarios.',
+      'Idempotente: eventos duplicados devuelven 200 sin efectos secundarios. ' +
+      'En modo **mock**: usar `x-signature: mock-signature` (o vacío) y body normalizado.',
+  })
+  @ApiParam({
+    name: 'provider',
+    description: 'Nombre del provider activo',
+    enum: ['mock', 'mercadopago'],
+    example: 'mock',
+  })
+  @ApiHeader({
+    name: 'x-signature',
+    description:
+      'Firma HMAC-SHA256 del webhook. En mock usar "mock-signature" o dejar vacío.',
+    required: false,
+    example: 'mock-signature',
+  })
+  @ApiBody({
+    description: 'Payload del webhook. En mock: body normalizado directamente.',
+    examples: {
+      mock_approved: {
+        summary: 'Pago aprobado (mock)',
+        value: {
+          type: 'payment.approved',
+          externalId: 'test-pay-001',
+          externalReference: 'mock-SUBSCRIPTION_ID-XXXXXXXX',
+          amount: 10000,
+          currency: 'CLP',
+        },
+      },
+      mock_rejected: {
+        summary: 'Pago rechazado (mock)',
+        value: {
+          type: 'payment.rejected',
+          externalId: 'test-pay-002',
+          externalReference: 'mock-SUBSCRIPTION_ID-XXXXXXXX',
+          amount: 10000,
+          currency: 'CLP',
+        },
+      },
+      mercadopago: {
+        summary: 'Webhook real MercadoPago',
+        value: {
+          action: 'payment.updated',
+          type: 'payment',
+          data: { id: '123456789' },
+        },
+      },
+    },
+    schema: { type: 'object' },
   })
   @ApiResponse({ status: 200, description: 'Procesado o no-op (idempotente)' })
   @ApiResponse({ status: 401, description: 'Firma inválida' })

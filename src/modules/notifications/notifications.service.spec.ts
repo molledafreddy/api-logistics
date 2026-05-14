@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationsService } from './notifications.service';
+import { PushSenderService } from './push-sender.service';
 import { Notification } from './entities/notification.entity';
 import { PushToken } from './entities/push-token.entity';
 import { NotificationType } from '../../common/enums/notification-type.enum';
@@ -37,6 +38,10 @@ describe('NotificationsService', () => {
         { provide: getRepositoryToken(Notification), useValue: notifRepo },
         { provide: getRepositoryToken(PushToken), useValue: pushRepo },
         { provide: EventEmitter2, useValue: emitter },
+        {
+          provide: PushSenderService,
+          useValue: { sendPushToUser: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
     service = module.get(NotificationsService);
