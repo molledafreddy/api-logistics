@@ -1,9 +1,9 @@
 # ═══════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN pnpm prune --prod --ignore-scripts
 # ═══════════════════════════════════════════
 # Stage 2: Production
 # ═══════════════════════════════════════════
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Security: non-root user
 RUN addgroup -g 1001 -S nodejs && \
