@@ -1,6 +1,6 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-05-05T04:20:26.775Z_
+_Generated: 2026-05-14T01:04:09.194Z_
 
 ## 📊 Summary
 
@@ -12,16 +12,17 @@ _Generated: 2026-05-05T04:20:26.775Z_
 - With 2xx response: 198 / 198 (100.0%)
 
 - 🔴 Errors: **0**
-- 🟡 Warnings: **2**
+- 🟡 Warnings: **3**
 
 ## 🔍 Findings by rule
 
-### 🟡 `inline-body-schema` — 2 occurrences
+### 🟡 `inline-body-schema` — 3 occurrences
 
-| Method  | Path                        | Detail                                                 |
-| ------- | --------------------------- | ------------------------------------------------------ |
-| `PATCH` | `/api/v1/plans/{id}/price`  | Request body uses inline schema (prefer DTO with $ref) |
-| `PATCH` | `/api/v1/plans/{id}/limits` | Request body uses inline schema (prefer DTO with $ref) |
+| Method  | Path                                  | Detail                                                 |
+| ------- | ------------------------------------- | ------------------------------------------------------ |
+| `PATCH` | `/api/v1/plans/{id}/price`            | Request body uses inline schema (prefer DTO with $ref) |
+| `PATCH` | `/api/v1/plans/{id}/limits`           | Request body uses inline schema (prefer DTO with $ref) |
+| `POST`  | `/api/v1/payments/{provider}/webhook` | Request body uses inline schema (prefer DTO with $ref) |
 
 ## 🏷️ Operations per tag
 

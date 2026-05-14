@@ -2243,9 +2243,73 @@
     },
     "/api/v1/payments/{provider}/webhook": {
       "post": {
-        "description": "Recibe notificaciones del provider (firma HMAC verificada). Idempotente: eventos duplicados devuelven 200 sin efectos secundarios.",
+        "description": "Recibe notificaciones del provider (firma HMAC verificada). Idempotente: eventos duplicados devuelven 200 sin efectos secundarios. En modo **mock**: usar `x-signature: mock-signature` (o vacío) y body normalizado.",
         "operationId": "PaymentsController_webhook",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-signature",
+            "in": "header",
+            "description": "Firma HMAC-SHA256 del webhook. En mock usar \"mock-signature\" o dejar vacío.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "mock-signature"
+            }
+          },
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "description": "Nombre del provider activo",
+            "schema": {
+              "enum": ["mock", "mercadopago"],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Payload del webhook. En mock: body normalizado directamente.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "examples": {
+                "mock_approved": {
+                  "summary": "Pago aprobado (mock)",
+                  "value": {
+                    "type": "payment.approved",
+                    "externalId": "test-pay-001",
+                    "externalReference": "mock-SUBSCRIPTION_ID-XXXXXXXX",
+                    "amount": 10000,
+                    "currency": "CLP"
+                  }
+                },
+                "mock_rejected": {
+                  "summary": "Pago rechazado (mock)",
+                  "value": {
+                    "type": "payment.rejected",
+                    "externalId": "test-pay-002",
+                    "externalReference": "mock-SUBSCRIPTION_ID-XXXXXXXX",
+                    "amount": 10000,
+                    "currency": "CLP"
+                  }
+                },
+                "mercadopago": {
+                  "summary": "Webhook real MercadoPago",
+                  "value": {
+                    "action": "payment.updated",
+                    "type": "payment",
+                    "data": {
+                      "id": "123456789"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Procesado o no-op (idempotente)"
@@ -2430,6 +2494,16 @@
       "post": {
         "operationId": "NotificationsController_registerPushToken",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Push token registered"
@@ -9693,6 +9767,31 @@
           }
         },
         "required": ["subscriptionId", "amount", "itemTitle"]
+      },
+      "RegisterPushTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "FCM registration token obtenido desde el navegador o app móvil",
+            "maxLength": 500,
+            "example": "dCPtjiB3d0wlUCSeibrF8k:APA91bGMSImQl2mvPSKOEYdpdeSzb1NKVC1Wv5yrhN8GnCAz3bD9WpBoHucU1Xi0qjUWbVJO7zpvFLhmq8iHWI390Vh0LejVeMSK4MAtatmNolBYLTui8nw"
+          },
+          "platform": {
+            "type": "string",
+            "description": "Plataforma del dispositivo",
+            "maxLength": 20,
+            "enum": ["web", "android", "ios"],
+            "example": "web"
+          },
+          "deviceName": {
+            "type": "string",
+            "description": "Nombre descriptivo del dispositivo",
+            "maxLength": 100,
+            "example": "Chrome en MacBook"
+          }
+        },
+        "required": ["token", "platform"]
       },
       "CreateVerificationTierDto": {
         "type": "object",
