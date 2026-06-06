@@ -1,9 +1,11 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { buildTrackingPageHtml } from './tracking-page.template';
 
+@ApiTags('TrackingPage')
 @Controller('tracking')
 @Public()
 export class TrackingPageController {
@@ -19,6 +21,8 @@ export class TrackingPageController {
   }
 
   @Get(':token')
+  @ApiOperation({ summary: 'Página de seguimiento público de envío' })
+  @ApiParam({ name: 'token', description: 'Token único del envío' })
   getPage(@Param('token') token: string, @Res() res: Response): void {
     const html = buildTrackingPageHtml(token, this.apiBase);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

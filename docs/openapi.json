@@ -507,6 +507,7 @@
             "name": "token",
             "required": true,
             "in": "path",
+            "description": "Token único del link de referido",
             "schema": {
               "type": "string"
             }
@@ -526,6 +527,7 @@
             "description": "Not Found — recurso no existe"
           }
         },
+        "summary": "Página de bienvenida para link de referido",
         "tags": ["ReferralsLanding"],
         "security": [
           {
@@ -9598,6 +9600,7 @@
             "name": "token",
             "required": true,
             "in": "path",
+            "description": "Token único del envío",
             "schema": {
               "type": "string"
             }
@@ -9617,6 +9620,7 @@
             "description": "Not Found — recurso no existe"
           }
         },
+        "summary": "Página de seguimiento público de envío",
         "tags": ["TrackingPage"],
         "security": [
           {

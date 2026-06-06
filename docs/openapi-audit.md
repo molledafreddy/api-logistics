@@ -1,17 +1,17 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-06-06T03:03:31.693Z_
+_Generated: 2026-06-06T03:14:58.255Z_
 
 ## 📊 Summary
 
 - Total operations: **219**
-- With `summary`: 217 / 219 (99.1%)
+- With `summary`: 219 / 219 (100.0%)
 - With `description`: 20 / 219 (9.1%)
 - With `tags`: 219 / 219 (100.0%)
 - With `security`: 212 / 219 (96.8%)
 - With 2xx response: 219 / 219 (100.0%)
 
-- 🔴 Errors: **2**
+- 🔴 Errors: **0**
 - 🟡 Warnings: **3**
 
 ## 🔍 Findings by rule
@@ -23,13 +23,6 @@ _Generated: 2026-06-06T03:03:31.693Z_
 | `PATCH` | `/api/v1/plans/{id}/price`            | Request body uses inline schema (prefer DTO with $ref) |
 | `PATCH` | `/api/v1/plans/{id}/limits`           | Request body uses inline schema (prefer DTO with $ref) |
 | `POST`  | `/api/v1/payments/{provider}/webhook` | Request body uses inline schema (prefer DTO with $ref) |
-
-### 🔴 `missing-summary` — 2 occurrences
-
-| Method | Path                             | Detail                                 |
-| ------ | -------------------------------- | -------------------------------------- |
-| `GET`  | `/api/v1/referrals/join/{token}` | No @ApiOperation({ summary }) declared |
-| `GET`  | `/api/v1/tracking/{token}`       | No @ApiOperation({ summary }) declared |
 
 ## 🏷️ Operations per tag
 
