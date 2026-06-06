@@ -197,6 +197,30 @@
         "tags": ["Auth"]
       }
     },
+    "/api/v1/auth/me/permissions": {
+      "get": {
+        "operationId": "AuthController_getMyPermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de códigos de permiso"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Permisos del plan activo de la empresa del usuario",
+        "tags": ["Auth"]
+      }
+    },
     "/api/v1/auth/resend-verification": {
       "post": {
         "operationId": "AuthController_resendVerification",
@@ -243,6 +267,271 @@
         ],
         "summary": "Sincronizar estado de verificación de email",
         "tags": ["Auth"]
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "patch": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña actualizada"
+          },
+          "401": {
+            "description": "Contraseña actual incorrecta"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambiar contraseña del usuario autenticado",
+        "tags": ["Auth"]
+      }
+    },
+    "/api/v1/referrals/config": {
+      "get": {
+        "operationId": "ReferralsController_getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener configuración actual de porcentajes y TTL",
+        "tags": ["Referrals"]
+      },
+      "patch": {
+        "operationId": "ReferralsController_updateConfig",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReferralConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar porcentajes y TTL del sistema de referidos (solo SUPER_ADMIN)",
+        "tags": ["Referrals"]
+      }
+    },
+    "/api/v1/referrals/links": {
+      "post": {
+        "operationId": "ReferralsController_generateLink",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Link generado con URL y fecha de expiración"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generar nuevo link de referido",
+        "tags": ["Referrals"]
+      },
+      "get": {
+        "operationId": "ReferralsController_getMyLinks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar mis links de referido activos",
+        "tags": ["Referrals"]
+      }
+    },
+    "/api/v1/referrals/links/{id}": {
+      "delete": {
+        "operationId": "ReferralsController_deactivateLink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Desactivar un link de referido",
+        "tags": ["Referrals"]
+      }
+    },
+    "/api/v1/referrals/links/validate": {
+      "get": {
+        "operationId": "ReferralsController_validateToken",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "query",
+            "description": "Token del link de referido",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de validez del token"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validar token de referido (público — usado en pantalla de registro)",
+        "tags": ["Referrals"]
+      }
+    },
+    "/api/v1/referrals/me": {
+      "get": {
+        "operationId": "ReferralsController_getMyStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mis estadísticas de referidos",
+        "tags": ["Referrals"]
+      }
+    },
+    "/api/v1/referrals/join/{token}": {
+      "get": {
+        "operationId": "ReferralsLandingController_getPage",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "tags": ["ReferralsLanding"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
       }
     },
     "/api/v1/companies": {
@@ -1160,6 +1449,30 @@
           }
         ],
         "summary": "Límites efectivos del plan activo del usuario actual",
+        "tags": ["Plans"]
+      }
+    },
+    "/api/v1/plans/me/permissions": {
+      "get": {
+        "operationId": "PlansController_getMyPermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Permisos efectivos del plan activo del usuario",
         "tags": ["Plans"]
       }
     },
@@ -2358,6 +2671,30 @@
         "tags": ["billing"]
       }
     },
+    "/api/v1/billing/me/history": {
+      "get": {
+        "operationId": "BillingController_getMyHistory",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de eventos de pago"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Historial de eventos de pago de la suscripción activa",
+        "tags": ["billing"]
+      }
+    },
     "/api/v1/billing/me/retry": {
       "post": {
         "description": "Solo aplicable a suscripciones en `pending_payment` o `suspended`. Throttle de 5 minutos entre intentos.",
@@ -2386,6 +2723,31 @@
           }
         ],
         "summary": "Reintenta el cobro generando un nuevo checkout",
+        "tags": ["billing"]
+      }
+    },
+    "/api/v1/billing/me/last-payment-event": {
+      "get": {
+        "description": "El cliente móvil debe llamar a este endpoint tras volver del checkout (deep link `logistics://payment/*`) para conocer el estado REAL del pago. Nunca confiar en el query string del deep link: es spoofeable. Devuelve `null` si no hay eventos en las últimas 24h.",
+        "operationId": "BillingController_getMyLastPaymentEvent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Último evento o null"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Último evento de pago verificado (fuente de verdad post-checkout)",
         "tags": ["billing"]
       }
     },
@@ -2835,6 +3197,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddDocumentDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Document added"
@@ -3336,6 +3708,92 @@
           }
         ],
         "summary": "Generate a pre-signed S3 download URL",
+        "tags": ["Files"]
+      }
+    },
+    "/api/v1/files/upload": {
+      "post": {
+        "operationId": "FilesController_uploadFile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "folder": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Download URL of uploaded file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a file via server (proxy to S3)",
+        "tags": ["Files"]
+      }
+    },
+    "/api/v1/files/local/{path}": {
+      "get": {
+        "operationId": "FilesController_serveLocal",
+        "parameters": [
+          {
+            "name": "0",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Serve locally stored file (STORAGE_PROVIDER=local only)",
         "tags": ["Files"]
       }
     },
@@ -4496,6 +4954,53 @@
           }
         ],
         "summary": "Cambiar estado del driver",
+        "tags": ["Drivers"]
+      }
+    },
+    "/api/v1/drivers/{id}/invite": {
+      "post": {
+        "description": "Crea un usuario pendiente de verificación vinculado al driver y devuelve el token de activación. El conductor usa ese token en la pantalla de activación de la app para establecer su contraseña.",
+        "operationId": "DriversController_inviteDriver",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteDriverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitación creada — devuelve token de activación"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "409": {
+            "description": "Driver ya tiene cuenta o email en uso"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invitar conductor a crear su cuenta de acceso",
         "tags": ["Drivers"]
       }
     },
@@ -5908,6 +6413,14 @@
             }
           },
           {
+            "name": "deliveryRunId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "shipmentId",
             "required": false,
             "in": "query",
@@ -6038,6 +6551,14 @@
           },
           {
             "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deliveryRunId",
             "required": false,
             "in": "query",
             "schema": {
@@ -7656,6 +8177,43 @@
         "tags": ["DeliveryRuns"]
       }
     },
+    "/api/v1/delivery-runs/{id}/assignable-drivers": {
+      "get": {
+        "description": "Devuelve conductores de la empresa carrier del run más los de empresas con relación covered_carrier o associated_company en estado accepted. Solo accesible con plan de empresa (roles MANAGER o superior).",
+        "operationId": "DeliveryRunsController_getAssignableDrivers",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Drivers asignables al run (propios + empresas partner activas)",
+        "tags": ["DeliveryRuns"]
+      }
+    },
     "/api/v1/delivery-runs/{id}/assign-driver": {
       "patch": {
         "operationId": "DeliveryRunsController_assignDriver",
@@ -7991,6 +8549,88 @@
           }
         ],
         "summary": "Cerrar un stop como entregado (DR-004)",
+        "tags": ["DeliveryRuns"]
+      }
+    },
+    "/api/v1/delivery-runs/{id}/stops/{shipmentId}/start-transit": {
+      "post": {
+        "operationId": "DeliveryRunsController_stopStartTransit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shipmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Marcar stop en tránsito → in_transit",
+        "tags": ["DeliveryRuns"]
+      }
+    },
+    "/api/v1/delivery-runs/{id}/stops/{shipmentId}/arrive": {
+      "post": {
+        "operationId": "DeliveryRunsController_stopArrive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shipmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirmar llegada al stop → at_stop",
         "tags": ["DeliveryRuns"]
       }
     },
@@ -8912,6 +9552,78 @@
         "summary": "Eliminar favorito (soft delete)",
         "tags": ["Saved Addresses"]
       }
+    },
+    "/api/v1/public/tracking/{token}": {
+      "get": {
+        "operationId": "PublicTrackingController_getTracking",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token único del envío (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "summary": "Seguimiento público de envío — sin autenticación",
+        "tags": ["Public Tracking"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tracking/{token}": {
+      "get": {
+        "operationId": "TrackingPageController_getPage",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          },
+          "404": {
+            "description": "Not Found — recurso no existe"
+          }
+        },
+        "tags": ["TrackingPage"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -9062,6 +9774,10 @@
           "timezone": {
             "type": "string",
             "example": "America/New_York"
+          },
+          "referralToken": {
+            "type": "string",
+            "description": "Token de link de referido (opcional)"
           }
         },
         "required": [
@@ -9096,6 +9812,47 @@
           }
         },
         "required": ["refreshToken"]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Contraseña actual"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "Nueva contraseña (mínimo 8 caracteres)"
+          }
+        },
+        "required": ["currentPassword", "newPassword"]
+      },
+      "UpdateReferralConfigDto": {
+        "type": "object",
+        "properties": {
+          "referrerDiscountPct": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "% descuento en próxima renovación del referidor"
+          },
+          "referredDiscountPct": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "% descuento en primer pago del referido"
+          },
+          "linkTtlHours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 720,
+            "description": "Horas de vigencia del link generado"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Habilita o deshabilita el sistema de referidos"
+          }
+        }
       },
       "CreateCompanyDto": {
         "type": "object",
@@ -9852,6 +10609,36 @@
         },
         "required": ["decision"]
       },
+      "AddDocumentDto": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "rut",
+              "tax_id",
+              "insurance",
+              "driver_license",
+              "vehicle_registration",
+              "permit",
+              "other"
+            ],
+            "example": "rut",
+            "description": "Type of document being uploaded"
+          },
+          "fileUrl": {
+            "type": "string",
+            "example": "http://localhost:3000/api/v1/files/local/verifications/uuid.jpg",
+            "description": "URL of the uploaded file"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "RUT de empresa",
+            "description": "Display name for the document"
+          }
+        },
+        "required": ["documentType", "fileUrl"]
+      },
       "CreateRelationshipDto": {
         "type": "object",
         "properties": {
@@ -10287,6 +11074,31 @@
           }
         },
         "required": ["status"]
+      },
+      "InviteDriverDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "juan.perez@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Juan",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Pérez",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "example": "+56912345678",
+            "maxLength": 30
+          }
+        },
+        "required": ["email"]
       },
       "WaypointDto": {
         "type": "object",
@@ -10975,6 +11787,10 @@
       "CreateExpenseDto": {
         "type": "object",
         "properties": {
+          "deliveryRunId": {
+            "type": "object",
+            "nullable": true
+          },
           "shipmentId": {
             "type": "string"
           },
@@ -11037,6 +11853,10 @@
       "UpdateExpenseDto": {
         "type": "object",
         "properties": {
+          "deliveryRunId": {
+            "type": "object",
+            "nullable": true
+          },
           "shipmentId": {
             "type": "string"
           },
