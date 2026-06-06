@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -7,11 +7,13 @@ import { SupabaseService } from './supabase.service';
 import { SupabaseJwtStrategy } from './strategies/supabase-jwt.strategy';
 import { User } from './entities/user.entity';
 import { Company } from '../companies/entities/company.entity';
+import { ReferralsModule } from '../referrals/referrals.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'supabase-jwt' }),
     TypeOrmModule.forFeature([User, Company]),
+    forwardRef(() => ReferralsModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, SupabaseService, SupabaseJwtStrategy],

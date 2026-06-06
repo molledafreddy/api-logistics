@@ -6,6 +6,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from '../auth/entities/user.entity';
 import { SupabaseService } from '../auth/supabase.service';
@@ -103,6 +104,7 @@ describe('UsersService', () => {
               .fn()
               .mockImplementation((entity) => Promise.resolve(entity)),
             findOne: jest.fn(),
+            count: jest.fn().mockResolvedValue(0),
             createQueryBuilder: jest.fn().mockReturnValue(mockQb),
           },
         },
@@ -110,6 +112,16 @@ describe('UsersService', () => {
           provide: SupabaseService,
           useValue: {
             createAuthUser: jest.fn().mockResolvedValue({ id: 'new-auth-uid' }),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            query: jest
+              .fn()
+              .mockResolvedValue([
+                { limits: { global: { max_users: 99999 } } },
+              ]),
           },
         },
       ],

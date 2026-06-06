@@ -293,6 +293,17 @@ export class Shipment extends BaseEntity {
   @Column({ type: 'jsonb', default: {} })
   metadata!: Record<string, unknown>;
 
+  // ─── Public tracking ───────────────────
+  @Column({ type: 'uuid', unique: true, name: 'public_tracking_token' })
+  publicTrackingToken!: string;
+
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'proximity_alert_sent_at',
+  })
+  proximityAlertSentAt!: Date | null;
+
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt!: Date | null;
 

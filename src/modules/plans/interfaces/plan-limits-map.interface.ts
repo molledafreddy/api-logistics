@@ -18,10 +18,32 @@
  * La vertical especial `global` se reserva para límites no asociados a una
  * vertical concreta (compatibilidad con el modelo del Anexo V3).
  */
+/**
+ * Claves conocidas de la vertical "global".
+ * Usado por guards y servicios para acceso con autocompletion.
+ */
+export interface GlobalLimits {
+  maxShipmentsPerDay?: number;
+  maxStopsPerOptimization?: number;
+  maxReoptimizationsPerDay?: number;
+  max_drivers?: number;
+  max_templates?: number;
+}
+
+/** Claves conocidas de la vertical "trucking". */
+export interface TruckingLimits {
+  max_trucks?: number;
+}
+
+/**
+ * Mapa de límites materializado en `plans.limits` (jsonb).
+ * Cada clave es una vertical; el valor es un mapa de code → número.
+ * La vertical "global" y "trucking" tienen claves conocidas tipadas.
+ */
 export interface PlanLimitsMap {
-  [vertical: string]: {
-    [code: string]: number;
-  };
+  global?: Record<string, number>;
+  trucking?: Record<string, number>;
+  [vertical: string]: Record<string, number> | undefined;
 }
 
 /** Vertical reservada para límites globales del plan. */

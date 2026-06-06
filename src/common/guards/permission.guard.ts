@@ -96,11 +96,14 @@ export class PermissionGuard implements CanActivate {
       const rows: Array<{ code: string }> = await this.dataSource.query(
         `
         SELECT pd.code
-        FROM subscriptions s
+        FROM (
+          SELECT plan_id FROM subscriptions
+          WHERE company_id = $1 AND status = 'active'
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) s
         JOIN plan_permissions pp ON pp.plan_id = s.plan_id
         JOIN permission_definitions pd ON pd.id = pp.permission_id
-        WHERE s.company_id = $1 AND s.status = 'active'
-        ORDER BY s.created_at DESC
         `,
         [companyId],
       );

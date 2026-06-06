@@ -6,6 +6,7 @@ import {
   VersioningType,
   HttpStatus,
   Logger,
+  RequestMethod,
 } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -80,8 +81,27 @@ async function bootstrap() {
   // ─── Seguridad: cabeceras (Helmet) ────
   app.use(
     helmet({
-      // En dev desactivamos CSP para que el ws-tester pueda cargar socket.io desde CDN
-      contentSecurityPolicy: isProd ? undefined : false,
+      // CSP permite: Leaflet (unpkg.com), OSM tiles y scripts/estilos inline de la página de tracking.
+      // En dev se desactiva para facilitar herramientas locales (ws-tester, etc.).
+      contentSecurityPolicy: isProd
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+              styleSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+              imgSrc: [
+                "'self'",
+                'data:',
+                'https://*.tile.openstreetmap.org',
+                'https://unpkg.com',
+              ],
+              connectSrc: ["'self'"],
+              fontSrc: ["'self'"],
+              objectSrc: ["'none'"],
+              frameAncestors: ["'none'"],
+            },
+          }
+        : false,
       crossOriginEmbedderPolicy: false,
       // HSTS estricto sólo en producción (1 año + subdominios + preload)
       hsts: isProd
@@ -121,7 +141,10 @@ async function bootstrap() {
   });
 
   // ─── Prefijo global ───────────────────
-  app.setGlobalPrefix(apiPrefix);
+  // /tracking/:token se excluye para servir la página HTML pública sin prefijo v1
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: [{ path: 'tracking/:token', method: RequestMethod.GET }],
+  });
 
   // ─── Pipes globales ────────────────────
   app.useGlobalPipes(

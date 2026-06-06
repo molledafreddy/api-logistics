@@ -5,6 +5,8 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
+import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
+import { ReferralsService } from '../referrals/referrals.service';
 import { User } from './entities/user.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { UserStatus } from '../../common/enums/user-status.enum';
@@ -151,6 +153,19 @@ describe('AuthService', () => {
           provide: DataSource,
           useValue: {
             createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+            query: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: PermissionsCacheService,
+          useValue: { getOrLoad: jest.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: ReferralsService,
+          useValue: {
+            applyReferralCode: jest.fn().mockResolvedValue(undefined),
+            getReferredDiscount: jest.fn().mockResolvedValue(0),
+            onReferredPaymentApproved: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

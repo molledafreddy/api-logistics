@@ -14,10 +14,14 @@ import {
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 import type { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import {
   BillingService,
+  LastPaymentEventView,
   MyRenewalView,
+  PaymentHistoryItem,
   RetryRenewalResult,
 } from './billing.service';
 
@@ -35,6 +39,7 @@ export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   @Get('me/renewal')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_OWNER, UserRole.ADMIN)
   @ApiOperation({
     summary: 'Estado de la próxima renovación de la suscripción del usuario',
     description:
@@ -52,8 +57,28 @@ export class BillingController {
     return this.billingService.getMyRenewal(user.companyId);
   }
 
+  @Get('me/history')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+  )
+  @ApiOperation({
+    summary: 'Historial de eventos de pago de la suscripción activa',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de eventos de pago' })
+  async getMyHistory(
+    @CurrentUser() user: IUserPayload,
+  ): Promise<PaymentHistoryItem[]> {
+    if (!user?.companyId)
+      throw new UnauthorizedException('Usuario sin company');
+    return this.billingService.getMyHistory(user.companyId);
+  }
+
   @Post('me/retry')
   @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_OWNER)
   @ApiOperation({
     summary: 'Reintenta el cobro generando un nuevo checkout',
     description:
@@ -75,5 +100,26 @@ export class BillingController {
       throw new UnauthorizedException('Usuario sin company');
     }
     return this.billingService.retry(user.companyId);
+  }
+
+  @Get('me/last-payment-event')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary:
+      'Último evento de pago verificado (fuente de verdad post-checkout)',
+    description:
+      'El cliente móvil debe llamar a este endpoint tras volver del checkout ' +
+      '(deep link `logistics://payment/*`) para conocer el estado REAL del pago. ' +
+      'Nunca confiar en el query string del deep link: es spoofeable. ' +
+      'Devuelve `null` si no hay eventos en las últimas 24h.',
+  })
+  @ApiResponse({ status: 200, description: 'Último evento o null' })
+  @ApiResponse({ status: 401, description: 'No autenticado' })
+  async getMyLastPaymentEvent(
+    @CurrentUser() user: IUserPayload,
+  ): Promise<LastPaymentEventView | null> {
+    if (!user?.companyId)
+      throw new UnauthorizedException('Usuario sin company');
+    return this.billingService.getMyLastPaymentEvent(user.companyId);
   }
 }

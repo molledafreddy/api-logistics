@@ -7,7 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { Shipment } from './entities/shipment.entity';
 import { Truck } from '../trucks/entities/truck.entity';
 import { Driver } from '../drivers/entities/driver.entity';
@@ -28,6 +28,7 @@ import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { RelationshipsService } from '../relationships/relationships.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { randomUUID } from 'crypto';
 
 /**
  * Roles que pueden gestionar shipments dentro de una empresa carrier o cliente.
@@ -95,6 +96,7 @@ export class ShipmentsService {
     private readonly userRepository: Repository<User>,
     private readonly relationshipsService: RelationshipsService,
     private readonly notificationsService: NotificationsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ─────────────────────────────────────────────
@@ -108,6 +110,10 @@ export class ShipmentsService {
   // ─────────────────────────────────────────────
   async create(dto: CreateShipmentDto, user: IUserPayload): Promise<Shipment> {
     const userCompanyId = this.requireCompanyId(user);
+
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      await this.checkDailyShipmentLimit(userCompanyId);
+    }
 
     // Por convención, el creador siempre forma parte de la transacción:
     //  - Si dto.customerCompanyId está presente → quien crea es el CLIENTE,
@@ -171,6 +177,7 @@ export class ShipmentsService {
       companyId: carrierId,
       customerCompanyId,
       trackingCode,
+      publicTrackingToken: randomUUID(),
       status: initialStatus,
       priority: dto.priority || 'normal',
       cargoType: dto.cargoType || 'general',
@@ -892,6 +899,56 @@ export class ShipmentsService {
     if (!allowed[from]?.includes(to)) {
       throw new BadRequestException(
         `Invalid status transition: ${from} -> ${to}`,
+      );
+    }
+  }
+
+  /**
+   * Verifica que la empresa no haya superado su límite diario de envíos.
+   * - Sin suscripción activa → aplica 6 (free tier por defecto).
+   * - Con suscripción → lee global.maxShipmentsPerDay del jsonb del plan.
+   * - Valor 99999 o -1 se trata como ilimitado.
+   */
+  private async checkDailyShipmentLimit(companyId: string): Promise<void> {
+    const rows: Array<{ limits: Record<string, Record<string, number>> }> =
+      await this.dataSource.query(
+        `SELECT p.limits
+           FROM subscriptions s
+           JOIN plans p ON p.id = s.plan_id
+          WHERE s.company_id = $1 AND s.status IN ('active', 'pending_payment')
+          ORDER BY s.created_at DESC
+          LIMIT 1`,
+        [companyId],
+      );
+
+    let maxPerDay: number;
+
+    if (rows.length === 0) {
+      maxPerDay = 6;
+    } else {
+      const resolved = rows[0].limits?.['global']?.['maxShipmentsPerDay'];
+      if (resolved === undefined || resolved === -1 || resolved >= 99999) {
+        return; // ilimitado
+      }
+      maxPerDay = resolved;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const countToday = await this.shipmentRepository
+      .createQueryBuilder('s')
+      .where('s.companyId = :companyId', { companyId })
+      .andWhere('s.createdAt >= :today', { today })
+      .andWhere('s.createdAt < :tomorrow', { tomorrow })
+      .andWhere('s.deletedAt IS NULL')
+      .getCount();
+
+    if (countToday >= maxPerDay) {
+      throw new ForbiddenException(
+        `Has alcanzado el límite de ${maxPerDay} envío(s) por día en tu plan actual. Considera mejorar tu plan.`,
       );
     }
   }

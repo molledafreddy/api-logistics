@@ -38,17 +38,20 @@ export class OptimizationLimitsGuard implements CanActivate {
     const companyId = user?.companyId;
     if (!companyId) throw new ForbiddenException('No companyId in user');
 
-    // Cargar la subscripción activa y su plan
+    // Cargar la subscripción activa y su plan.
+    // Sin suscripción activa → no hay límites de stops que verificar
+    // (el acceso ya fue bloqueado por @Permissions('optimization.basic') en el controller).
     const subscription = await this.subscriptionRepo.findOne({
       where: { company_id: companyId, status: 'active' },
       order: { created_at: 'DESC' },
     });
-    if (!subscription)
-      throw new ForbiddenException('No active subscription found for company');
+    if (!subscription) return true; // PermissionGuard ya validó el acceso
+
     const plan = await this.planRepo.findOne({
       where: { id: subscription.plan_id },
     });
-    if (!plan) throw new ForbiddenException('Plan not found');
+    if (!plan) return true;
+
     const limits: PlanLimitsMap = plan.limits || {};
     const globalLimits = limits[PLAN_LIMITS_GLOBAL_VERTICAL] || {};
 

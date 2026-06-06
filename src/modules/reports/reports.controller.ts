@@ -5,6 +5,7 @@ import { ReportsService } from './reports.service';
 import { ReportQueryDto, ShipmentReportQueryDto, ReportFormat } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
 
@@ -20,6 +21,7 @@ type IUserPayload = UserPayloadNS.IUserPayload;
   UserRole.MANAGER,
   UserRole.ACCOUNTANT,
 )
+@Permissions('reports.advanced')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 

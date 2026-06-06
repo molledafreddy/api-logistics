@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import {
   BadRequestException,
   ForbiddenException,
@@ -69,6 +70,16 @@ describe('ShipmentsService', () => {
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: RelationshipsService, useValue: relationships },
         { provide: NotificationsService, useValue: notifications },
+        {
+          provide: DataSource,
+          useValue: {
+            query: jest
+              .fn()
+              .mockResolvedValue([
+                { limits: { global: { maxShipmentsPerDay: 99999 } } },
+              ]),
+          },
+        },
       ],
     }).compile();
     service = module.get(ShipmentsService);

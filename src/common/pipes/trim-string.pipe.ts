@@ -12,6 +12,10 @@ export class TrimStringPipe implements PipeTransform {
     for (const [key, value] of Object.entries(values)) {
       if (typeof value === 'string') {
         result[key] = value.trim();
+      } else if (Array.isArray(value)) {
+        result[key] = value.map((item) =>
+          this.isObject(item) && !Array.isArray(item) ? this.trim(item) : item,
+        );
       } else if (this.isObject(value)) {
         result[key] = this.trim(value);
       } else {

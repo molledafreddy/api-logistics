@@ -6,8 +6,11 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { DriversService } from './drivers.service';
 import { Driver } from './entities/driver.entity';
+import { User } from '../auth/entities/user.entity';
+import { MailService } from '../mail/mail.service';
 import { DriverStatus } from '../../common/enums/driver-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import type { IUserPayload } from '../../common/interfaces/user-payload.interface';
@@ -25,6 +28,7 @@ const repoMock = () => ({
   create: jest.fn((x) => x),
   save: jest.fn(async (x) => ({ id: 'd1', ...x })),
   findOne: jest.fn(),
+  count: jest.fn().mockResolvedValue(0),
   softRemove: jest.fn(),
   createQueryBuilder: jest.fn(),
 });
@@ -44,6 +48,35 @@ describe('DriversService', () => {
       providers: [
         DriversService,
         { provide: getRepositoryToken(Driver), useValue: repo },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn((x) => x),
+            save: jest.fn(async (x) => ({ id: 'u1', ...x })),
+            count: jest.fn().mockResolvedValue(0),
+            findOneBy: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            query: jest
+              .fn()
+              .mockResolvedValue([
+                { limits: { global: { max_drivers: 99999 } } },
+              ]),
+          },
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendDriverInvitation: jest.fn().mockResolvedValue(undefined),
+            sendDriverWelcomeWithCredentials: jest
+              .fn()
+              .mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
     service = module.get(DriversService);

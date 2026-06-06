@@ -99,6 +99,7 @@ describe('RecurringTemplatesService', () => {
         async (opts: any) =>
           state.templates.find((t: any) => t.id === opts.where.id) ?? null,
       ),
+      count: jest.fn().mockResolvedValue(0),
       createQueryBuilder: () => {
         const conds: Array<(t: any) => boolean> = [];
         const params: any = {};
@@ -239,6 +240,9 @@ describe('RecurringTemplatesService', () => {
 
     dataSource = {
       transaction: jest.fn(async (fn: any) => fn(em)),
+      query: jest
+        .fn()
+        .mockResolvedValue([{ limits: { global: { max_templates: 99999 } } }]),
     };
 
     eventEmitter = new EventEmitter2();

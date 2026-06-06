@@ -10,5 +10,7 @@ export enum NotificationType {
   VERIFICATION_UPDATE = 'verification_update',
   SUBSCRIPTION_ALERT = 'subscription_alert',
   DRIVER_LOCATION = 'driver_location',
+  PROXIMITY_ALERT = 'proximity_alert',
+  RUN_ASSIGNED = 'run_assigned',
   SYSTEM = 'system',
 }

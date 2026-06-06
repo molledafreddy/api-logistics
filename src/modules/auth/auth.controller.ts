@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,7 +17,12 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/index';
+import {
+  RegisterDto,
+  LoginDto,
+  RefreshTokenDto,
+  ChangePasswordDto,
+} from './dto/index';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
@@ -92,6 +98,18 @@ export class AuthController {
     return this.authService.getProfile(user.sub);
   }
 
+  @Get('me/permissions')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Permisos del plan activo de la empresa del usuario',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de códigos de permiso' })
+  @ApiResponse({ status: 401, description: 'No autenticado' })
+  async getMyPermissions(@CurrentUser() user: IUserPayload) {
+    if (!user.companyId) return { permissions: [] };
+    return this.authService.getMyPermissions(user.companyId);
+  }
+
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
@@ -110,5 +128,22 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'No autenticado' })
   async verifyEmail(@CurrentUser() user: IUserPayload) {
     return this.authService.syncEmailVerification(user.sub);
+  }
+
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cambiar contraseña del usuario autenticado' })
+  @ApiResponse({ status: 200, description: 'Contraseña actualizada' })
+  @ApiResponse({ status: 401, description: 'Contraseña actual incorrecta' })
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @CurrentUser() user: IUserPayload,
+  ) {
+    return this.authService.changePassword(
+      user.sub,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

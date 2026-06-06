@@ -26,6 +26,7 @@ import {
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
 
@@ -48,6 +49,7 @@ export class RecurringTemplatesController {
   // 1
   @Post()
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @ApiOperation({ summary: 'Crear plantilla de recurrencia' })
   @ApiResponse({ status: 201 })
   create(
@@ -60,6 +62,7 @@ export class RecurringTemplatesController {
   // 2
   @Get()
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @ApiOperation({ summary: 'Listar plantillas (filtros + paginación)' })
   findAll(
     @Query() query: QueryRecurringTemplateDto,
@@ -71,6 +74,7 @@ export class RecurringTemplatesController {
   // 3
   @Get(':id')
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @ApiOperation({ summary: 'Detalle de plantilla' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,6 +86,7 @@ export class RecurringTemplatesController {
   // 4
   @Patch(':id')
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @ApiOperation({
     summary: 'Editar plantilla (RT-003: no afecta runs ya generados)',
   })
@@ -96,6 +101,7 @@ export class RecurringTemplatesController {
   // 5
   @Post(':id/generate')
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -117,6 +123,7 @@ export class RecurringTemplatesController {
   // 6
   @Post(':id/pause')
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Pausar plantilla (RT-004) — active = false' })
   pause(
@@ -129,6 +136,7 @@ export class RecurringTemplatesController {
   // 7
   @Post(':id/resume')
   @Roles(...MANAGER_ROLES)
+  @Permissions('templates.basic')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reanudar plantilla (RT-004) — active = true' })
   resume(

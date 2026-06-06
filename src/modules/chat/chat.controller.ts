@@ -26,12 +26,14 @@ import {
   AddParticipantsDto,
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
 
 type IUserPayload = UserPayloadNS.IUserPayload;
 
 @ApiTags('Chat')
 @ApiBearerAuth()
+@Permissions('chat.internal')
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}

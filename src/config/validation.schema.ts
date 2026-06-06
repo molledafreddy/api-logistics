@@ -55,13 +55,15 @@ export const validationSchema = Joi.object({
   S3_BUCKET_EXPORTS: Joi.string().default('logistics-exports'),
   S3_FORCE_PATH_STYLE: Joi.boolean().default(true),
 
-  // ─── Email ────────────────────────────────
-  MAIL_HOST: Joi.string().required(),
+  // ─── Email (Resend) ──────────────────────
+  RESEND_API_KEY: Joi.string().allow('').default(''),
+  MAIL_FROM: Joi.string().default('Logistics App <onboarding@resend.dev>'),
+  // Legacy SMTP — ya no se usan con Resend, se mantienen opcionales por compatibilidad
+  MAIL_HOST: Joi.string().allow('').default(''),
   MAIL_PORT: Joi.number().default(1025),
   MAIL_USER: Joi.string().allow('').default(''),
   MAIL_PASSWORD: Joi.string().allow('').default(''),
-  MAIL_FROM: Joi.string().email().default('noreply@api-logistics.com'),
-  MAIL_FROM_NAME: Joi.string().default('API Logistics'),
+  MAIL_FROM_NAME: Joi.string().default('Logistics App'),
 
   // ─── Stripe (no activo — provider es MercadoPago) ───
   STRIPE_SECRET_KEY: Joi.string().allow('').default(''),

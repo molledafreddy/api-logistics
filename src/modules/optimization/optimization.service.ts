@@ -165,6 +165,12 @@ export class OptimizationService {
     }));
     const saved = await this.runRepo.save(run);
 
+    // Sync runSequence on each shipment so stops are returned in the optimized order
+    let pos = 1;
+    for (const sid of run.optimizedSequence) {
+      await this.shipmentRepo.update({ id: sid }, { runSequence: pos++ });
+    }
+
     this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_OPTIMIZED, {
       runId: saved.id,
       companyId: saved.companyId,

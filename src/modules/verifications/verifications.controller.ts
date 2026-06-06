@@ -21,10 +21,13 @@ import {
   CreateVerificationDto,
   ReviewVerificationDto,
   CreateVerificationTierDto,
+  AddDocumentDto,
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
+
+const { SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER } = UserRole;
 import { ServiceType } from '../../common/enums/service-type.enum';
 import { BusinessModel } from '../../common/enums/business-model.enum';
 
@@ -58,6 +61,7 @@ export class VerificationsController {
 
   // ─── Verifications ─────────────────
   @Post()
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Create a new verification request' })
   @ApiResponse({ status: 201, description: 'Verification request created' })
   @ApiResponse({ status: 400, description: 'Invalid parameters' })
@@ -67,6 +71,7 @@ export class VerificationsController {
   }
 
   @Get('company/:companyId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER)
   @ApiOperation({ summary: 'List verifications for a company' })
   @ApiResponse({ status: 200, description: 'List of verifications' })
   @ApiResponse({ status: 404, description: 'Company not found' })
@@ -75,6 +80,7 @@ export class VerificationsController {
   }
 
   @Get(':id')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER)
   @ApiOperation({ summary: 'Get verification by ID' })
   @ApiResponse({ status: 200, description: 'Verification details' })
   @ApiResponse({ status: 404, description: 'Verification not found' })
@@ -83,6 +89,7 @@ export class VerificationsController {
   }
 
   @Patch(':id/submit')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Submit verification for review' })
   @ApiResponse({ status: 200, description: 'Verification submitted' })
   @ApiResponse({ status: 400, description: 'Missing required documents' })
@@ -108,15 +115,17 @@ export class VerificationsController {
 
   // ─── Documents ─────────────────────
   @Post(':id/documents')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Add a document to a verification' })
   @ApiResponse({ status: 201, description: 'Document added' })
   @ApiResponse({ status: 400, description: 'Invalid document' })
   @ApiResponse({ status: 404, description: 'Verification not found' })
-  addDocument(@Param('id') id: string, @Body() body: any) {
+  addDocument(@Param('id') id: string, @Body() body: AddDocumentDto) {
     return this.service.addDocument(id, body);
   }
 
   @Get(':id/documents')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER)
   @ApiOperation({ summary: 'List documents for a verification' })
   @ApiResponse({ status: 200, description: 'List of documents' })
   @ApiResponse({ status: 404, description: 'Verification not found' })
@@ -126,6 +135,7 @@ export class VerificationsController {
 
   // ─── Compliance + Onboarding (PARTE 7 · Sprint 6) ──
   @Get('compliance/:companyId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER)
   @ApiOperation({
     summary: 'Snapshot de cumplimiento (MV-002) para una empresa',
     description:
@@ -138,6 +148,7 @@ export class VerificationsController {
   }
 
   @Get('onboarding/:companyId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN, MANAGER)
   @ApiOperation({
     summary: 'Wizard de onboarding personalizado para la empresa',
     description:

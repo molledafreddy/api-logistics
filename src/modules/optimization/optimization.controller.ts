@@ -1,5 +1,8 @@
 import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
 import { OptimizationLimitsGuard } from './optimization-limits.guard';
+import { Permissions } from '../../common/decorators/permissions.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -25,6 +28,7 @@ export class OptimizationController {
   ) {}
 
   @Post(':id/optimize')
+  @Permissions('optimization.basic')
   @UseGuards(OptimizationLimitsGuard)
   @ApiOperation({
     summary: 'Optimiza la secuencia de stops del run (Sprint 7)',
@@ -52,6 +56,14 @@ export class OptimizationController {
   }
 
   @Get(':id/etas')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+  )
   @ApiOperation({
     summary: 'ETAs en vivo por stop (último GPS conocido del truck)',
     description:

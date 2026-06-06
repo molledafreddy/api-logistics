@@ -88,6 +88,23 @@ export class Subscription {
   @Column({ type: 'timestamptz', nullable: true })
   grace_warning_sent_at?: Date | null;
 
+  // ─── Descuento por referido (referidor) ─
+  /** % de descuento a aplicar en la próxima renovación del referidor. */
+  @Column({
+    type: 'int',
+    nullable: true,
+    name: 'pending_referral_discount_pct',
+  })
+  pending_referral_discount_pct?: number | null;
+
+  /** Cuándo se aplicó el descuento de referido (para auditoría). */
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'referral_discount_applied_at',
+  })
+  referral_discount_applied_at?: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

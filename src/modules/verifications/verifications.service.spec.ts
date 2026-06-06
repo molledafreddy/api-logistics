@@ -5,6 +5,9 @@ import { VerificationsService } from './verifications.service';
 import { Verification } from './entities/verification.entity';
 import { VerificationDocument } from './entities/verification-document.entity';
 import { VerificationTier } from './entities/verification-tier.entity';
+import { Company } from '../companies/entities/company.entity';
+import { User } from '../auth/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import { VerificationStatus } from '../../common/enums/verification-status.enum';
 
 const repoMock = () => ({
@@ -35,6 +38,32 @@ describe('VerificationsService', () => {
           useValue: docRepo,
         },
         { provide: getRepositoryToken(VerificationTier), useValue: tierRepo },
+        {
+          provide: getRepositoryToken(Company),
+          useValue: {
+            findOne: jest.fn(),
+            findOneBy: jest.fn(),
+            save: jest.fn(async (x: any) => x),
+            update: jest.fn().mockResolvedValue({ affected: 1 }),
+          },
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {
+            findOne: jest.fn(),
+            find: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            sendVerificationApproved: jest.fn().mockResolvedValue(undefined),
+            sendVerificationRejected: jest.fn().mockResolvedValue(undefined),
+            sendVerificationSubmitted: jest.fn().mockResolvedValue(undefined),
+            sendToCompany: jest.fn().mockResolvedValue(undefined),
+            sendToUser: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
     service = module.get(VerificationsService);

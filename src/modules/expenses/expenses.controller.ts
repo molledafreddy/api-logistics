@@ -38,6 +38,14 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Post()
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+  )
   @ApiOperation({ summary: 'Crear gasto' })
   @ApiResponse({ status: 201, description: 'Gasto creado' })
   create(@Body() dto: CreateExpenseDto, @CurrentUser() user: IUserPayload) {
@@ -45,6 +53,15 @@ export class ExpensesController {
   }
 
   @Get()
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.ACCOUNTANT,
+  )
   @ApiOperation({ summary: 'Listar gastos' })
   findAll(@Query() query: QueryExpenseDto, @CurrentUser() user: IUserPayload) {
     return this.expensesService.findAll(query, user);
@@ -64,6 +81,15 @@ export class ExpensesController {
   }
 
   @Get(':id')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.ACCOUNTANT,
+  )
   @ApiOperation({ summary: 'Obtener gasto por ID' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -73,6 +99,13 @@ export class ExpensesController {
   }
 
   @Patch(':id')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DRIVER,
+  )
   @ApiOperation({ summary: 'Actualizar gasto (solo si está pending)' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -132,6 +165,13 @@ export class ExpensesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DRIVER,
+  )
   @ApiOperation({ summary: 'Eliminar gasto (soft delete)' })
   remove(
     @Param('id', ParseUUIDPipe) id: string,

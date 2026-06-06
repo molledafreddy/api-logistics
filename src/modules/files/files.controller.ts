@@ -1,11 +1,35 @@
-import { Controller, Post, Get, Delete, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Query,
+  Param,
+  Res,
+  UseInterceptors,
+  UploadedFile,
+  NotFoundException,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { FilesService } from './files.service';
+
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
+}
 
 @ApiTags('Files')
 @ApiBearerAuth()
@@ -43,6 +67,44 @@ export class FilesController {
   @ApiResponse({ status: 400, description: 'Missing file key' })
   getDownloadUrl(@Query('key') key: string) {
     return this.service.getDownloadUrl(key);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a file via server (proxy to S3)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        folder: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Download URL of uploaded file',
+    schema: { type: 'string' },
+  })
+  uploadFile(@UploadedFile() file: MulterFile, @Body('folder') folder: string) {
+    return this.service.uploadBuffer(
+      folder ?? 'uploads',
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+    );
+  }
+
+  @Get('local/*')
+  @ApiOperation({
+    summary: 'Serve locally stored file (STORAGE_PROVIDER=local only)',
+  })
+  serveLocal(@Param('0') key: string, @Res() res: Response) {
+    const filePath = this.service.getLocalFilePath(key);
+    return res.sendFile(filePath, (err) => {
+      if (err) throw new NotFoundException(`File not found: ${key}`);
+    });
   }
 
   @Delete()

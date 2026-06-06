@@ -24,6 +24,7 @@ export class RecurringGeneratorScheduler {
   /** 23:00 UTC todos los días. Generar ocurrencia de mañana. */
   @Cron('0 23 * * *', { timeZone: 'UTC' })
   async runDaily(): Promise<void> {
+    if (process.env.RECURRING_TEMPLATES_CRON_ENABLED !== 'true') return;
     const target = this.tomorrowISO();
     await this.enqueueForDate(target, 'cron');
   }

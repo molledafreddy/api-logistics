@@ -20,6 +20,8 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { CompanyType } from '../../common/enums/company-type.enum';
 import { CompanyStatus } from '../../common/enums/company-status.enum';
+import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
+import { ReferralsService } from '../referrals/referrals.service';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,8 @@ export class AuthService {
     private readonly supabaseService: SupabaseService,
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
+    private readonly permissionsCache: PermissionsCacheService,
+    private readonly referralsService: ReferralsService,
   ) {
     // Anon client for user-facing auth operations (login, signup)
     const url = this.configService.get<string>('supabase.url')!;
@@ -114,6 +118,13 @@ export class AuthService {
       this.logger.log(
         `User registered: ${savedUser.email} (${savedUser.id}) — Company: ${savedCompany.name} (${savedCompany.id})`,
       );
+
+      if (dto.referralToken) {
+        await this.referralsService.applyReferralOnRegister(
+          dto.referralToken,
+          savedCompany.id,
+        );
+      }
 
       // 3. Sign in to get tokens
       const { data: signInData, error: signInError } =
@@ -349,6 +360,29 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async getMyPermissions(
+    companyId: string,
+  ): Promise<{ permissions: string[] }> {
+    const permissions = await this.permissionsCache.getOrLoad(companyId, () =>
+      this.loadCompanyPermissions(companyId),
+    );
+    return { permissions };
+  }
+
+  private async loadCompanyPermissions(companyId: string): Promise<string[]> {
+    const rows: Array<{ code: string }> = await this.dataSource.query(
+      `SELECT pd.code
+         FROM subscriptions s
+         JOIN plan_permissions pp ON pp.plan_id = s.plan_id
+         JOIN permission_definitions pd ON pd.id = pp.permission_id
+        WHERE s.company_id = $1 AND s.status = 'active'
+        ORDER BY s.created_at DESC
+        LIMIT 100`,
+      [companyId],
+    );
+    return rows.map((r) => r.code);
+  }
+
   /**
    * Re-send email verification.
    * Triggers Supabase to send a new confirmation email.
@@ -442,6 +476,45 @@ export class AuthService {
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
     };
+  }
+
+  /**
+   * Change password for the authenticated user.
+   * 1. Verify current password via Supabase signIn (prevents CSRF/token-theft attacks).
+   * 2. Update password via admin client (bypasses email confirmation requirement).
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    if (!user.authUid) {
+      throw new UnauthorizedException('Usuario sin autenticación configurada');
+    }
+
+    // Verify current password
+    const { error: signInError } =
+      await this.anonClient.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+    if (signInError) {
+      throw new UnauthorizedException('La contraseña actual es incorrecta');
+    }
+
+    // Update via admin client (no email re-confirmation needed)
+    await this.supabaseService.updateAuthUser(user.authUid, {
+      password: newPassword,
+    });
+
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   /**

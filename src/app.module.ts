@@ -51,6 +51,8 @@ import { OptimizationModule } from './modules/optimization/optimization.module';
 import { GeocodingModule } from './modules/geocoding/geocoding.module';
 import { SavedAddressesModule } from './modules/saved-addresses/saved-addresses.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { PublicTrackingModule } from './modules/public-tracking/public-tracking.module';
+import { ReferralsModule } from './modules/referrals/referrals.module';
 
 // Gateways (WebSockets)
 import { GatewaysModule } from './gateways/gateways.module';
@@ -157,6 +159,8 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     GeocodingModule,
     SavedAddressesModule,
     PaymentsModule,
+    PublicTrackingModule,
+    ReferralsModule,
     GatewaysModule,
   ],
   controllers: [HealthController, RootController],

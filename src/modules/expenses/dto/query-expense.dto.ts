@@ -38,6 +38,11 @@ export class QueryExpenseDto extends PaginationDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
+  deliveryRunId?: string;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
   shipmentId?: string;
 
   @ApiPropertyOptional()

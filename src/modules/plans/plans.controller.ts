@@ -205,6 +205,13 @@ export class PlansController {
     return this.plansService.getEffectiveLimits(user.companyId);
   }
 
+  @Get('me/permissions')
+  @ApiOperation({ summary: 'Permisos efectivos del plan activo del usuario' })
+  async getMyPermissions(@CurrentUser() user: IUserPayload) {
+    if (!user?.companyId) return [];
+    return this.plansService.getEffectivePermissions(user.companyId);
+  }
+
   @Patch(':id/price')
   @UseGuards(PermissionGuard)
   @Permissions('plans.write')

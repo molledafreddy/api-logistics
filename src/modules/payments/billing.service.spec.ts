@@ -4,6 +4,7 @@ import type { Repository } from 'typeorm';
 import { BillingService } from './billing.service';
 import type { Subscription } from '../subscriptions/entities/subscription.entity';
 import type { Plan } from '../plans/entities/plan.entity';
+import type { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
 import type { PaymentsService } from './payments.service';
 
 function repoMock<T extends object>() {
@@ -16,16 +17,18 @@ function repoMock<T extends object>() {
 describe('BillingService', () => {
   let subRepo: jest.Mocked<Repository<Subscription>>;
   let planRepo: jest.Mocked<Repository<Plan>>;
+  let paymentEventRepo: jest.Mocked<Repository<PaymentEvent>>;
   let payments: jest.Mocked<PaymentsService>;
   let svc: BillingService;
 
   beforeEach(() => {
     subRepo = repoMock<Subscription>();
     planRepo = repoMock<Plan>();
+    paymentEventRepo = repoMock<PaymentEvent>();
     payments = {
       createCheckout: jest.fn(),
     } as unknown as jest.Mocked<PaymentsService>;
-    svc = new BillingService(subRepo, planRepo, payments);
+    svc = new BillingService(subRepo, planRepo, paymentEventRepo, payments);
   });
 
   it('404 si la company no tiene sub activa', async () => {

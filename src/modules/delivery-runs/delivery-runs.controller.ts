@@ -84,6 +84,22 @@ export class DeliveryRunsController {
     return this.service.findOne(id, user);
   }
 
+  @Get(':id/assignable-drivers')
+  @Roles(...MANAGER_ROLES)
+  @ApiOperation({
+    summary: 'Drivers asignables al run (propios + empresas partner activas)',
+    description:
+      'Devuelve conductores de la empresa carrier del run más los de empresas con ' +
+      'relación covered_carrier o associated_company en estado accepted. ' +
+      'Solo accesible con plan de empresa (roles MANAGER o superior).',
+  })
+  getAssignableDrivers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: IUserPayload,
+  ) {
+    return this.service.getAssignableDrivers(id, user);
+  }
+
   // 4
   @Patch(':id')
   @Roles(...MANAGER_ROLES)
@@ -201,6 +217,32 @@ export class DeliveryRunsController {
   }
 
   // 12-B
+  @Post(':id/stops/:shipmentId/start-transit')
+  @HttpCode(HttpStatus.OK)
+  @Roles(...MANAGER_OR_DRIVER)
+  @ApiOperation({ summary: 'Marcar stop en tránsito → in_transit' })
+  stopStartTransit(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @CurrentUser() user: IUserPayload,
+  ) {
+    return this.service.stopStartTransit(id, shipmentId, user);
+  }
+
+  // 12-B2
+  @Post(':id/stops/:shipmentId/arrive')
+  @HttpCode(HttpStatus.OK)
+  @Roles(...MANAGER_OR_DRIVER)
+  @ApiOperation({ summary: 'Confirmar llegada al stop → at_stop' })
+  stopArrive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @CurrentUser() user: IUserPayload,
+  ) {
+    return this.service.stopArrive(id, shipmentId, user);
+  }
+
+  // 12-C
   @Post(':id/stops/:shipmentId/incident')
   @HttpCode(HttpStatus.OK)
   @Roles(...MANAGER_OR_DRIVER)

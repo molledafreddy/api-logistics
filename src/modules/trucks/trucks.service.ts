@@ -7,13 +7,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, DataSource } from 'typeorm';
 import { Truck } from './entities/truck.entity';
 import { CreateTruckDto, UpdateTruckDto, QueryTruckDto } from './dto';
 import { TruckStatus } from '../../common/enums/truck-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
+
+const FREE_PLAN_MAX_TRUCKS = 1;
 
 @Injectable()
 export class TrucksService {
@@ -22,6 +24,7 @@ export class TrucksService {
   constructor(
     @InjectRepository(Truck)
     private readonly truckRepository: Repository<Truck>,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ─────────────────────────────────────────────
@@ -29,6 +32,10 @@ export class TrucksService {
   // ─────────────────────────────────────────────
   async create(dto: CreateTruckDto, user: IUserPayload): Promise<Truck> {
     const companyId = this.requireCompanyId(user);
+
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      await this.checkTruckPlanLimit(companyId);
+    }
 
     // Verifica unicidad de placa por empresa
     const existing = await this.truckRepository.findOne({
@@ -277,6 +284,51 @@ export class TrucksService {
     if (user.role === UserRole.SUPER_ADMIN) return;
     if (truck.companyId !== user.companyId) {
       throw new ForbiddenException('You do not have access to this truck');
+    }
+  }
+
+  /**
+   * Verifica el límite de trucks según el plan activo de la empresa.
+   * - Sin suscripción activa → aplica FREE_PLAN_MAX_TRUCKS como fallback.
+   * - Con suscripción activa → lee trucking.max_trucks del jsonb del plan.
+   *   Si el plan no define max_trucks, considera el límite ilimitado.
+   * - Valor 99999 se trata como ilimitado (sentinel del seed enterprise).
+   */
+  private async checkTruckPlanLimit(companyId: string): Promise<void> {
+    const rows: Array<{ limits: Record<string, Record<string, number>> }> =
+      await this.dataSource.query(
+        `SELECT p.limits
+           FROM subscriptions s
+           JOIN plans p ON p.id = s.plan_id
+          WHERE s.company_id = $1 AND s.status IN ('active', 'pending_payment')
+          ORDER BY s.created_at DESC
+          LIMIT 1`,
+        [companyId],
+      );
+
+    let maxTrucks: number;
+
+    if (rows.length === 0) {
+      maxTrucks = FREE_PLAN_MAX_TRUCKS;
+    } else {
+      const limits = rows[0].limits ?? {};
+      const resolved =
+        limits['trucking']?.['max_trucks'] ?? limits['global']?.['max_trucks'];
+
+      if (resolved === undefined || resolved === -1 || resolved >= 99999) {
+        return; // ilimitado
+      }
+      maxTrucks = resolved;
+    }
+
+    const currentCount = await this.truckRepository.count({
+      where: { companyId },
+    });
+
+    if (currentCount >= maxTrucks) {
+      throw new ForbiddenException(
+        `Has alcanzado el límite de ${maxTrucks} vehículo(s) en tu plan actual. Considera mejorar tu plan.`,
+      );
     }
   }
 }

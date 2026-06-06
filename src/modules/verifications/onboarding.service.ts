@@ -1,10 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Verification } from './entities/verification.entity';
 import { VerificationTier } from './entities/verification-tier.entity';
 import { Company } from '../companies/entities/company.entity';
+import { Truck } from '../trucks/entities/truck.entity';
+import { Driver } from '../drivers/entities/driver.entity';
 
 import { ServiceType } from '../../common/enums/service-type.enum';
 import { BusinessModel } from '../../common/enums/business-model.enum';
@@ -31,8 +33,6 @@ import { OnboardingWizardDto, WizardStepDto } from './dto';
  */
 @Injectable()
 export class OnboardingService {
-  private readonly logger = new Logger(OnboardingService.name);
-
   constructor(
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
@@ -40,6 +40,10 @@ export class OnboardingService {
     private readonly verificationRepo: Repository<Verification>,
     @InjectRepository(VerificationTier)
     private readonly tierRepo: Repository<VerificationTier>,
+    @InjectRepository(Driver)
+    private readonly driverRepo: Repository<Driver>,
+    @InjectRepository(Truck)
+    private readonly truckRepo: Repository<Truck>,
   ) {}
 
   /**
@@ -101,6 +105,26 @@ export class OnboardingService {
   ): Promise<WizardStepDto[]> {
     const steps: WizardStepDto[] = [];
 
+    // Check real data (skipped in preview mode)
+    const [hasDrivers, hasTrucks, hasProfile] = preview
+      ? [false, false, false]
+      : await Promise.all([
+          this.driverRepo
+            .count({ where: { companyId: company.id } })
+            .then((n: number) => n > 0),
+          this.truckRepo
+            .count({ where: { companyId: company.id } })
+            .then((n: number) => n > 0),
+          Promise.resolve(
+            !!(
+              company.taxId ||
+              company.addressLine1 ||
+              company.phone ||
+              company.email
+            ),
+          ),
+        ]);
+
     // 1. Perfil de empresa
     steps.push({
       key: 'company_profile',
@@ -108,7 +132,7 @@ export class OnboardingService {
       description:
         'Razón social, dirección, identificación fiscal, contacto principal',
       order: 1,
-      completed: preview ? false : !!company.id,
+      completed: preview ? false : hasProfile,
       requiredDocuments: [],
       unlocksServiceType: null,
     });
@@ -119,7 +143,7 @@ export class OnboardingService {
       title: 'Agrega al menos 1 chofer',
       description: 'Sube datos básicos y licencia de conducir',
       order: 2,
-      completed: preview ? false : false, // el frontend o un módulo futuro puede resolverlo
+      completed: hasDrivers,
       requiredDocuments: ['driver_license'],
       unlocksServiceType: null,
     });
@@ -130,7 +154,7 @@ export class OnboardingService {
       title: 'Registra tu flota',
       description: 'Al menos 1 vehículo con placa, capacidad y seguro',
       order: 3,
-      completed: preview ? false : false,
+      completed: hasTrucks,
       requiredDocuments: ['vehicle_registration', 'vehicle_insurance'],
       unlocksServiceType: null,
     });
@@ -209,7 +233,8 @@ export class OnboardingService {
     const now = Date.now();
     return verifications.some(
       (v) =>
-        v.tier?.code === code && (!v.expiresAt || v.expiresAt.getTime() > now),
+        v.tier?.code?.toLowerCase() === code.toLowerCase() &&
+        (!v.expiresAt || v.expiresAt.getTime() > now),
     );
   }
 }

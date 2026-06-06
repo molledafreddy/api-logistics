@@ -58,6 +58,16 @@ export class ShipmentsController {
   }
 
   @Get()
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.ACCOUNTANT,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Listar shipments' })
   findAll(@Query() query: QueryShipmentDto, @CurrentUser() user: IUserPayload) {
     return this.shipmentsService.findAll(query, user);
@@ -72,6 +82,16 @@ export class ShipmentsController {
   }
 
   @Get(':id')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.ACCOUNTANT,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Obtener shipment por ID' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -81,6 +101,16 @@ export class ShipmentsController {
   }
 
   @Get(':id/timeline')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.ACCOUNTANT,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Obtener línea de tiempo del shipment' })
   getTimeline(
     @Param('id', ParseUUIDPipe) id: string,

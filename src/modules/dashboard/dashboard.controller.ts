@@ -4,6 +4,7 @@ import { DashboardService } from './dashboard.service';
 import { DashboardQueryDto } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
 
@@ -20,6 +21,7 @@ type IUserPayload = UserPayloadNS.IUserPayload;
   UserRole.ACCOUNTANT,
   UserRole.DISPATCHER,
 )
+@Permissions('dashboard.view')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 

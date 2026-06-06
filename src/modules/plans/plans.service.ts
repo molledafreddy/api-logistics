@@ -39,7 +39,7 @@ export class PlansService {
 
   async findAllPlans() {
     this.logger.debug(`[findAllPlans] llamada`);
-    return this.planRepository.find();
+    return this.planRepository.find({ where: { is_active: true } });
   }
 
   async findOnePlan(id: string) {
@@ -135,11 +135,14 @@ export class PlansService {
     const rows: Array<{ code: string }> = await entityManager.query(
       `
       SELECT pd.code
-      FROM subscriptions s
-      JOIN plan_permissions pp ON pp.plan_id = s.plan_id
-      JOIN permission_definitions pd ON pd.id = pp.permission_id
-      WHERE s.company_id = $1 AND s.status = 'active'
-      ORDER BY s.created_at DESC
+        FROM (
+          SELECT plan_id FROM subscriptions
+           WHERE company_id = $1 AND status = 'active'
+           ORDER BY created_at DESC
+           LIMIT 1
+        ) s
+        JOIN plan_permissions pp ON pp.plan_id = s.plan_id
+        JOIN permission_definitions pd ON pd.id = pp.permission_id
       `,
       [companyId],
     );
@@ -209,7 +212,7 @@ export class PlansService {
     const map: PlanLimitsMap = {};
     for (const r of rows) {
       if (!map[r.vertical]) map[r.vertical] = {};
-      map[r.vertical][r.code] = Number(r.value);
+      map[r.vertical]![r.code] = Number(r.value);
     }
     await this.planRepository.update(planId, { limits: map });
     return map;

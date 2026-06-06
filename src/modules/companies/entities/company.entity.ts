@@ -129,6 +129,10 @@ export class Company extends BaseEntity {
   @Column({ type: 'varchar', length: 50, default: 'America/New_York' })
   timezone!: string;
 
+  // ─── Referidos ─────────────────────────
+  @Column({ type: 'uuid', nullable: true, name: 'referred_by_company_id' })
+  referredByCompanyId!: string | null;
+
   // ─── Timestamps ────────────────────────
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt!: Date | null;

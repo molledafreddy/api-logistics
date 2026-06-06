@@ -3,16 +3,18 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, IsNull, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DeliveryRun } from './entities/delivery-run.entity';
 import { Shipment } from '../shipments/entities/shipment.entity';
 import { Truck } from '../trucks/entities/truck.entity';
 import { Driver } from '../drivers/entities/driver.entity';
+import { CompanyRelationship } from '../relationships/entities/company-relationship.entity';
 
 import {
   CreateDeliveryRunDto,
@@ -29,10 +31,16 @@ import {
 import { DeliveryRunStatus } from '../../common/enums/delivery-run-status.enum';
 import { ShipmentStatus } from '../../common/enums/shipment-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { RelationshipStatus } from '../../common/enums/relationship-status.enum';
+import { RelationshipType } from '../../common/enums/relationship-type.enum';
+import { NotificationType } from '../../common/enums/notification-type.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 import { ComplianceService } from '../verifications/compliance.service';
+import { WhatsAppService } from '../notifications/whatsapp.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 
 /**
  * DeliveryRunsService — Gestiona el manifiesto operativo del día.
@@ -46,6 +54,7 @@ import { ComplianceService } from '../verifications/compliance.service';
  *   DR-006  no se permite cambiar driverId/truckId si status=in_progress
  *   DR-007  optimizedSequence == set de shipmentIds del run (mismo conjunto)
  *   DR-008  reorder solo permitido en estados planned o ready
+ *   DR-009  un driver no puede tener más de un run in_progress simultáneamente
  */
 @Injectable()
 export class DeliveryRunsService {
@@ -60,9 +69,14 @@ export class DeliveryRunsService {
     private readonly truckRepo: Repository<Truck>,
     @InjectRepository(Driver)
     private readonly driverRepo: Repository<Driver>,
+    @InjectRepository(CompanyRelationship)
+    private readonly relRepo: Repository<CompanyRelationship>,
     private readonly dataSource: DataSource,
     private readonly eventEmitter: EventEmitter2,
     private readonly complianceService: ComplianceService,
+    private readonly whatsapp: WhatsAppService,
+    private readonly notificationsService: NotificationsService,
+    private readonly permissionsCache: PermissionsCacheService,
   ) {}
 
   // ═══════════════════════════════════════════════════════════
@@ -105,7 +119,12 @@ export class DeliveryRunsService {
       }
 
       // Reload para devolver totalStops/secuencia actualizados
-      return em.findOneOrFail(DeliveryRun, { where: { id: saved.id } });
+      const reloaded = await em.findOneOrFail(DeliveryRun, {
+        where: { id: saved.id },
+      });
+      if (reloaded.driverId)
+        this.notifyAssignedDriver(reloaded.driverId, reloaded);
+      return reloaded;
     });
   }
 
@@ -124,9 +143,19 @@ export class DeliveryRunsService {
       qb.andWhere('run.companyId = :companyId', { companyId });
     }
 
-    // Drivers solo ven sus propios runs
+    // Drivers solo ven sus propios runs (filtra por Driver entity ID, no User ID)
     if (user.role === UserRole.DRIVER) {
-      qb.andWhere('run.driverId = :uid', { uid: user.sub });
+      const companyId = this.requireCompanyId(user);
+      const driver = await this.driverRepo.findOne({
+        where: { userId: user.sub, companyId },
+        select: ['id'],
+      });
+      if (!driver) {
+        return PaginationResponseDto.create([], 0, query.page, query.limit);
+      }
+      qb.andWhere('run.driverId = :driverEntityId', {
+        driverEntityId: driver.id,
+      });
     }
 
     if (query.date) {
@@ -170,7 +199,7 @@ export class DeliveryRunsService {
     const run = await this.runRepo.findOne({ where: { id } });
     if (!run) throw new NotFoundException(`DeliveryRun ${id} not found`);
     this.assertTenantAccess(run, user);
-    this.assertDriverScope(run, user);
+    await this.assertDriverScope(run, user);
 
     const shipments = await this.shipmentRepo.find({
       where: { deliveryRunId: id },
@@ -236,7 +265,9 @@ export class DeliveryRunsService {
       run.status = DeliveryRunStatus.READY;
     }
 
-    return this.runRepo.save(run);
+    const saved = await this.runRepo.save(run);
+    if (saved.driverId) this.notifyAssignedDriver(saved.driverId, saved);
+    return saved;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -351,7 +382,7 @@ export class DeliveryRunsService {
   // ═══════════════════════════════════════════════════════════
   async start(id: string, user: IUserPayload): Promise<DeliveryRun> {
     const run = await this.getOpenRun(id, user);
-    this.assertCarrierOrAssignedDriver(run, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
 
     if (
       run.status !== DeliveryRunStatus.PLANNED &&
@@ -368,6 +399,22 @@ export class DeliveryRunsService {
     }
     if (run.totalStops === 0) {
       throw new BadRequestException('Run has no shipments to start');
+    }
+
+    // DR-009: un driver no puede tener más de un run in_progress simultáneamente.
+    const [activeRow] = await this.dataSource.query<{ id: string }[]>(
+      `SELECT id FROM delivery_runs
+       WHERE driver_id = $1
+         AND status = 'in_progress'
+         AND deleted_at IS NULL
+         AND id != $2
+       LIMIT 1`,
+      [run.driverId, run.id],
+    );
+    if (activeRow) {
+      throw new ConflictException(
+        `El conductor ya tiene un run activo en progreso. Completa o cancela el run actual antes de iniciar uno nuevo.`,
+      );
     }
 
     // MV-002 (PARTE 7 · Sprint 6): si la empresa opera passenger/mixed,
@@ -400,7 +447,7 @@ export class DeliveryRunsService {
   // ═══════════════════════════════════════════════════════════
   async complete(id: string, user: IUserPayload): Promise<DeliveryRun> {
     const run = await this.getOpenRun(id, user);
-    this.assertCarrierOrAssignedDriver(run, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
 
     if (run.status !== DeliveryRunStatus.IN_PROGRESS) {
       throw new BadRequestException(
@@ -468,7 +515,7 @@ export class DeliveryRunsService {
     user: IUserPayload,
   ): Promise<{ run: DeliveryRun; shipment: Shipment }> {
     const { run, shipment } = await this.loadStop(runId, shipmentId, user);
-    this.assertCarrierOrAssignedDriver(run, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
 
     if (run.status !== DeliveryRunStatus.IN_PROGRESS) {
       throw new BadRequestException(
@@ -485,41 +532,138 @@ export class DeliveryRunsService {
       );
     }
 
-    return this.dataSource.transaction(async (em) => {
-      shipment.status = ShipmentStatus.DELIVERED;
-      shipment.deliveredAt = new Date();
-      if (dto.podUrl) {
-        shipment.podUrl = dto.podUrl;
-        shipment.podSignedBy = dto.signedBy ?? null;
-        shipment.podUploadedAt = new Date();
-        shipment.status = ShipmentStatus.POD_UPLOADED;
-      }
-      if (dto.notes) {
-        shipment.notes =
-          (shipment.notes ? shipment.notes + '\n' : '') +
-          `[stop done] ${dto.notes}`;
-      }
-      await em.save(shipment);
+    const { updatedRun, updatedShipment, shouldComplete } =
+      await this.dataSource.transaction(async (em) => {
+        shipment.status = ShipmentStatus.DELIVERED;
+        shipment.deliveredAt = new Date();
+        if (dto.podUrl) {
+          shipment.podUrl = dto.podUrl;
+          shipment.podSignedBy = dto.signedBy ?? null;
+          shipment.podUploadedAt = new Date();
+          shipment.status = ShipmentStatus.POD_UPLOADED;
+        }
+        if (dto.notes) {
+          shipment.notes =
+            (shipment.notes ? shipment.notes + '\n' : '') +
+            `[stop done] ${dto.notes}`;
+        }
+        await em.save(shipment);
 
-      run.completedStops = await this.recountCompletedStops(em, run.id);
-      await em.save(run);
+        run.completedStops = await this.recountCompletedStops(em, run.id);
+        await em.save(run);
 
-      this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_STOP_DONE, {
-        runId: run.id,
-        shipmentId: shipment.id,
-        companyId: run.companyId,
-        status: shipment.status,
-        completedStops: run.completedStops,
-        totalStops: run.totalStops,
+        this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_STOP_DONE, {
+          runId: run.id,
+          shipmentId: shipment.id,
+          companyId: run.companyId,
+          status: shipment.status,
+          completedStops: run.completedStops,
+          totalStops: run.totalStops,
+        });
+
+        return {
+          updatedRun: run,
+          updatedShipment: shipment,
+          // Evaluated here so the count is from inside the transaction,
+          // but completeInternal runs AFTER the tx commits to avoid lock contention.
+          shouldComplete: run.completedStops >= run.totalStops,
+        };
       });
 
-      // Auto-completar el run si todos los stops están cerrados
-      if (run.completedStops >= run.totalStops) {
-        const finalRun = await this.completeInternal(run.id, user.sub);
-        return { run: finalRun, shipment };
-      }
-      return { run, shipment };
-    });
+    // Auto-complete outside the transaction so completeInternal can update the
+    // run row without waiting on the lock held by the now-committed transaction.
+    const finalRun = shouldComplete
+      ? await this.completeInternal(updatedRun.id, user.sub)
+      : updatedRun;
+
+    // Fire-and-forget: WhatsApp delivery confirmation (gated by tracking.public_link)
+    if (
+      updatedShipment.destinationContactPhone &&
+      updatedShipment.publicTrackingToken
+    ) {
+      this.permissionsCache
+        .getOrLoad(run.companyId, () =>
+          this.loadCompanyPermissions(run.companyId),
+        )
+        .then((perms) => {
+          if (!perms.includes('tracking.public_link')) return;
+          return this.whatsapp.sendDeliveryConfirmation(
+            updatedShipment.destinationContactPhone!,
+            updatedShipment.publicTrackingToken,
+            updatedShipment.destinationAddress,
+          );
+        })
+        .catch((err: Error) =>
+          this.logger.warn(
+            `[WhatsApp] delivery confirmation failed: ${err.message}`,
+          ),
+        );
+    }
+
+    return { run: finalRun, shipment: updatedShipment };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // STOP START TRANSIT  (driver opened stop screen → IN_TRANSIT)
+  // ═══════════════════════════════════════════════════════════
+  async stopStartTransit(
+    runId: string,
+    shipmentId: string,
+    user: IUserPayload,
+  ): Promise<Shipment> {
+    const { run, shipment } = await this.loadStop(runId, shipmentId, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
+
+    if (run.status !== DeliveryRunStatus.IN_PROGRESS) {
+      throw new BadRequestException(
+        'Stops can only be marked while run is in_progress',
+      );
+    }
+
+    // Idempotent: already in transit or further along
+    if (
+      shipment.status === ShipmentStatus.IN_TRANSIT ||
+      shipment.status === ShipmentStatus.AT_STOP ||
+      shipment.status === ShipmentStatus.DELIVERED ||
+      shipment.status === ShipmentStatus.POD_UPLOADED ||
+      shipment.status === ShipmentStatus.COMPLETED
+    ) {
+      return shipment;
+    }
+
+    shipment.status = ShipmentStatus.IN_TRANSIT;
+    return this.shipmentRepo.save(shipment);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // STOP ARRIVE  (driver reached the stop → AT_STOP)
+  // ═══════════════════════════════════════════════════════════
+  async stopArrive(
+    runId: string,
+    shipmentId: string,
+    user: IUserPayload,
+  ): Promise<Shipment> {
+    const { run, shipment } = await this.loadStop(runId, shipmentId, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
+
+    if (run.status !== DeliveryRunStatus.IN_PROGRESS) {
+      throw new BadRequestException(
+        'Stops can only be marked while run is in_progress',
+      );
+    }
+
+    // Idempotent: already at stop or further along
+    if (
+      shipment.status === ShipmentStatus.AT_STOP ||
+      shipment.status === ShipmentStatus.DELIVERED ||
+      shipment.status === ShipmentStatus.POD_UPLOADED ||
+      shipment.status === ShipmentStatus.COMPLETED
+    ) {
+      return shipment;
+    }
+
+    shipment.status = ShipmentStatus.AT_STOP;
+    return this.shipmentRepo.save(shipment);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -532,7 +676,7 @@ export class DeliveryRunsService {
     user: IUserPayload,
   ): Promise<{ run: DeliveryRun; shipment: Shipment }> {
     const { run, shipment } = await this.loadStop(runId, shipmentId, user);
-    this.assertCarrierOrAssignedDriver(run, user);
+    await this.assertCarrierOrAssignedDriver(run, user);
 
     if (run.status !== DeliveryRunStatus.IN_PROGRESS) {
       throw new BadRequestException(
@@ -540,33 +684,40 @@ export class DeliveryRunsService {
       );
     }
 
-    return this.dataSource.transaction(async (em) => {
-      shipment.status = ShipmentStatus.INCIDENT;
-      shipment.notes =
-        (shipment.notes ? shipment.notes + '\n' : '') +
-        `[INCIDENT] ${dto.reason}` +
-        (dto.photoUrl ? ` photo=${dto.photoUrl}` : '');
-      await em.save(shipment);
+    const { updatedRun, updatedShipment, shouldComplete } =
+      await this.dataSource.transaction(async (em) => {
+        shipment.status = ShipmentStatus.INCIDENT;
+        shipment.notes =
+          (shipment.notes ? shipment.notes + '\n' : '') +
+          `[INCIDENT] ${dto.reason}` +
+          (dto.photoUrl ? ` photo=${dto.photoUrl}` : '');
+        await em.save(shipment);
 
-      run.completedStops = await this.recountCompletedStops(em, run.id);
-      await em.save(run);
+        run.completedStops = await this.recountCompletedStops(em, run.id);
+        await em.save(run);
 
-      this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_STOP_INCIDENT, {
-        runId: run.id,
-        shipmentId: shipment.id,
-        companyId: run.companyId,
-        reason: dto.reason,
-        photoUrl: dto.photoUrl ?? null,
-        completedStops: run.completedStops,
-        totalStops: run.totalStops,
+        this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_STOP_INCIDENT, {
+          runId: run.id,
+          shipmentId: shipment.id,
+          companyId: run.companyId,
+          reason: dto.reason,
+          photoUrl: dto.photoUrl ?? null,
+          completedStops: run.completedStops,
+          totalStops: run.totalStops,
+        });
+
+        return {
+          updatedRun: run,
+          updatedShipment: shipment,
+          shouldComplete: run.completedStops >= run.totalStops,
+        };
       });
 
-      if (run.completedStops >= run.totalStops) {
-        const finalRun = await this.completeInternal(run.id, user.sub);
-        return { run: finalRun, shipment };
-      }
-      return { run, shipment };
-    });
+    const finalRun = shouldComplete
+      ? await this.completeInternal(updatedRun.id, user.sub)
+      : updatedRun;
+
+    return { run: finalRun, shipment: updatedShipment };
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -778,9 +929,29 @@ export class DeliveryRunsService {
     }
   }
 
+  /** Resuelve el Driver entity ID a partir del User UUID del JWT. */
+  private async resolveDriverEntityId(
+    userId: string,
+    companyId: string,
+  ): Promise<string | null> {
+    const driver = await this.driverRepo.findOne({
+      where: { userId, companyId },
+      select: ['id'],
+    });
+    return driver?.id ?? null;
+  }
+
   /** Driver solo accede a runs donde es el driverId asignado (DR-002 + scope). */
-  private assertDriverScope(run: DeliveryRun, user: IUserPayload): void {
-    if (user.role === UserRole.DRIVER && run.driverId !== user.sub) {
+  private async assertDriverScope(
+    run: DeliveryRun,
+    user: IUserPayload,
+  ): Promise<void> {
+    if (user.role !== UserRole.DRIVER) return;
+    const driverEntityId = await this.resolveDriverEntityId(
+      user.sub,
+      run.companyId,
+    );
+    if (!driverEntityId || run.driverId !== driverEntityId) {
       throw new ForbiddenException('Driver can only access assigned runs');
     }
   }
@@ -801,22 +972,28 @@ export class DeliveryRunsService {
   }
 
   /** Para start/complete/stops: carrier (managers) o el driver asignado. */
-  private assertCarrierOrAssignedDriver(
+  private async assertCarrierOrAssignedDriver(
     run: DeliveryRun,
     user: IUserPayload,
-  ): void {
+  ): Promise<void> {
     if (user.role === UserRole.SUPER_ADMIN) return;
     if (run.companyId !== user.companyId) {
       throw new ForbiddenException('Not your run');
     }
-    if (user.role === UserRole.DRIVER && run.driverId !== user.sub) {
-      throw new ForbiddenException(
-        'Only the assigned driver can act on this run',
+    if (user.role === UserRole.DRIVER) {
+      const driverEntityId = await this.resolveDriverEntityId(
+        user.sub,
+        run.companyId,
       );
+      if (!driverEntityId || run.driverId !== driverEntityId) {
+        throw new ForbiddenException(
+          'Only the assigned driver can act on this run',
+        );
+      }
     }
   }
 
-  /** DR-005 */
+  /** DR-005 — trucks must be own; drivers may be own OR active partner company. */
   private async validateResourcesBelongToCarrier(
     carrierCompanyId: string,
     truckId: string | null | undefined,
@@ -842,15 +1019,139 @@ export class DeliveryRunsService {
       if (!driver)
         throw new BadRequestException(`Driver ${driverId} not found`);
       if (driver.companyId !== carrierCompanyId) {
-        throw new ForbiddenException(
-          `DR-005: Driver ${driverId} does not belong to carrier ${carrierCompanyId}`,
-        );
+        const hasPartnerRelation = await this.relRepo.findOne({
+          where: [
+            {
+              parentCompanyId: carrierCompanyId,
+              childCompanyId: driver.companyId,
+              status: RelationshipStatus.ACCEPTED,
+              relationshipType: RelationshipType.COVERED_CARRIER,
+            },
+            {
+              parentCompanyId: carrierCompanyId,
+              childCompanyId: driver.companyId,
+              status: RelationshipStatus.ACCEPTED,
+              relationshipType: RelationshipType.ASSOCIATED_COMPANY,
+            },
+            {
+              parentCompanyId: driver.companyId,
+              childCompanyId: carrierCompanyId,
+              status: RelationshipStatus.ACCEPTED,
+              relationshipType: RelationshipType.COVERED_CARRIER,
+            },
+            {
+              parentCompanyId: driver.companyId,
+              childCompanyId: carrierCompanyId,
+              status: RelationshipStatus.ACCEPTED,
+              relationshipType: RelationshipType.ASSOCIATED_COMPANY,
+            },
+          ],
+          select: ['id'],
+        });
+        if (!hasPartnerRelation) {
+          throw new ForbiddenException(
+            `DR-005: Driver ${driverId} does not belong to carrier ${carrierCompanyId} or an active partner company`,
+          );
+        }
       }
     }
   }
 
-  // Mantener referencia a IsNull para satisfacer linter cuando no se usa.
-  // (Reservado para queries futuras de "shipments huérfanos sin run".)
+  /**
+   * Retorna los drivers asignables a un run: propios + empresas partner activas
+   * (covered_carrier o associated_company con status=accepted).
+   */
+  async getAssignableDrivers(
+    runId: string,
+    user: IUserPayload,
+  ): Promise<Driver[]> {
+    const run = await this.runRepo.findOne({
+      where: { id: runId },
+      select: ['id', 'companyId'],
+    });
+    if (!run) throw new NotFoundException(`Run ${runId} not found`);
+    this.assertCarrierAction(run, user);
 
-  private readonly _ensureIsNullImported = IsNull;
+    const companyId = run.companyId;
+
+    // IDs de empresas partner con relación activa
+    const relations = await this.relRepo.find({
+      where: [
+        {
+          parentCompanyId: companyId,
+          status: RelationshipStatus.ACCEPTED,
+          relationshipType: RelationshipType.COVERED_CARRIER,
+        },
+        {
+          parentCompanyId: companyId,
+          status: RelationshipStatus.ACCEPTED,
+          relationshipType: RelationshipType.ASSOCIATED_COMPANY,
+        },
+        {
+          childCompanyId: companyId,
+          status: RelationshipStatus.ACCEPTED,
+          relationshipType: RelationshipType.COVERED_CARRIER,
+        },
+        {
+          childCompanyId: companyId,
+          status: RelationshipStatus.ACCEPTED,
+          relationshipType: RelationshipType.ASSOCIATED_COMPANY,
+        },
+      ],
+      select: ['parentCompanyId', 'childCompanyId'],
+    });
+
+    const partnerIds = new Set<string>();
+    for (const r of relations) {
+      if (r.parentCompanyId !== companyId) partnerIds.add(r.parentCompanyId);
+      if (r.childCompanyId !== companyId) partnerIds.add(r.childCompanyId);
+    }
+
+    const eligibleCompanyIds = [companyId, ...partnerIds];
+
+    return this.driverRepo
+      .createQueryBuilder('driver')
+      .where('driver.companyId IN (:...ids)', { ids: eligibleCompanyIds })
+      .andWhere('driver.deletedAt IS NULL')
+      .orderBy('driver.companyId = :own', 'DESC', 'NULLS LAST')
+      .addOrderBy('driver.firstName', 'ASC')
+      .setParameter('own', companyId)
+      .getMany();
+  }
+
+  /**
+   * Envía push notification al driver cuando se le asigna un run.
+   * Best-effort: no lanza si el driver no tiene cuenta o push token.
+   */
+  private notifyAssignedDriver(driverId: string, run: DeliveryRun): void {
+    this.driverRepo
+      .findOne({ where: { id: driverId }, select: ['userId'] })
+      .then((driver) => {
+        if (!driver?.userId) return;
+        return this.notificationsService.create({
+          userId: driver.userId,
+          type: NotificationType.RUN_ASSIGNED,
+          title: 'Nueva ruta asignada',
+          body: `Tienes una ruta programada para el ${run.scheduledDate}`,
+          data: { runId: run.id, scheduledDate: run.scheduledDate },
+        });
+      })
+      .catch((err) =>
+        this.logger.warn(`notifyAssignedDriver error: ${err?.message ?? err}`),
+      );
+  }
+
+  private async loadCompanyPermissions(companyId: string): Promise<string[]> {
+    const rows: Array<{ code: string }> = await this.dataSource.query(
+      `SELECT pd.code
+         FROM subscriptions s
+         JOIN plan_permissions pp ON pp.plan_id = s.plan_id
+         JOIN permission_definitions pd ON pd.id = pp.permission_id
+        WHERE s.company_id = $1 AND s.status = 'active'
+        ORDER BY s.created_at DESC
+        LIMIT 100`,
+      [companyId],
+    );
+    return rows.map((r) => r.code);
+  }
 }

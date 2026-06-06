@@ -156,19 +156,39 @@ describe('DeliveryRunsService', () => {
     eventEmitter = new EventEmitter2();
     dataSource = {
       transaction: jest.fn(async (cb: any) => cb(makeEm(state))),
+      query: jest.fn().mockResolvedValue([]),
     };
     const complianceServiceMock: any = {
       assertCanOperatePassenger: jest.fn().mockResolvedValue(undefined),
       getCompanyCompliance: jest.fn(),
+    };
+    const whatsappMock: any = {
+      sendDeliveryConfirmation: jest.fn().mockResolvedValue(undefined),
+      sendPickupConfirmation: jest.fn().mockResolvedValue(undefined),
+      sendProximityAlert: jest.fn().mockResolvedValue(undefined),
+    };
+    const permissionsCacheMock: any = {
+      getOrLoad: jest.fn().mockResolvedValue([]),
+    };
+    const relRepoMock: any = {
+      find: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn().mockResolvedValue(null),
+    };
+    const notificationsServiceMock: any = {
+      create: jest.fn().mockResolvedValue(undefined),
     };
     service = new DeliveryRunsService(
       runRepo,
       shipmentRepo,
       truckRepo,
       driverRepo,
+      relRepoMock,
       dataSource,
       eventEmitter,
       complianceServiceMock,
+      whatsappMock,
+      notificationsServiceMock,
+      permissionsCacheMock,
     );
     (service as any)._complianceMock = complianceServiceMock;
   });

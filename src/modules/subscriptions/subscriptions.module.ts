@@ -9,9 +9,11 @@ import { Coupon } from './entities/coupon.entity';
 import { SubscriptionsController } from './subscriptions.controller';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionRenewalModule } from './subscription-renewal.module';
+import { CommonModule } from '../../common/common.module';
 
 @Module({
   imports: [
+    CommonModule,
     TypeOrmModule.forFeature([
       Subscription,
       SubscriptionAddon,

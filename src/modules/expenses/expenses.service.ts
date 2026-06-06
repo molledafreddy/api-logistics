@@ -75,6 +75,8 @@ export class ExpensesService {
       qb.andWhere('exp.status = :status', { status: query.status });
     if (query.category)
       qb.andWhere('exp.category = :category', { category: query.category });
+    if (query.deliveryRunId)
+      qb.andWhere('exp.deliveryRunId = :runId', { runId: query.deliveryRunId });
     if (query.shipmentId)
       qb.andWhere('exp.shipmentId = :sid', { sid: query.shipmentId });
     if (query.truckId)

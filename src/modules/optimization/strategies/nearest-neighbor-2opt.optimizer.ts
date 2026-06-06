@@ -1,81 +1,154 @@
 import { Injectable } from '@nestjs/common';
 import {
   IRouteOptimizer,
+  LatLng,
   OptimizationInput,
   OptimizationResult,
+  OptimizedStop,
 } from '../optimization.types';
+import { HaversineOptimizer } from './haversine.optimizer';
 
 /**
- * Optimizer: Nearest Neighbor + 2-opt
- * Sprint B — Optimizer Free
+ * Optimizer: Nearest Neighbor + 2-opt (Sprint B — Optimizer Free)
+ *
+ * Algoritmo:
+ *   1. NN para construir ruta inicial desde el origen (depot).
+ *   2. 2-opt para mejorar localmente la ruta (intercambio de segmentos).
+ *   3. Cálculo de distancias/duraciones con Haversine (great-circle).
+ *
+ * Diferencias vs implementación anterior:
+ *   - Antes usaba distancia euclídea sobre (lat,lng), lo cual NO produce
+ *     kilómetros (las coords geográficas no son cartesianas) y subestima
+ *     distancias a latitudes altas. Ahora usa Haversine real → totalDistanceKm
+ *     es métricamente correcto.
+ *   - Antes mapeaba `shipmentId: input.stops[idx]` después de reordenar,
+ *     lo que asignaba los IDs en orden ORIGINAL en lugar del orden optimizado
+ *     (bug grave de correctness). Ahora trackeamos `originalIdx` por stop
+ *     y mapeamos correctamente.
+ *   - Calcula durationMin usando `avgSpeedKmh` + `serviceTimePerStopMin`
+ *     en lugar de devolver 0 (que rompía los ETAs downstream).
  */
-
 @Injectable()
 export class NearestNeighborTwoOptOptimizer implements IRouteOptimizer {
   readonly providerName: OptimizationResult['provider'] = 'nn_2opt';
 
   async optimize(input: OptimizationInput): Promise<OptimizationResult> {
-    // 1. Nearest Neighbor (NN) para obtener una ruta inicial
-    let route = this.nearestNeighbor(input.stops.map((s) => s.destination));
-    // 2. 2-opt para mejorar la ruta
-    route = this.twoOpt(route);
-    // Mapear a OptimizedStop[]
-    const sequence = route.map((stop, idx) => ({
-      shipmentId: input.stops[idx]?.shipmentId || '',
-      order: idx + 1,
-      distanceFromPrevKm: idx === 0 ? 0 : this.euclidean(route[idx - 1], stop),
-      durationFromPrevMin: 0, // Puedes calcularlo si tienes velocidad promedio
+    const avgSpeedKmh = input.avgSpeedKmh ?? 35;
+    const serviceMin = input.serviceTimePerStopMin ?? 5;
+
+    if (input.stops.length === 0) {
+      return {
+        provider: this.providerName,
+        totalDistanceKm: 0,
+        totalDurationMin: 0,
+        sequence: [],
+      };
+    }
+
+    // Trabajamos sobre IndexedPoint para preservar el shipmentId original
+    // tras los reordenamientos del NN y del 2-opt.
+    type IndexedPoint = { point: LatLng; originalIdx: number };
+    const indexed: IndexedPoint[] = input.stops.map((s, i) => ({
+      point: s.destination,
+      originalIdx: i,
     }));
+
+    // 1) Nearest Neighbor desde el ORIGEN (no desde stop[0]).
+    let route = this.nearestNeighbor(input.origin, indexed);
+
+    // 2) 2-opt mejorando la métrica REAL (haversine) desde el origen.
+    route = this.twoOpt(input.origin, route);
+
+    // 3) Construir sequence respetando el orden optimizado y los IDs originales.
+    const sequence: OptimizedStop[] = [];
+    let totalKm = 0;
+    let totalMin = 0;
+    let cursor: LatLng = input.origin;
+
+    for (let i = 0; i < route.length; i++) {
+      const { point, originalIdx } = route[i];
+      const dKm = HaversineOptimizer.distanceKm(cursor, point);
+      const durMin = (dKm / avgSpeedKmh) * 60 + serviceMin;
+
+      sequence.push({
+        shipmentId: input.stops[originalIdx].shipmentId,
+        order: i + 1,
+        distanceFromPrevKm: round2(dKm),
+        durationFromPrevMin: round2(durMin),
+      });
+
+      totalKm += dKm;
+      totalMin += durMin;
+      cursor = point;
+    }
+
     return {
       provider: this.providerName,
-      totalDistanceKm: this.calculateTotalDistance(route),
-      totalDurationMin: 0, // Puedes calcularlo si tienes velocidad promedio
+      totalDistanceKm: round2(totalKm),
+      totalDurationMin: round2(totalMin),
       sequence,
     };
   }
 
-  private nearestNeighbor(
-    stops: { lat: number; lng: number }[],
-  ): { lat: number; lng: number }[] {
-    if (stops.length <= 2) return stops;
-    const visited = new Set<number>();
-    const route = [stops[0]];
-    visited.add(0);
-    let current = 0;
-    while (route.length < stops.length) {
-      let nearest = -1;
-      let minDist = Infinity;
-      for (let i = 1; i < stops.length; i++) {
-        if (!visited.has(i)) {
-          const dist = this.euclidean(stops[current], stops[i]);
-          if (dist < minDist) {
-            minDist = dist;
-            nearest = i;
-          }
+  // ─── Algoritmos internos ────────────────────────────────────────────────
+
+  /**
+   * Nearest Neighbor desde el origen. En cada paso, escoge el punto no visitado
+   * más cercano (haversine) al punto actual.
+   */
+  private nearestNeighbor<T extends { point: LatLng }>(
+    origin: LatLng,
+    points: T[],
+  ): T[] {
+    if (points.length <= 1) return [...points];
+
+    const remaining = [...points];
+    const route: T[] = [];
+    let cursor: LatLng = origin;
+
+    while (remaining.length > 0) {
+      let bestIdx = 0;
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < remaining.length; i++) {
+        const d = HaversineOptimizer.distanceKm(cursor, remaining[i].point);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
         }
       }
-      if (nearest === -1) break;
-      route.push(stops[nearest]);
-      visited.add(nearest);
-      current = nearest;
+      const next = remaining.splice(bestIdx, 1)[0];
+      route.push(next);
+      cursor = next.point;
     }
     return route;
   }
 
-  private twoOpt(
-    route: { lat: number; lng: number }[],
-  ): { lat: number; lng: number }[] {
+  /**
+   * 2-opt: mejora local que invierte segmentos de la ruta si reduce la
+   * distancia total medida desde el origen. Itera hasta no encontrar mejora.
+   */
+  private twoOpt<T extends { point: LatLng }>(
+    origin: LatLng,
+    initial: T[],
+  ): T[] {
+    if (initial.length < 4) return initial; // 2-opt no aporta con <4 stops
+    let route = [...initial];
+    let bestDistance = this.totalDistanceFromOrigin(origin, route);
     let improved = true;
+
     while (improved) {
       improved = false;
-      for (let i = 1; i < route.length - 2; i++) {
-        for (let k = i + 1; k < route.length - 1; k++) {
-          const newRoute = this.twoOptSwap(route, i, k);
-          if (
-            this.calculateTotalDistance(newRoute) <
-            this.calculateTotalDistance(route)
-          ) {
-            route = newRoute;
+      // Recorre todas las parejas (i,k) y prueba revertir el segmento [i..k].
+      for (let i = 0; i < route.length - 1; i++) {
+        for (let k = i + 1; k < route.length; k++) {
+          const candidate = this.twoOptSwap(route, i, k);
+          const candidateDistance = this.totalDistanceFromOrigin(
+            origin,
+            candidate,
+          );
+          if (candidateDistance + 1e-9 < bestDistance) {
+            route = candidate;
+            bestDistance = candidateDistance;
             improved = true;
           }
         }
@@ -84,11 +157,7 @@ export class NearestNeighborTwoOptOptimizer implements IRouteOptimizer {
     return route;
   }
 
-  private twoOptSwap(
-    route: { lat: number; lng: number }[],
-    i: number,
-    k: number,
-  ) {
+  private twoOptSwap<T>(route: T[], i: number, k: number): T[] {
     return [
       ...route.slice(0, i),
       ...route.slice(i, k + 1).reverse(),
@@ -96,18 +165,21 @@ export class NearestNeighborTwoOptOptimizer implements IRouteOptimizer {
     ];
   }
 
-  private euclidean(
-    a: { lat: number; lng: number },
-    b: { lat: number; lng: number },
-  ) {
-    return Math.sqrt((a.lat - b.lat) ** 2 + (a.lng - b.lng) ** 2);
-  }
-
-  private calculateTotalDistance(route: { lat: number; lng: number }[]) {
-    let dist = 0;
-    for (let i = 0; i < route.length - 1; i++) {
-      dist += this.euclidean(route[i], route[i + 1]);
+  /** Distancia total desde el origen pasando por la ruta en orden, usando haversine. */
+  private totalDistanceFromOrigin<T extends { point: LatLng }>(
+    origin: LatLng,
+    route: T[],
+  ): number {
+    let total = 0;
+    let cursor: LatLng = origin;
+    for (const { point } of route) {
+      total += HaversineOptimizer.distanceKm(cursor, point);
+      cursor = point;
     }
-    return dist;
+    return total;
   }
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }

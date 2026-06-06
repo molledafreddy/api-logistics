@@ -9,7 +9,30 @@ import { In, Repository } from 'typeorm';
 
 import { Plan } from '../plans/entities/plan.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
 import { PaymentsService } from './payments.service';
+
+export interface PaymentHistoryItem {
+  id: string;
+  eventType: string;
+  amount: number | null;
+  currency: 'CLP';
+  provider: string | null;
+  externalId: string | null;
+  eventDate: string;
+  createdAt: string;
+}
+
+export interface LastPaymentEventView {
+  eventId: string;
+  status: 'success' | 'failure' | 'pending' | 'unknown';
+  eventType: string;
+  amount: number | null;
+  currency: 'CLP';
+  eventDate: string;
+  /** Edad del evento en segundos, para que el cliente filtre eventos viejos. */
+  ageSec: number;
+}
 
 export interface MyRenewalView {
   subscriptionId: string;
@@ -28,6 +51,7 @@ export interface MyRenewalView {
 export interface RetryRenewalResult {
   subscriptionId: string;
   initPoint: string;
+  sandboxInitPoint?: string;
   expiresInSec: number;
 }
 
@@ -50,6 +74,8 @@ export class BillingService {
     private readonly subRepo: Repository<Subscription>,
     @InjectRepository(Plan)
     private readonly planRepo: Repository<Plan>,
+    @InjectRepository(PaymentEvent)
+    private readonly paymentEventRepo: Repository<PaymentEvent>,
     private readonly paymentsService: PaymentsService,
   ) {}
 
@@ -149,7 +175,96 @@ export class BillingService {
     return {
       subscriptionId: sub.id,
       initPoint: checkout.initPoint,
+      sandboxInitPoint: checkout.sandboxInitPoint,
       expiresInSec: this.RETRY_THROTTLE_MS / 1000,
+    };
+  }
+
+  /** Historial de eventos de pago para la company del usuario. */
+  async getMyHistory(companyId: string): Promise<PaymentHistoryItem[]> {
+    const sub = await this.subRepo.findOne({
+      where: { company_id: companyId },
+      order: { created_at: 'DESC' },
+      select: ['id'],
+    });
+    if (!sub) return [];
+
+    const events = await this.paymentEventRepo.find({
+      where: { subscription_id: sub.id },
+      order: { event_date: 'DESC' },
+      take: 50,
+    });
+
+    return events.map((e) => ({
+      id: e.id,
+      eventType: e.event_type,
+      amount: e.amount ?? null,
+      currency: 'CLP',
+      provider: e.provider ?? null,
+      externalId: e.external_id ?? null,
+      eventDate: e.event_date.toISOString(),
+      createdAt: e.created_at.toISOString(),
+    }));
+  }
+
+  /**
+   * Sprint G (Security) — Último evento de pago verificado por webhook.
+   *
+   * Fuente de verdad para que el cliente móvil pueda mostrar feedback
+   * post-pago sin confiar en el query string del deep link (spoofeable).
+   * El cliente recibe `logistics://payment/*` como TRIGGER y luego consulta
+   * este endpoint para conocer el estado REAL del último PaymentEvent.
+   *
+   * Devuelve `null` si no hay eventos o si el más reciente está fuera del
+   * timeframe relevante (24h por defecto).
+   */
+  async getMyLastPaymentEvent(
+    companyId: string,
+    options: { withinHours?: number } = {},
+  ): Promise<LastPaymentEventView | null> {
+    const sub = await this.subRepo.findOne({
+      where: { company_id: companyId },
+      order: { created_at: 'DESC' },
+      select: ['id'],
+    });
+    if (!sub) return null;
+
+    const event = await this.paymentEventRepo.findOne({
+      where: { subscription_id: sub.id },
+      order: { event_date: 'DESC' },
+    });
+    if (!event) return null;
+
+    const windowMs = (options.withinHours ?? 24) * 60 * 60 * 1000;
+    const ageMs = Date.now() - event.event_date.getTime();
+    if (ageMs > windowMs) return null;
+
+    let status: 'success' | 'failure' | 'pending' | 'unknown';
+    switch (event.event_type) {
+      case 'payment.approved':
+        status = 'success';
+        break;
+      case 'payment.rejected':
+      case 'payment.cancelled':
+      case 'payment.refunded':
+        status = 'failure';
+        break;
+      case 'payment.pending':
+      case 'payment.in_process':
+        status = 'pending';
+        break;
+      default:
+        status = 'unknown';
+    }
+
+    return {
+      eventId: event.id,
+      status,
+      eventType: event.event_type,
+      amount: event.amount ?? null,
+      currency: 'CLP',
+      eventDate: event.event_date.toISOString(),
+      ageSec: Math.floor(ageMs / 1000),
     };
   }
 }

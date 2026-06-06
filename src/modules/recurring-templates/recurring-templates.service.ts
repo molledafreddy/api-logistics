@@ -9,6 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository, Not } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { randomUUID } from 'crypto';
 
 import { RecurringTemplate } from './entities/recurring-template.entity';
 import { DeliveryRun } from '../delivery-runs/entities/delivery-run.entity';
@@ -79,6 +80,10 @@ export class RecurringTemplatesService {
   ): Promise<RecurringTemplate> {
     const companyId = this.requireCompanyId(user);
     this.assertManagerRole(user);
+
+    if (user.role !== 'super_admin') {
+      await this.checkTemplatePlanLimit(companyId);
+    }
 
     if (dto.pattern === RecurrencePattern.WEEKLY && !dto.daysOfWeek?.length) {
       throw new BadRequestException(
@@ -367,6 +372,7 @@ export class RecurringTemplatesService {
           volumeM3: snap.volumeM3 ?? null,
           pieces: snap.pieces ?? null,
           currency: 'USD',
+          publicTrackingToken: randomUUID(),
           metadata: snap.metadata ?? {},
         });
         const savedSh = await em.save(sh);
@@ -531,6 +537,53 @@ export class RecurringTemplatesService {
     if (!allowed.includes(user.role)) {
       throw new ForbiddenException(
         'RT-001: only carrier managers can manage recurring templates',
+      );
+    }
+  }
+
+  /**
+   * Verifica que la empresa no haya superado su límite de plantillas activas.
+   * - Sin suscripción activa → 0 plantillas (free tier sin templates.basic).
+   * - Con suscripción → lee global.max_templates del jsonb del plan.
+   * - Valor 99999 o -1 se trata como ilimitado.
+   */
+  private async checkTemplatePlanLimit(companyId: string): Promise<void> {
+    const rows: Array<{ limits: Record<string, Record<string, number>> }> =
+      await this.dataSource.query(
+        `SELECT p.limits
+           FROM subscriptions s
+           JOIN plans p ON p.id = s.plan_id
+          WHERE s.company_id = $1 AND s.status IN ('active', 'pending_payment')
+          ORDER BY s.created_at DESC
+          LIMIT 1`,
+        [companyId],
+      );
+
+    if (rows.length === 0) {
+      throw new ForbiddenException(
+        'Tu plan no permite crear plantillas de recurrencia. Considera mejorar tu plan.',
+      );
+    }
+
+    const resolved = rows[0].limits?.['global']?.['max_templates'];
+
+    if (resolved === undefined || resolved === -1 || resolved >= 99999) {
+      return; // ilimitado
+    }
+
+    if (resolved === 0) {
+      throw new ForbiddenException(
+        'Tu plan no permite crear plantillas de recurrencia. Considera mejorar tu plan.',
+      );
+    }
+
+    const currentCount = await this.templateRepo.count({
+      where: { companyId, active: true },
+    });
+
+    if (currentCount >= resolved) {
+      throw new ForbiddenException(
+        `Has alcanzado el límite de ${resolved} plantilla(s) activa(s) en tu plan actual. Considera mejorar tu plan.`,
       );
     }
   }

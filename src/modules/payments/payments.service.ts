@@ -16,6 +16,7 @@ import {
   NormalizedPaymentEvent,
   PAYMENT_PROVIDER_TOKEN,
 } from './payments.types';
+import { ReferralsService } from '../referrals/referrals.service';
 
 /**
  * Sprint E — Orquesta el flujo de pagos.
@@ -46,6 +47,7 @@ export class PaymentsService {
     @InjectRepository(Plan)
     private readonly planRepo: Repository<Plan>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly referralsService: ReferralsService,
   ) {}
 
   // ─── Public API ────────────────────────────
@@ -61,7 +63,25 @@ export class PaymentsService {
       );
     }
 
-    const result = await this.provider.createCheckout(input);
+    const discountPct = await this.referralsService.getReferredDiscount(
+      input.companyId,
+    );
+    const effectiveInput =
+      discountPct > 0
+        ? {
+            ...input,
+            amount: Math.round(input.amount * (1 - discountPct / 100)),
+            itemTitle: `${input.itemTitle} (${discountPct}% desc. referido)`,
+          }
+        : input;
+
+    if (discountPct > 0) {
+      this.logger.log(
+        `descuento referido ${discountPct}% aplicado company=${input.companyId} amount=${input.amount}→${effectiveInput.amount}`,
+      );
+    }
+
+    const result = await this.provider.createCheckout(effectiveInput);
 
     // Persistimos el external_reference y marcamos provider en la subscription.
     sub.provider = this.provider.providerName;
@@ -191,6 +211,38 @@ export class PaymentsService {
             },
           });
         }
+
+        // Fase 5: cierra el ciclo referido (referred → referred_rewarded) y
+        // asigna descuento pendiente al referidor en su suscripción.
+        this.referralsService
+          .onReferredPaymentApproved(sub.company_id, this.subRepo)
+          .catch((err) =>
+            this.logger.error(
+              `referral post-payment failed company=${sub.company_id}: ${(err as Error).message}`,
+            ),
+          );
+
+        // Fase 6: si esta suscripción tenía un descuento de referido pendiente
+        // (es decir, esta empresa ES el referidor), lo consumimos y cerramos el ciclo.
+        if (sub.pending_referral_discount_pct) {
+          sub.referral_discount_applied_at = new Date();
+          sub.pending_referral_discount_pct = null;
+          this.subRepo
+            .save(sub)
+            .catch((err) =>
+              this.logger.error(
+                `referral clear discount failed sub=${sub.id}: ${(err as Error).message}`,
+              ),
+            );
+          this.referralsService
+            .onReferrerRewarded(sub.company_id)
+            .catch((err) =>
+              this.logger.error(
+                `onReferrerRewarded failed company=${sub.company_id}: ${(err as Error).message}`,
+              ),
+            );
+        }
+
         break;
       }
       case 'payment.rejected':

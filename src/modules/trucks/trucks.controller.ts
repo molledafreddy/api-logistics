@@ -57,6 +57,14 @@ export class TrucksController {
   }
 
   @Get()
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Listar camiones (paginado y filtrable)' })
   @ApiResponse({ status: 200, description: 'Listado de camiones' })
   findAll(@Query() query: QueryTruckDto, @CurrentUser() user: IUserPayload) {
@@ -64,6 +72,15 @@ export class TrucksController {
   }
 
   @Get(':id')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Obtener camión por ID' })
   @ApiResponse({ status: 200, description: 'Camión encontrado' })
   @ApiResponse({ status: 404, description: 'Camión no encontrado' })
@@ -75,6 +92,14 @@ export class TrucksController {
   }
 
   @Get(':id/location')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.DRIVER,
+  )
   @ApiOperation({ summary: 'Obtener última ubicación conocida del camión' })
   @ApiResponse({ status: 200, description: 'Ubicación del camión' })
   getLocation(

@@ -23,6 +23,10 @@ import {
   AddAddonDto,
   UpdateAddonQuantityDto,
 } from './dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
+
+const { SUPER_ADMIN, COMPANY_OWNER, ADMIN } = UserRole;
 
 @ApiTags('Subscriptions')
 @ApiBearerAuth()
@@ -36,6 +40,7 @@ export class SubscriptionsController {
   }
 
   @Post('free')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Crear suscripción gratuita' })
   @ApiResponse({ status: 201, description: 'Suscripción gratuita creada' })
   @ApiResponse({ status: 400, description: 'Parámetros inválidos' })
@@ -49,6 +54,7 @@ export class SubscriptionsController {
   }
 
   @Get('company/:companyId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Listar suscripciones por empresa' })
   @ApiResponse({ status: 200, description: 'Lista de suscripciones' })
   @ApiResponse({ status: 404, description: 'Empresa no encontrada' })
@@ -72,6 +78,7 @@ export class SubscriptionsController {
   }
 
   @Patch(':id/upgrade')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Upgrade de suscripción' })
   @ApiResponse({ status: 200, description: 'Suscripción actualizada' })
   @ApiResponse({ status: 400, description: 'Plan inválido o no compatible' })
@@ -83,6 +90,7 @@ export class SubscriptionsController {
   }
 
   @Patch(':id/downgrade')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Downgrade de suscripción' })
   @ApiResponse({ status: 200, description: 'Suscripción actualizada' })
   @ApiResponse({ status: 400, description: 'Plan inválido o no compatible' })
@@ -94,6 +102,7 @@ export class SubscriptionsController {
   }
 
   @Patch(':id/suspend')
+  @Roles(SUPER_ADMIN)
   @ApiOperation({ summary: 'Suspender suscripción' })
   @ApiResponse({ status: 200, description: 'Suscripción suspendida' })
   @ApiResponse({ status: 404, description: 'Suscripción no encontrada' })
@@ -106,6 +115,7 @@ export class SubscriptionsController {
 
   // --- Endpoints para Addons ---
   @Post(':id/addons')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Agregar addon a suscripción' })
   @ApiResponse({ status: 201, description: 'Addon agregado' })
   @ApiResponse({ status: 400, description: 'Parámetros inválidos' })
@@ -127,6 +137,7 @@ export class SubscriptionsController {
   }
 
   @Patch('addons/:addonId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Actualizar cantidad de un addon' })
   @ApiResponse({ status: 200, description: 'Addon actualizado' })
   @ApiResponse({ status: 404, description: 'Addon no encontrado' })
@@ -144,6 +155,7 @@ export class SubscriptionsController {
   }
 
   @Get(':id/addons')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Listar addons de una suscripción' })
   @ApiResponse({ status: 200, description: 'Lista de addons' })
   @ApiResponse({ status: 404, description: 'Suscripción no encontrada' })
@@ -154,6 +166,7 @@ export class SubscriptionsController {
   }
 
   @Get('addons/:addonId')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER, ADMIN)
   @ApiOperation({ summary: 'Obtener addon por ID' })
   @ApiResponse({ status: 200, description: 'Addon encontrado' })
   @ApiResponse({ status: 404, description: 'Addon no encontrado' })
@@ -164,6 +177,7 @@ export class SubscriptionsController {
   }
 
   @Patch('addons/:addonId/delete')
+  @Roles(SUPER_ADMIN, COMPANY_OWNER)
   @ApiOperation({ summary: 'Eliminar addon de una suscripción' })
   @ApiResponse({ status: 200, description: 'Addon eliminado' })
   @ApiResponse({ status: 404, description: 'Addon no encontrado' })

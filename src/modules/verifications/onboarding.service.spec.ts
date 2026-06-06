@@ -19,6 +19,8 @@ describe('OnboardingService', () => {
   let companyRepo: any;
   let verificationRepo: any;
   let tierRepo: any;
+  let driverRepo: any;
+  let truckRepo: any;
 
   beforeEach(() => {
     companyRepo = { findOne: jest.fn() };
@@ -29,7 +31,15 @@ describe('OnboardingService', () => {
         requiredDocuments: PASSENGER_DOCS,
       }),
     };
-    service = new OnboardingService(companyRepo, verificationRepo, tierRepo);
+    driverRepo = { count: jest.fn().mockResolvedValue(0) };
+    truckRepo = { count: jest.fn().mockResolvedValue(0) };
+    service = new OnboardingService(
+      companyRepo,
+      verificationRepo,
+      tierRepo,
+      driverRepo,
+      truckRepo,
+    );
   });
 
   it('lanza NotFound si la empresa no existe', async () => {
@@ -109,9 +119,10 @@ describe('OnboardingService', () => {
       id: COMPANY,
       serviceType: ServiceType.FREIGHT,
       businessModel: BusinessModel.SMALL_FLEET,
+      taxId: '76123456-7', // marca company_profile como completed (1/4 = 25%)
     });
     const wizard = await service.getWizardForCompany(COMPANY);
-    // Solo company_profile arranca completed=true (id existe).
+    // Solo company_profile arranca completed=true (taxId presente).
     // 1 de 4 pasos = 25 %.
     expect(wizard.progressPct).toBe(25);
     expect(wizard.completed).toBe(false);

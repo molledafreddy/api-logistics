@@ -55,6 +55,11 @@ describe('PaymentsService', () => {
     eventEmitter = {
       emit: jest.fn(),
     } as unknown as jest.Mocked<EventEmitter2>;
+    const referralsService = {
+      getReferredDiscount: jest.fn().mockResolvedValue(0),
+      onReferredPaymentApproved: jest.fn().mockResolvedValue(undefined),
+      applyReferralCode: jest.fn().mockResolvedValue(undefined),
+    } as any;
     svc = new PaymentsService(
       provider,
       subRepo,
@@ -62,6 +67,7 @@ describe('PaymentsService', () => {
       eventRepo,
       planRepo,
       eventEmitter,
+      referralsService,
     );
   });
 

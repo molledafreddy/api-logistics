@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -25,6 +26,7 @@ const repoMock = () => ({
   create: jest.fn((x) => x),
   save: jest.fn(async (x) => ({ id: 't1', ...x })),
   findOne: jest.fn(),
+  count: jest.fn().mockResolvedValue(0),
   softRemove: jest.fn(),
   createQueryBuilder: jest.fn(),
 });
@@ -48,6 +50,16 @@ describe('TrucksService', () => {
       providers: [
         TrucksService,
         { provide: getRepositoryToken(Truck), useValue: repo },
+        {
+          provide: DataSource,
+          useValue: {
+            query: jest
+              .fn()
+              .mockResolvedValue([
+                { limits: { global: { max_trucks: 99999 } } },
+              ]),
+          },
+        },
       ],
     }).compile();
     service = module.get(TrucksService);

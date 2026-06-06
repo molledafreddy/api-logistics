@@ -8,9 +8,16 @@ import {
   IsIn,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateExpenseDto {
+  @ApiPropertyOptional({ nullable: true })
+  @ValidateIf((o) => o.deliveryRunId != null)
+  @IsUUID()
+  @IsOptional()
+  deliveryRunId?: string | null;
+
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()

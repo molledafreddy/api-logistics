@@ -70,4 +70,9 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   timezone?: string;
+
+  @ApiPropertyOptional({ description: 'Token de link de referido (opcional)' })
+  @IsOptional()
+  @IsString()
+  referralToken?: string;
 }

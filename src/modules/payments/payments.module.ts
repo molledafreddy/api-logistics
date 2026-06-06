@@ -8,6 +8,7 @@ import { Invoice } from '../subscriptions/entities/invoice.entity';
 import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
 import { User } from '../auth/entities/user.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ReferralsModule } from '../referrals/referrals.module';
 
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
@@ -37,6 +38,7 @@ import { MercadoPagoProvider } from './providers/mercadopago.provider';
     ConfigModule,
     TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent, Plan, User]),
     NotificationsModule,
+    ReferralsModule,
   ],
   controllers: [PaymentsController, BillingController],
   providers: [

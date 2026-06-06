@@ -22,6 +22,9 @@ export class Expense extends BaseEntity {
   createdBy!: string;
 
   // ─── Relación opcional ─────────────────
+  @Column({ type: 'uuid', nullable: true, name: 'delivery_run_id' })
+  deliveryRunId!: string | null;
+
   @Column({ type: 'uuid', nullable: true, name: 'shipment_id' })
   shipmentId!: string | null;
 

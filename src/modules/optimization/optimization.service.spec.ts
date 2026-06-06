@@ -44,7 +44,7 @@ describe('OptimizationService', () => {
       findOne: jest.fn(),
       save: jest.fn(async (r: any) => r),
     };
-    shipmentRepo = { find: jest.fn() };
+    shipmentRepo = { find: jest.fn(), update: jest.fn() };
     haversine = new HaversineOptimizer();
     googleRoutes = { providerName: 'google_routes', optimize: jest.fn() };
     mapbox = { providerName: 'mapbox', optimize: jest.fn() };

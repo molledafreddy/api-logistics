@@ -46,6 +46,7 @@ export class CompaniesController {
   }
 
   @Get()
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Listar empresas' })
   @ApiResponse({ status: 200, description: 'Lista de empresas' })
   async findAll(
@@ -56,6 +57,15 @@ export class CompaniesController {
   }
 
   @Get(':id')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPANY_OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.DISPATCHER,
+    UserRole.ACCOUNTANT,
+    UserRole.VIEWER,
+  )
   @ApiOperation({ summary: 'Obtener empresa por ID' })
   @ApiResponse({ status: 200, description: 'Empresa encontrada' })
   @ApiResponse({ status: 404, description: 'Empresa no encontrada' })
@@ -67,6 +77,7 @@ export class CompaniesController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Actualizar empresa' })
   @ApiResponse({ status: 200, description: 'Empresa actualizada' })
   @ApiResponse({ status: 403, description: 'Sin permisos' })
@@ -81,6 +92,7 @@ export class CompaniesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_OWNER)
   @ApiOperation({ summary: 'Eliminar empresa (soft delete)' })
   @ApiResponse({ status: 204, description: 'Empresa eliminada' })
   @ApiResponse({ status: 403, description: 'Sin permisos' })

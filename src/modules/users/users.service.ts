@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { User } from '../auth/entities/user.entity';
 import { SupabaseService } from '../auth/supabase.service';
@@ -45,6 +45,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly supabaseService: SupabaseService,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ─── List users of the company ─────────────────────
@@ -135,6 +136,10 @@ export class UsersService {
       !canInvite.includes(currentUser.role)
     ) {
       throw new ForbiddenException('No tienes permisos para invitar usuarios');
+    }
+
+    if (currentUser.role !== UserRole.SUPER_ADMIN) {
+      await this.checkUserPlanLimit(currentUser.companyId);
     }
 
     // Check if email already exists
@@ -426,5 +431,48 @@ export class UsersService {
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
     };
+  }
+
+  /**
+   * Verifica que la empresa no haya superado su límite de usuarios.
+   * - free_courier / pro_courier / free_passenger / pro_passenger → max_users = 1 (solo owner).
+   * - enterprise_courier / enterprise_passenger → max_users = 15.
+   * - enterprise_fleet → ilimitado.
+   * - Sin suscripción activa → 1 (fallback free tier).
+   * - El owner ya existe, por lo que al invitar el count actual debe ser < max_users.
+   */
+  private async checkUserPlanLimit(companyId: string): Promise<void> {
+    const rows: Array<{ limits: Record<string, Record<string, number>> }> =
+      await this.dataSource.query(
+        `SELECT p.limits
+           FROM subscriptions s
+           JOIN plans p ON p.id = s.plan_id
+          WHERE s.company_id = $1 AND s.status IN ('active', 'pending_payment')
+          ORDER BY s.created_at DESC
+          LIMIT 1`,
+        [companyId],
+      );
+
+    let maxUsers: number;
+
+    if (rows.length === 0) {
+      maxUsers = 1;
+    } else {
+      const resolved = rows[0].limits?.['global']?.['max_users'];
+      if (resolved === undefined || resolved === -1 || resolved >= 99999) {
+        return; // ilimitado
+      }
+      maxUsers = resolved;
+    }
+
+    const currentCount = await this.userRepository.count({
+      where: { companyId },
+    });
+
+    if (currentCount >= maxUsers) {
+      throw new ForbiddenException(
+        `Tu plan permite máximo ${maxUsers} usuario(s). Actualiza a Enterprise para agregar más miembros al equipo.`,
+      );
+    }
   }
 }

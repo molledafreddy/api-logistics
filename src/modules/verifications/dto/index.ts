@@ -7,7 +7,6 @@ import {
   IsPositive,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { VerificationStatus } from '../../../common/enums/verification-status.enum';
 
 export class CreateVerificationDto {
   @ApiProperty({ description: 'UUID of the company requesting verification' })
@@ -78,6 +77,47 @@ export class CreateVerificationTierDto {
   @IsOptional()
   @IsInt()
   validityDays?: number;
+}
+
+export class AddDocumentDto {
+  @ApiProperty({
+    enum: [
+      'rut',
+      'tax_id',
+      'insurance',
+      'driver_license',
+      'vehicle_registration',
+      'permit',
+      'other',
+    ],
+    example: 'rut',
+    description: 'Type of document being uploaded',
+  })
+  @IsEnum([
+    'rut',
+    'tax_id',
+    'insurance',
+    'driver_license',
+    'vehicle_registration',
+    'permit',
+    'other',
+  ])
+  documentType!: string;
+
+  @ApiProperty({
+    example: 'http://localhost:3000/api/v1/files/local/verifications/uuid.jpg',
+    description: 'URL of the uploaded file',
+  })
+  @IsString()
+  fileUrl!: string;
+
+  @ApiPropertyOptional({
+    example: 'RUT de empresa',
+    description: 'Display name for the document',
+  })
+  @IsOptional()
+  @IsString()
+  fileName?: string;
 }
 
 // PARTE 7 · Sprint 6 — Compliance + Onboarding

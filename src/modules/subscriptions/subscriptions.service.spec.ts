@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-
 import { getQueueToken } from '@nestjs/bullmq';
+import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 import { SubscriptionsService } from './subscriptions.service';
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionAddon } from './entities/subscription-addon.entity';
@@ -17,6 +17,13 @@ const mockRepo = () => ({
   findOne: jest.fn(),
   delete: jest.fn(),
   create: jest.fn(),
+  manager: {
+    query: jest
+      .fn()
+      .mockResolvedValue([
+        { audience: 'courier', tier: 'pro', name: 'Pro Courier' },
+      ]),
+  },
 });
 
 describe('SubscriptionsService', () => {
@@ -40,6 +47,10 @@ describe('SubscriptionsService', () => {
         {
           provide: getQueueToken('subscription-renewal'),
           useValue: { add: jest.fn() },
+        },
+        {
+          provide: PermissionsCacheService,
+          useValue: { invalidate: jest.fn(), getOrLoad: jest.fn() },
         },
       ],
     }).compile();
@@ -88,27 +99,47 @@ describe('SubscriptionsService', () => {
   });
 
   it('should upgrade a subscription', async () => {
+    subscriptionRepo.findOne.mockResolvedValue({
+      id: 'sub1',
+      plan_id: 'plan1',
+      company_id: 'c1',
+    });
     subscriptionRepo.update.mockResolvedValue({ affected: 1 });
+    // manager.query returns [current plan, new plan] — same audience, higher tier
+    subscriptionRepo.manager.query
+      .mockResolvedValueOnce([
+        { audience: 'courier', tier: 'free', name: 'Free Courier' },
+      ])
+      .mockResolvedValueOnce([
+        { audience: 'courier', tier: 'pro', name: 'Pro Courier' },
+      ]);
     const result = await service.upgradeSubscription('sub1', 'plan2');
     expect(subscriptionRepo.update).toHaveBeenCalledWith(
       'sub1',
-      expect.objectContaining({
-        plan_id: 'plan2',
-        status: 'active',
-      }),
+      expect.objectContaining({ plan_id: 'plan2', status: 'active' }),
     );
     expect(result).toEqual({ affected: 1 });
   });
 
   it('should downgrade a subscription', async () => {
+    subscriptionRepo.findOne.mockResolvedValue({
+      id: 'sub1',
+      plan_id: 'plan1',
+      company_id: 'c1',
+    });
     subscriptionRepo.update.mockResolvedValue({ affected: 1 });
+    // manager.query returns [current plan, new plan] — same audience, lower tier
+    subscriptionRepo.manager.query
+      .mockResolvedValueOnce([
+        { audience: 'courier', tier: 'pro', name: 'Pro Courier' },
+      ])
+      .mockResolvedValueOnce([
+        { audience: 'courier', tier: 'free', name: 'Free Courier' },
+      ]);
     const result = await service.downgradeSubscription('sub1', 'planFree');
     expect(subscriptionRepo.update).toHaveBeenCalledWith(
       'sub1',
-      expect.objectContaining({
-        plan_id: 'planFree',
-        status: 'active',
-      }),
+      expect.objectContaining({ plan_id: 'planFree', status: 'active' }),
     );
     expect(result).toEqual({ affected: 1 });
   });
