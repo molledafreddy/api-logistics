@@ -9,7 +9,7 @@ export class MailService {
   private readonly from: string;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = this.config.get<string>('RESEND_API_KEY', '');
+    const apiKey = this.config.get<string>('RESEND_API_KEY') || 're_no_key';
     this.resend = new Resend(apiKey);
     this.from = this.config.get<string>(
       'MAIL_FROM',

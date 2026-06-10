@@ -103,6 +103,7 @@ jobs:
       MERCADOPAGO_TIMEOUT_MS: 8000
       APP_URL: http://localhost:3000
       APP_PORT: 3000
+      RESEND_API_KEY: re_test_placeholder_no_send
 
     steps:
       - uses: actions/checkout@v4
