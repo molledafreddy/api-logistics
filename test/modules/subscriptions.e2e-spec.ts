@@ -18,7 +18,7 @@ describe('Subscriptions E2E', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
-    jwt = await getAccessToken(app);
+    jwt = await getAccessToken(app, 'admin@test.com', 'TestPassword123!');
     if (!dataSource.isInitialized) await dataSource.initialize();
 
     // Get CI Test Company (where test user belongs)
