@@ -300,4 +300,7 @@ async function bootstrap() {
   logger.log(`🔌 WS Tester:  http://localhost:${port}/public/ws-tester.html`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to start application:', err);
+  process.exit(1);
+});
