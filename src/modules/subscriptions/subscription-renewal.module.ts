@@ -44,11 +44,10 @@ const useBull =
     ]),
   ],
   providers: [
-    SubscriptionRenewalProcessor,
     SubscriptionsService,
-    ...(useBull ? [RenewalSchedulerService] : []),
-    ...(!useBull
-      ? [
+    ...(useBull
+      ? [SubscriptionRenewalProcessor, RenewalSchedulerService]
+      : [
           {
             provide: 'BullQueue_subscription-renewal',
             useValue: {
@@ -56,8 +55,7 @@ const useBull =
               close: async () => undefined,
             },
           },
-        ]
-      : []),
+        ]),
   ],
   exports: [
     ...(useBull

@@ -64,14 +64,33 @@ const permissionsCacheProvider = skipRedis
             inject: [ConfigService],
             isGlobal: true,
             useFactory: async (_config: ConfigService) => {
-              const { host, port, password, tls } = getRedisConnection();
-              return {
-                store: await redisStore({
-                  socket: { host, port, ...(tls ? { tls: true } : {}) },
-                  password,
-                  ttl: 5 * 60 * 1000,
-                }),
-              };
+              const { host, port, password } = getRedisConnection();
+              // node-redis (used by cache-manager-redis-yet) ignores ioredis options —
+              // timeout and reconnect must be configured via socket options.
+              try {
+                const store = await redisStore({
+                  socket: {
+                    host,
+                    port,
+                    tls: process.env.REDIS_TLS === 'true',
+                    connectTimeout: 5_000,
+                    reconnectStrategy: (retries: number) => {
+                      if (retries >= 3)
+                        return new Error('Redis unreachable after 3 attempts');
+                      return Math.min(retries * 300, 1_000);
+                    },
+                  },
+                  password: password || undefined,
+                  ttl: 5 * 60 * 1_000,
+                });
+                return { store };
+              } catch (err) {
+                console.warn(
+                  '[CacheModule] Redis unavailable, falling back to in-memory cache:',
+                  (err as Error).message,
+                );
+                return {};
+              }
             },
           }),
         ]

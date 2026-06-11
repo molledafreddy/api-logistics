@@ -11,7 +11,7 @@ WORKDIR /app
 ENV HUSKY=0
 
 # Copy lockfile and package.json for dependency caching
-COPY pnpm-lock.yaml package.json ./
+COPY pnpm-lock.yaml package.json .npmrc ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code and build
@@ -36,6 +36,7 @@ WORKDIR /app
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/public ./public
 
 # Default environment variables
 ENV NODE_ENV=production

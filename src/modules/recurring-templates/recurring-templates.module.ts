@@ -13,6 +13,9 @@ import { RecurringTemplatesController } from './recurring-templates.controller';
 import { RecurringGeneratorProcessor } from './recurring-templates.processor';
 import { RecurringGeneratorScheduler } from './recurring-templates.scheduler';
 
+const useBull =
+  process.env.SKIP_BULL_SETUP !== 'true' && !!process.env.REDIS_URL;
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -22,17 +25,16 @@ import { RecurringGeneratorScheduler } from './recurring-templates.scheduler';
       Truck,
       Driver,
     ]),
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
+    ...(useBull
       ? [BullModule.registerQueue({ name: 'recurring-generator' })]
       : []),
   ],
   controllers: [RecurringTemplatesController],
   providers: [
     RecurringTemplatesService,
-    RecurringGeneratorProcessor,
-    RecurringGeneratorScheduler,
-    ...(process.env.SKIP_BULL_SETUP === 'true'
-      ? [
+    ...(useBull
+      ? [RecurringGeneratorProcessor, RecurringGeneratorScheduler]
+      : [
           {
             provide: 'BullQueue_recurring-generator',
             useValue: {
@@ -40,8 +42,7 @@ import { RecurringGeneratorScheduler } from './recurring-templates.scheduler';
               close: async () => undefined,
             },
           },
-        ]
-      : []),
+        ]),
   ],
   exports: [RecurringTemplatesService],
 })
