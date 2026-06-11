@@ -2,7 +2,7 @@
 dockerfilePath = "docker/Dockerfile"
 
 [deploy]
-startCommand = "node dist/database/migrate.js && node dist/main"
+startCommand = "node dist/database/migrate.js && exec node dist/main"
 healthcheckPath = "/v1/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

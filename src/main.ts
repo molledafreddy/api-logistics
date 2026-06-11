@@ -30,18 +30,21 @@ import { TrimStringPipe } from './common/pipes/index';
 import { initSentry } from './common/sentry/sentry.init';
 
 async function bootstrap() {
-  // Watchdog: if the process doesn't finish bootstrapping within 90s, kill it.
-  // Railway will restart and the error is visible in logs.
+  // Use stderr for all diagnostic logs: stderr is always unbuffered in Docker/Railway
+  // even when stdout is pipe-buffered and lost on SIGKILL.
+  const diag = (msg: string) => process.stderr.write(`[Bootstrap] ${msg}\n`);
+
+  // Watchdog: kill after 90 s so Railway restarts with a visible error instead of
+  // silently hanging until the healthcheck timeout.  NOT unref'd — must fire.
   const watchdog = setTimeout(() => {
-    console.error(
-      '[Bootstrap] FATAL: startup watchdog timeout (90s) — process hung during module initialization, forcing exit',
+    process.stderr.write(
+      '[Bootstrap] FATAL: startup watchdog 90 s timeout — process hung, forcing exit\n',
     );
     process.exit(1);
   }, 90_000);
-  watchdog.unref();
 
-  console.log(
-    `[Bootstrap] Starting (pid=${process.pid}, NODE_ENV=${process.env.NODE_ENV}, REDIS_URL=${process.env.REDIS_URL ? 'set' : 'not set'})`,
+  diag(
+    `Starting pid=${process.pid} NODE_ENV=${process.env.NODE_ENV} REDIS_URL=${process.env.REDIS_URL ? 'set' : 'unset'}`,
   );
 
   // ─── Sentry (debe inicializarse ANTES del NestFactory) ───
@@ -59,9 +62,24 @@ async function bootstrap() {
   });
 
   // ─── Crear aplicación ──────────────────
-  console.log('[Bootstrap] Calling NestFactory.create...');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  console.log('[Bootstrap] NestJS application created successfully');
+  // Hard 45 s timeout: if any module factory hangs (Redis, DB, etc.) we get a
+  // clear error in logs instead of a silent hang until the healthcheck timeout.
+  diag('Calling NestFactory.create (45 s hard timeout)...');
+  const app = await Promise.race([
+    NestFactory.create<NestExpressApplication>(AppModule),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              'NestFactory.create timed out after 45 s — a module factory is blocking startup',
+            ),
+          ),
+        45_000,
+      ),
+    ),
+  ]);
+  diag('NestJS application created successfully');
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
@@ -308,7 +326,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // ─── Iniciar servidor ──────────────────
-  console.log(`[Bootstrap] Listening on port ${port}...`);
+  diag(`Listening on port ${port}...`);
   await app.listen(port);
   clearTimeout(watchdog);
   logger.log(
@@ -318,7 +336,11 @@ async function bootstrap() {
   logger.log(`🔌 WS Tester:  http://localhost:${port}/public/ws-tester.html`);
 }
 
-bootstrap().catch((err) => {
-  console.error('Failed to start application:', err);
+// Module-level: runs immediately when the file is loaded.
+// If this does NOT appear in Railway logs, the module itself failed to load.
+process.stderr.write('[MAIN] module loaded, calling bootstrap()\n');
+
+bootstrap().catch((err: Error) => {
+  process.stderr.write(`[MAIN] FATAL bootstrap error: ${err?.stack ?? err}\n`);
   process.exit(1);
 });
