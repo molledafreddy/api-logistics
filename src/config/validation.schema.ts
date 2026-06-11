@@ -13,11 +13,13 @@ export const validationSchema = Joi.object({
   CORS_ORIGINS: Joi.string().default('http://localhost:3001'),
 
   // ─── Database ─────────────────────────────
-  DB_HOST: Joi.string().required(),
+  // Individual vars optional when DATABASE_URL is present (Railway/production)
+  DATABASE_URL: Joi.string().allow('').optional(),
+  DB_HOST: Joi.string().optional().default('localhost'),
   DB_PORT: Joi.number().default(5432),
-  DB_NAME: Joi.string().required(),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
+  DB_NAME: Joi.string().optional().default('logistics_dev'),
+  DB_USER: Joi.string().optional().default('logistics'),
+  DB_PASSWORD: Joi.string().allow('').optional().default(''),
   DB_SSL: Joi.boolean().default(false),
   DB_LOGGING: Joi.boolean().default(false),
   DB_SYNCHRONIZE: Joi.boolean().default(false),
@@ -44,9 +46,10 @@ export const validationSchema = Joi.object({
   SUPABASE_JWT_AUD: Joi.string().default('authenticated'),
 
   // ─── S3 / MinIO ──────────────────────────
-  S3_ENDPOINT: Joi.string().uri().required(),
-  S3_ACCESS_KEY: Joi.string().required(),
-  S3_SECRET_KEY: Joi.string().required(),
+  // Optional when STORAGE_PROVIDER=local
+  S3_ENDPOINT: Joi.string().uri().allow('').optional().default(''),
+  S3_ACCESS_KEY: Joi.string().allow('').optional().default(''),
+  S3_SECRET_KEY: Joi.string().allow('').optional().default(''),
   S3_REGION: Joi.string().default('us-east-1'),
   S3_BUCKET_AVATARS: Joi.string().default('logistics-avatars'),
   S3_BUCKET_DOCUMENTS: Joi.string().default('logistics-documents'),
@@ -159,6 +162,5 @@ export const validationSchema = Joi.object({
   MERCADOPAGO_TIMEOUT_MS: Joi.number().integer().min(1000).default(8000),
 
   // ─── Legacy / optional ────────────────────
-  // Solo usado por src/seeds/seed.ts (script TypeORM CLI antiguo).
-  DATABASE_URL: Joi.string().uri().allow('').optional(),
+  // (DATABASE_URL now declared in the DB section above)
 });
