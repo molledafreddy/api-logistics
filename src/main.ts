@@ -45,7 +45,9 @@ async function bootstrap() {
   });
 
   // ─── Crear aplicación ──────────────────
+  console.log('[Bootstrap] Starting NestJS application...');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  console.log('[Bootstrap] NestJS application created successfully');
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
