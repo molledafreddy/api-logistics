@@ -22,7 +22,7 @@ export default new DataSource({
   logging: process.env.DB_LOGGING === 'true',
   synchronize: false,
   namingStrategy: new SnakeNamingStrategy(),
-  entities: [User, 'src/**/*.entity.ts'],
+  entities: isProd ? ['dist/**/*.entity.js'] : [User, 'src/**/*.entity.ts'],
   migrations: [
     isProd ? 'dist/database/migrations/*' : 'src/database/migrations/*.ts',
   ],
