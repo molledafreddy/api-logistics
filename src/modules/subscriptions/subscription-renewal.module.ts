@@ -62,7 +62,7 @@ const useBull =
   exports: [
     ...(useBull
       ? [BullModule.registerQueue({ name: 'subscription-renewal' })]
-      : []),
+      : ['BullQueue_subscription-renewal']),
   ],
 })
 export class SubscriptionRenewalModule {}

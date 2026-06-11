@@ -76,6 +76,7 @@ jobs:
       DB_LOGGING: false
       REDIS_HOST: localhost
       REDIS_PORT: 6380
+      REDIS_URL: redis://localhost:6380
       JWT_ACCESS_SECRET: test-access-secret
       JWT_REFRESH_SECRET: test-refresh-secret
       SUPABASE_URL: https://qnhuwcprctgyhsyyanek.supabase.co

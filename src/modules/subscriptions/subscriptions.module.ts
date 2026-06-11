@@ -25,20 +25,7 @@ import { CommonModule } from '../../common/common.module';
     SubscriptionRenewalModule,
   ],
   controllers: [SubscriptionsController],
-  providers: [
-    SubscriptionsService,
-    ...(process.env.SKIP_BULL_SETUP === 'true'
-      ? [
-          {
-            provide: 'BullQueue_subscription-renewal',
-            useValue: {
-              add: async () => undefined,
-              close: async () => undefined,
-            },
-          },
-        ]
-      : []),
-  ],
+  providers: [SubscriptionsService],
   exports: [TypeOrmModule],
 })
 export class SubscriptionsModule {}
