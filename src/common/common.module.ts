@@ -65,24 +65,36 @@ const permissionsCacheProvider = skipRedis
             isGlobal: true,
             useFactory: async (_config: ConfigService) => {
               const { host, port, password } = getRedisConnection();
-              // node-redis (used by cache-manager-redis-yet) ignores ioredis options —
-              // timeout and reconnect must be configured via socket options.
+              // node-redis connect() can hang forever without rejecting on certain
+              // connectivity/TLS failures — wrap with a hard timeout so bootstrap
+              // always completes and falls back to in-memory cache.
+              const timeout = new Promise<never>((_, reject) =>
+                setTimeout(
+                  () => reject(new Error('Redis connect timeout (8s)')),
+                  8_000,
+                ),
+              );
               try {
-                const store = await redisStore({
-                  socket: {
-                    host,
-                    port,
-                    tls: process.env.REDIS_TLS === 'true',
-                    connectTimeout: 5_000,
-                    reconnectStrategy: (retries: number) => {
-                      if (retries >= 3)
-                        return new Error('Redis unreachable after 3 attempts');
-                      return Math.min(retries * 300, 1_000);
+                const store = await Promise.race([
+                  redisStore({
+                    socket: {
+                      host,
+                      port,
+                      tls: process.env.REDIS_TLS === 'true',
+                      connectTimeout: 5_000,
+                      reconnectStrategy: (retries: number) => {
+                        if (retries >= 3)
+                          return new Error(
+                            'Redis unreachable after 3 attempts',
+                          );
+                        return Math.min(retries * 300, 1_000);
+                      },
                     },
-                  },
-                  password: password || undefined,
-                  ttl: 5 * 60 * 1_000,
-                });
+                    password: password || undefined,
+                    ttl: 5 * 60 * 1_000,
+                  }),
+                  timeout,
+                ]);
                 return { store };
               } catch (err) {
                 console.warn(

@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { getRedisConnection } from '../../config/redis-connection.helper';
-
 import { PaymentsModule } from '../payments/payments.module';
 import { Plan } from '../plans/entities/plan.entity';
 
@@ -24,18 +22,7 @@ const useBull =
   imports: [
     PaymentsModule,
     ...(useBull
-      ? [
-          BullModule.forRoot({
-            connection: {
-              ...getRedisConnection(),
-              lazyConnect: true,
-              enableReadyCheck: false,
-            },
-          }),
-          BullModule.registerQueue({
-            name: 'subscription-renewal',
-          }),
-        ]
+      ? [BullModule.registerQueue({ name: 'subscription-renewal' })]
       : []),
     TypeOrmModule.forFeature([
       Subscription,

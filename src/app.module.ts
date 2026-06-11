@@ -4,7 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_GUARD } from '@nestjs/core';
+import { getRedisConnection } from './config/redis-connection.helper';
 import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 // Config
@@ -131,6 +133,19 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
     // ─── Scheduler (Cron) ──────
     ScheduleModule.forRoot(),
+
+    // ─── BullMQ (requires Redis) ───
+    ...(process.env.SKIP_BULL_SETUP !== 'true' && !!process.env.REDIS_URL
+      ? [
+          BullModule.forRoot({
+            connection: {
+              ...getRedisConnection(),
+              lazyConnect: true,
+              enableReadyCheck: false,
+            },
+          }),
+        ]
+      : []),
 
     // ─── Business Modules ────────────────────
     AuthModule,
