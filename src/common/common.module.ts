@@ -23,7 +23,9 @@ import { PermissionsCacheService } from './cache/permissions-cache.service';
  */
 
 const skipRedis =
-  process.env.SKIP_BULL_SETUP === 'true' || process.env.NODE_ENV === 'test';
+  process.env.SKIP_BULL_SETUP === 'true' ||
+  process.env.NODE_ENV === 'test' ||
+  !process.env.REDIS_URL;
 
 const permissionsCacheProvider = skipRedis
   ? {

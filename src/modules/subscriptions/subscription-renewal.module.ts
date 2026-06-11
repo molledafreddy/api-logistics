@@ -16,23 +16,14 @@ import { RenewalSchedulerService } from './renewal-scheduler.service';
 import { SubscriptionRenewalProcessor } from './subscription-renewal.processor';
 import { SubscriptionsService } from './subscriptions.service';
 
-/**
- * Sprint F.1 — SubscriptionRenewalModule.
- *
- * Compone:
- *   - BullMQ queue `subscription-renewal` (host Redis).
- *   - `RenewalSchedulerService` con cron horario que escanea subs próximas
- *     a vencer y encola jobs.
- *   - `SubscriptionRenewalProcessor` que consume jobs y orquesta cobros via
- *     `PaymentsService` (importado de `PaymentsModule`).
- *
- * Cuando `SKIP_BULL_SETUP=true` (generación de OpenAPI / unit tests), se
- * sustituye la queue por un mock no-op y el scheduler queda inerte.
- */
+// BullMQ requires Redis — skip when not available or explicitly disabled
+const useBull =
+  process.env.SKIP_BULL_SETUP !== 'true' && !!process.env.REDIS_URL;
+
 @Module({
   imports: [
     PaymentsModule,
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
+    ...(useBull
       ? [
           BullModule.forRoot({
             connection: getRedisConnection(),
@@ -55,10 +46,8 @@ import { SubscriptionsService } from './subscriptions.service';
   providers: [
     SubscriptionRenewalProcessor,
     SubscriptionsService,
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
-      ? [RenewalSchedulerService]
-      : []),
-    ...(process.env.SKIP_BULL_SETUP === 'true'
+    ...(useBull ? [RenewalSchedulerService] : []),
+    ...(!useBull
       ? [
           {
             provide: 'BullQueue_subscription-renewal',
@@ -71,7 +60,7 @@ import { SubscriptionsService } from './subscriptions.service';
       : []),
   ],
   exports: [
-    ...(process.env.SKIP_BULL_SETUP !== 'true'
+    ...(useBull
       ? [BullModule.registerQueue({ name: 'subscription-renewal' })]
       : []),
   ],
