@@ -49,7 +49,9 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('APP_PORT', 3000);
+  const port =
+    parseInt(process.env.PORT || '') ||
+    configService.get<number>('APP_PORT', 3000);
   const apiPrefix = configService.get<string>('API_PREFIX', 'v1');
   const nodeEnv = configService.get<string>('NODE_ENV');
   const isProd = nodeEnv === 'production';
