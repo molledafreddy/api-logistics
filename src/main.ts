@@ -30,6 +30,20 @@ import { TrimStringPipe } from './common/pipes/index';
 import { initSentry } from './common/sentry/sentry.init';
 
 async function bootstrap() {
+  // Watchdog: if the process doesn't finish bootstrapping within 90s, kill it.
+  // Railway will restart and the error is visible in logs.
+  const watchdog = setTimeout(() => {
+    console.error(
+      '[Bootstrap] FATAL: startup watchdog timeout (90s) — process hung during module initialization, forcing exit',
+    );
+    process.exit(1);
+  }, 90_000);
+  watchdog.unref();
+
+  console.log(
+    `[Bootstrap] Starting (pid=${process.pid}, NODE_ENV=${process.env.NODE_ENV}, REDIS_URL=${process.env.REDIS_URL ? 'set' : 'not set'})`,
+  );
+
   // ─── Sentry (debe inicializarse ANTES del NestFactory) ───
   initSentry({
     dsn: process.env.SENTRY_DSN || '',
@@ -45,7 +59,9 @@ async function bootstrap() {
   });
 
   // ─── Crear aplicación ──────────────────
+  console.log('[Bootstrap] Calling NestFactory.create...');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  console.log('[Bootstrap] NestJS application created successfully');
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
@@ -292,7 +308,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // ─── Iniciar servidor ──────────────────
+  console.log(`[Bootstrap] Listening on port ${port}...`);
   await app.listen(port);
+  clearTimeout(watchdog);
   logger.log(
     `🚀 API Logistics running on: http://localhost:${port}/${apiPrefix}`,
   );

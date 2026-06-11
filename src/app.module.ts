@@ -142,6 +142,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
               ...getRedisConnection(),
               lazyConnect: true,
               enableReadyCheck: false,
+              socketTimeout: 10_000,
             },
           }),
         ]
