@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { getRedisConnection } from '../../config/redis-connection.helper';
 
 import { PaymentsModule } from '../payments/payments.module';
 import { Plan } from '../plans/entities/plan.entity';
@@ -34,12 +35,7 @@ import { SubscriptionsService } from './subscriptions.service';
     ...(process.env.SKIP_BULL_SETUP !== 'true'
       ? [
           BullModule.forRoot({
-            connection: {
-              host: process.env.REDIS_HOST || 'localhost',
-              port: parseInt(process.env.REDIS_PORT || '6379', 10),
-              password: process.env.REDIS_PASSWORD || undefined,
-              tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-            },
+            connection: getRedisConnection(),
           }),
           BullModule.registerQueue({
             name: 'subscription-renewal',

@@ -5,6 +5,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import Redis from 'ioredis';
 import { Public } from './common/decorators/public.decorator';
+import { getRedisConnection } from './config/redis-connection.helper';
 
 interface IDependencyStatus {
   status: 'up' | 'down';
@@ -91,13 +92,12 @@ export class HealthController {
 
   private async checkRedis(): Promise<IDependencyStatus> {
     const start = Date.now();
+    const { host, port, password, tls } = getRedisConnection();
     const client = new Redis({
-      host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-      port: this.configService.get<number>('REDIS_PORT', 6379),
-      password:
-        this.configService.get<string>('REDIS_PASSWORD', '') || undefined,
-      tls:
-        this.configService.get<string>('REDIS_TLS') === 'true' ? {} : undefined,
+      host,
+      port,
+      password,
+      tls: tls as any,
       lazyConnect: true,
       connectTimeout: 1500,
       maxRetriesPerRequest: 1,

@@ -4,6 +4,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-yet';
 import { Company } from '../modules/companies/entities/company.entity';
+import { getRedisConnection } from '../config/redis-connection.helper';
 import { ServiceTypeGuard } from './guards/service-type.guard';
 import { BusinessModelGuard } from './guards/business-model.guard';
 import { PermissionsCacheService } from './cache/permissions-cache.service';
@@ -60,17 +61,13 @@ const permissionsCacheProvider = skipRedis
             imports: [ConfigModule],
             inject: [ConfigService],
             isGlobal: true,
-            useFactory: async (config: ConfigService) => {
-              const host = config.get<string>('REDIS_HOST', 'localhost');
-              const port = config.get<number>('REDIS_PORT', 6379);
-              const password =
-                config.get<string>('REDIS_PASSWORD', '') || undefined;
-              const useTls = config.get<string>('REDIS_TLS') === 'true';
+            useFactory: async (_config: ConfigService) => {
+              const { host, port, password, tls } = getRedisConnection();
               return {
                 store: await redisStore({
-                  socket: { host, port, ...(useTls ? { tls: true } : {}) },
+                  socket: { host, port, ...(tls ? { tls: true } : {}) },
                   password,
-                  ttl: 5 * 60 * 1000, // 5 min default (ms)
+                  ttl: 5 * 60 * 1000,
                 }),
               };
             },
