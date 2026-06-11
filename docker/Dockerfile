@@ -19,7 +19,7 @@ COPY . .
 RUN pnpm run build
 
 # Prune devDependencies
-RUN pnpm prune --prod --ignore-scripts
+RUN pnpm prune --prod --ignore-scripts --config.confirmModulesPurge=false
 
 # ═══════════════════════════════════════════
 # Stage 2: Production
