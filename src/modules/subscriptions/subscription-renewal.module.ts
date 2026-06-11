@@ -26,7 +26,11 @@ const useBull =
     ...(useBull
       ? [
           BullModule.forRoot({
-            connection: getRedisConnection(),
+            connection: {
+              ...getRedisConnection(),
+              lazyConnect: true,
+              enableReadyCheck: false,
+            },
           }),
           BullModule.registerQueue({
             name: 'subscription-renewal',
