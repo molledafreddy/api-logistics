@@ -1,6 +1,6 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-06-11T17:20:13.357Z_
+_Generated: 2026-06-11T17:42:09.925Z_
 
 ## 📊 Summary
 

@@ -6,7 +6,12 @@ export interface RedisConnectionOptions {
   connectTimeout: number;
   maxRetriesPerRequest: number | null;
   enableOfflineQueue: boolean;
-  lazyConnect: boolean;
+  retryStrategy: (times: number) => number | null;
+}
+
+function retryStrategy(times: number): number | null {
+  if (times >= 3) return null; // fail fast — don't hang startup
+  return Math.min(times * 300, 1000);
 }
 
 export function getRedisConnection(): RedisConnectionOptions {
@@ -14,7 +19,7 @@ export function getRedisConnection(): RedisConnectionOptions {
     connectTimeout: 5000,
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
-    lazyConnect: false,
+    retryStrategy,
   };
 
   if (process.env.REDIS_URL) {
