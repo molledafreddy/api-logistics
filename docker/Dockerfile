@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
@@ -24,11 +24,11 @@ RUN pnpm prune --prod --ignore-scripts --config.confirmModulesPurge=false
 # ═══════════════════════════════════════════
 # Stage 2: Production
 # ═══════════════════════════════════════════
-FROM node:22-alpine AS production
+FROM node:22-slim AS production
 
 # Security: non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -s /bin/sh -m nestjs
 
 WORKDIR /app
 
@@ -48,9 +48,9 @@ EXPOSE 3000
 # Non-root user
 USER nestjs
 
-# Health check
+# Health check — curl is available in node:22-slim (Debian)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/v1/health || exit 1
+  CMD curl -f http://localhost:3000/v1/health || exit 1
 
 # Start command
 CMD ["node", "dist/main"]
