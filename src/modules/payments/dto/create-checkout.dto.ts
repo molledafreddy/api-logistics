@@ -8,7 +8,35 @@ import {
   IsUUID,
   Length,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class BackUrlsDto {
+  @ApiPropertyOptional({
+    description: 'URL de retorno tras pago exitoso (deep link o HTTPS).',
+    example: 'logistics://payment/success',
+  })
+  @IsString()
+  @IsOptional()
+  success?: string;
+
+  @ApiPropertyOptional({
+    description: 'URL de retorno tras pago fallido.',
+    example: 'logistics://payment/failure',
+  })
+  @IsString()
+  @IsOptional()
+  failure?: string;
+
+  @ApiPropertyOptional({
+    description: 'URL de retorno cuando el pago queda pendiente.',
+    example: 'logistics://payment/pending',
+  })
+  @IsString()
+  @IsOptional()
+  pending?: string;
+}
 
 export class CreateCheckoutDto {
   @ApiProperty({
@@ -47,4 +75,14 @@ export class CreateCheckoutDto {
   @IsEmail()
   @IsOptional()
   payerEmail?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'URLs de retorno tras el pago. Si se omiten, se usan las configuradas en el servidor (MERCADOPAGO_*_URL).',
+    type: BackUrlsDto,
+  })
+  @ValidateNested()
+  @Type(() => BackUrlsDto)
+  @IsOptional()
+  backUrls?: BackUrlsDto;
 }

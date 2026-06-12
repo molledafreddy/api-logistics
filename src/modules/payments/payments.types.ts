@@ -29,6 +29,12 @@ export interface CheckoutInput {
   itemTitle: string;
   /** Email del payer (opcional, mejora conversion en MP). */
   payerEmail?: string;
+  /** URLs de retorno tras el pago. Si se omiten, el provider usa sus env vars. */
+  backUrls?: {
+    success?: string;
+    failure?: string;
+    pending?: string;
+  };
 }
 
 export interface CheckoutResult {
