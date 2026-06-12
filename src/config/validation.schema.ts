@@ -5,7 +5,9 @@ export const validationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'staging', 'production')
     .default('development'),
-  APP_PORT: Joi.number().default(3000),
+  APP_PORT: Joi.alternatives()
+    .try(Joi.number(), Joi.string().allow(''))
+    .default(3000),
   APP_URL: Joi.string().uri().default('http://localhost:3000'),
   APP_NAME: Joi.string().default('API-Logistics'),
   APP_VERSION: Joi.string().default('1.0.0'),
