@@ -73,7 +73,7 @@ export class PaymentsController {
       currency: dto.currency ?? 'CLP',
       itemTitle: dto.itemTitle,
       payerEmail: dto.payerEmail ?? user.email,
-      backUrls: dto.backUrls,
+      backUrls: dto.back_urls,
     });
   }
 

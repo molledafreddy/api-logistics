@@ -78,11 +78,19 @@ export class CreateCheckoutDto {
 
   @ApiPropertyOptional({
     description:
-      'URLs de retorno tras el pago. Si se omiten, se usan las configuradas en el servidor (MERCADOPAGO_*_URL).',
+      'URLs de retorno tras el pago (snake_case — mobile). Si se omiten, se usan las configuradas en el servidor.',
     type: BackUrlsDto,
   })
   @ValidateNested()
   @Type(() => BackUrlsDto)
   @IsOptional()
-  backUrls?: BackUrlsDto;
+  back_urls?: BackUrlsDto;
+
+  @ApiPropertyOptional({
+    description: 'Comportamiento de retorno automático de MercadoPago.',
+    enum: ['approved'],
+  })
+  @IsIn(['approved'])
+  @IsOptional()
+  auto_return?: 'approved';
 }

@@ -10499,6 +10499,26 @@
         },
         "required": ["quantity"]
       },
+      "BackUrlsDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "string",
+            "description": "URL de retorno tras pago exitoso (deep link o HTTPS).",
+            "example": "logistics://payment/success"
+          },
+          "failure": {
+            "type": "string",
+            "description": "URL de retorno tras pago fallido.",
+            "example": "logistics://payment/failure"
+          },
+          "pending": {
+            "type": "string",
+            "description": "URL de retorno cuando el pago queda pendiente.",
+            "example": "logistics://payment/pending"
+          }
+        }
+      },
       "CreateCheckoutDto": {
         "type": "object",
         "properties": {
@@ -10525,6 +10545,14 @@
           "payerEmail": {
             "type": "string",
             "description": "Email del payer (mejora conversion en MercadoPago)."
+          },
+          "backUrls": {
+            "description": "URLs de retorno tras el pago. Si se omiten, se usan las configuradas en el servidor (MERCADOPAGO_*_URL).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BackUrlsDto"
+              }
+            ]
           }
         },
         "required": ["subscriptionId", "amount", "itemTitle"]
