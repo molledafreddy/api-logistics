@@ -10546,13 +10546,18 @@
             "type": "string",
             "description": "Email del payer (mejora conversion en MercadoPago)."
           },
-          "backUrls": {
-            "description": "URLs de retorno tras el pago. Si se omiten, se usan las configuradas en el servidor (MERCADOPAGO_*_URL).",
+          "back_urls": {
+            "description": "URLs de retorno tras el pago (snake_case — mobile). Si se omiten, se usan las configuradas en el servidor.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/BackUrlsDto"
               }
             ]
+          },
+          "auto_return": {
+            "type": "string",
+            "description": "Comportamiento de retorno automático de MercadoPago.",
+            "enum": ["approved"]
           }
         },
         "required": ["subscriptionId", "amount", "itemTitle"]

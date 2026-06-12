@@ -97,9 +97,10 @@ export class SubscriptionsService implements OnModuleDestroy {
       `[upgradeSubscription] id: ${id}, newPlanId: ${newPlanId}`,
     );
     await this.validatePlanChangeAudience(id, newPlanId, 'upgrade');
+    const newStatus = await this.resolveStatusForPlan(newPlanId);
     const result = await this.subscriptionRepo.update(id, {
       plan_id: newPlanId,
-      status: 'active',
+      status: newStatus,
       current_period_start: new Date(),
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       canceled_at: undefined,
@@ -115,9 +116,10 @@ export class SubscriptionsService implements OnModuleDestroy {
       `[downgradeSubscription] id: ${id}, newPlanId: ${newPlanId}`,
     );
     await this.validatePlanChangeAudience(id, newPlanId, 'downgrade');
+    const newStatus = await this.resolveStatusForPlan(newPlanId);
     const result = await this.subscriptionRepo.update(id, {
       plan_id: newPlanId,
-      status: 'active',
+      status: newStatus,
       current_period_start: new Date(),
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       canceled_at: undefined,
@@ -126,6 +128,16 @@ export class SubscriptionsService implements OnModuleDestroy {
     const sub = await this.subscriptionRepo.findOne({ where: { id } });
     if (sub) await this.permissionsCache.invalidate(sub.company_id);
     return result;
+  }
+
+  /** Devuelve 'pending_payment' si el plan tiene precio, 'active' si es gratuito. */
+  private async resolveStatusForPlan(
+    planId: string,
+  ): Promise<'active' | 'pending_payment'> {
+    const [row] = await this.subscriptionRepo.manager.query<
+      { price: number }[]
+    >(`SELECT price FROM plans WHERE id = $1`, [planId]);
+    return row?.price > 0 ? 'pending_payment' : 'active';
   }
 
   /**
