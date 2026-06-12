@@ -1,7 +1,11 @@
-import * as Sentry from '@sentry/node';
-import { Logger } from '@nestjs/common';
-
-const logger = new Logger('Sentry');
+/**
+ * Sentry stub — disabled due to deadlock on Alpine Linux + Node 22.
+ * @sentry/node v10 initializes OpenTelemetry during import, causing a deadlock
+ * in the module loading phase before any application code runs.
+ *
+ * This stub maintains the same API surface so no other code needs to change.
+ * Error tracking can be re-added later with a different provider.
+ */
 
 interface SentryInitOptions {
   dsn: string;
@@ -12,41 +16,11 @@ interface SentryInitOptions {
   enabled: boolean;
 }
 
-/**
- * Inicializa Sentry de forma idempotente. Debe llamarse antes de NestFactory.create()
- * para que el SDK capture errores tempranos.
- */
 export function initSentry(opts: SentryInitOptions): boolean {
-  if (!opts.enabled || !opts.dsn) {
-    logger.log('Sentry deshabilitado (sin SENTRY_DSN)');
-    return false;
-  }
-
-  try {
-    Sentry.init({
-      dsn: opts.dsn,
-      environment: opts.environment,
-      release: opts.release,
-      tracesSampleRate: opts.tracesSampleRate,
-      // Profiling se carga sólo si la sample rate > 0 para evitar overhead
-      ...(opts.profilesSampleRate > 0
-        ? { profilesSampleRate: opts.profilesSampleRate }
-        : {}),
-      // Filtra ruido típico
-      ignoreErrors: [
-        'UnauthorizedException',
-        'ForbiddenException',
-        'NotFoundException',
-        'ThrottlerException',
-      ],
-    });
-
-    logger.log(`Sentry inicializado [env=${opts.environment}]`);
-    return true;
-  } catch (err) {
-    logger.error('Error inicializando Sentry', (err as Error).stack);
-    return false;
-  }
+  // No-op: Sentry disabled
+  return false;
 }
 
-export { Sentry };
+export const Sentry = {
+  // Stub object for any code that might reference Sentry
+};
