@@ -139,6 +139,9 @@
       "protobufjs",
       "@grpc/grpc-js",
       "firebase-admin",
+      "@firebase/util",
+      "msgpackr-extract",
+      "@nestjs/core",
       "esbuild"
     ]
   }
