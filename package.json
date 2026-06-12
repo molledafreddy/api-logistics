@@ -60,7 +60,6 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
     "@nestjs/websockets": "^11.1.19",
-    "@sentry/node": "^10.50.0",
     "@supabase/supabase-js": "^2.102.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.73.5",
