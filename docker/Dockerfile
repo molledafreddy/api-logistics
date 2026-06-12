@@ -12,7 +12,7 @@ ENV HUSKY=0
 
 # Copy lockfile and package.json for dependency caching
 COPY pnpm-lock.yaml package.json .npmrc ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile
 
 # Copy source code and build
 COPY . .
