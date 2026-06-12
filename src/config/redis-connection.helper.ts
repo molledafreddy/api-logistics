@@ -14,6 +14,13 @@ function retryStrategy(times: number): number | null {
   return Math.min(times * 300, 1000);
 }
 
+function shouldUseTls(hostname: string): boolean {
+  // Railway's internal network never uses TLS regardless of REDIS_TLS setting.
+  // Forcing TLS against a non-TLS endpoint causes an infinite TLS handshake hang.
+  if (hostname.includes('railway.internal')) return false;
+  return process.env.REDIS_TLS === 'true';
+}
+
 export function getRedisConnection(): RedisConnectionOptions {
   const base = {
     connectTimeout: 5000,
@@ -24,12 +31,13 @@ export function getRedisConnection(): RedisConnectionOptions {
 
   if (process.env.REDIS_URL) {
     const url = new URL(process.env.REDIS_URL);
+    const useTls = shouldUseTls(url.hostname);
     return {
       ...base,
       host: url.hostname,
       port: parseInt(url.port || '6379', 10),
       password: url.password || undefined,
-      tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+      tls: useTls ? {} : undefined,
     };
   }
 

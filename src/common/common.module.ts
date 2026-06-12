@@ -80,7 +80,9 @@ const permissionsCacheProvider = skipRedis
                     socket: {
                       host,
                       port,
-                      tls: process.env.REDIS_TLS === 'true',
+                      tls:
+                        !host.includes('railway.internal') &&
+                        process.env.REDIS_TLS === 'true',
                       connectTimeout: 5_000,
                       reconnectStrategy: (retries: number) => {
                         if (retries >= 3)
