@@ -1,7 +1,7 @@
-import * as Sentry from '@sentry/node';
-import { Logger } from '@nestjs/common';
-
-const logger = new Logger('Sentry');
+// @sentry/node v10 uses require-in-the-middle + OpenTelemetry instrumentation
+// hooks that deadlock on Alpine Linux / Node 22 during module loading — the
+// process hangs before any application code runs.  Sentry is disabled until
+// the SDK ships a fix or we migrate to a compatible version.
 
 interface SentryInitOptions {
   dsn: string;
@@ -12,41 +12,18 @@ interface SentryInitOptions {
   enabled: boolean;
 }
 
-/**
- * Inicializa Sentry de forma idempotente. Debe llamarse antes de NestFactory.create()
- * para que el SDK capture errores tempranos.
- */
-export function initSentry(opts: SentryInitOptions): boolean {
-  if (!opts.enabled || !opts.dsn) {
-    logger.log('Sentry deshabilitado (sin SENTRY_DSN)');
-    return false;
-  }
-
-  try {
-    Sentry.init({
-      dsn: opts.dsn,
-      environment: opts.environment,
-      release: opts.release,
-      tracesSampleRate: opts.tracesSampleRate,
-      // Profiling se carga sólo si la sample rate > 0 para evitar overhead
-      ...(opts.profilesSampleRate > 0
-        ? { profilesSampleRate: opts.profilesSampleRate }
-        : {}),
-      // Filtra ruido típico
-      ignoreErrors: [
-        'UnauthorizedException',
-        'ForbiddenException',
-        'NotFoundException',
-        'ThrottlerException',
-      ],
-    });
-
-    logger.log(`Sentry inicializado [env=${opts.environment}]`);
-    return true;
-  } catch (err) {
-    logger.error('Error inicializando Sentry', (err as Error).stack);
-    return false;
-  }
+export function initSentry(_opts: SentryInitOptions): boolean {
+  return false;
 }
 
-export { Sentry };
+// Re-export a no-op Sentry object so existing call-sites compile without changes.
+export const Sentry = {
+  captureException: (_err: unknown, _ctx?: unknown) => '',
+  captureMessage: (_msg: string, _level?: unknown) => '',
+  setUser: (_user: unknown) => {},
+  setTag: (_key: string, _value: unknown) => {},
+  setExtra: (_key: string, _value: unknown) => {},
+  addBreadcrumb: (_breadcrumb: unknown) => {},
+  withScope: (_cb: (scope: unknown) => void) => {},
+  startSpan: (_opts: unknown, _cb: () => unknown) => {},
+};
