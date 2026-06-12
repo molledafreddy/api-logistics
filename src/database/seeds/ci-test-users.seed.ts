@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import dataSource from '../data-source';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const logger = new Logger('CITestUsersSeed');
