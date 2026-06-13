@@ -87,7 +87,9 @@ describe('MercadoPagoProvider', () => {
     const body = JSON.parse((init as RequestInit).body as string);
     expect(body.items[0].unit_price).toBe(9900);
     expect(body.items[0].currency_id).toBe('CLP');
-    expect(body.payer.email).toBe('foo@bar.cl');
+    // payer debe ser undefined para evitar que MP detecte self-payment
+    // cuando el comprador usa la misma cuenta que el vendedor.
+    expect(body.payer).toBeUndefined();
     expect(body.external_reference).toBe(out.externalReference);
   });
 
