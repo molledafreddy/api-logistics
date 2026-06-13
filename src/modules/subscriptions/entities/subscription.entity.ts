@@ -88,6 +88,11 @@ export class Subscription {
   @Column({ type: 'timestamptz', nullable: true })
   grace_warning_sent_at?: Date | null;
 
+  // ─── Cambio de plan pendiente de pago ───
+  /** Plan al que se quiere migrar. Se aplica cuando el webhook confirma el pago. */
+  @Column({ type: 'uuid', nullable: true, name: 'pending_plan_id' })
+  pending_plan_id?: string | null;
+
   // ─── Descuento por referido (referidor) ─
   /** % de descuento a aplicar en la próxima renovación del referidor. */
   @Column({

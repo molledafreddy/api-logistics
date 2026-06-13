@@ -2645,6 +2645,78 @@
         ]
       }
     },
+    "/api/v1/payments/redirect/success": {
+      "get": {
+        "operationId": "PaymentsController_redirectSuccess",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "HTML con redirect al deep link de la app"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "summary": "Página de retorno tras pago exitoso (back_url de MercadoPago)",
+        "tags": ["Payments"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/redirect/failure": {
+      "get": {
+        "operationId": "PaymentsController_redirectFailure",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "HTML con redirect al deep link de la app"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "summary": "Página de retorno tras pago fallido (back_url de MercadoPago)",
+        "tags": ["Payments"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/redirect/pending": {
+      "get": {
+        "operationId": "PaymentsController_redirectPending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "HTML con redirect al deep link de la app"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "summary": "Página de retorno tras pago pendiente (back_url de MercadoPago)",
+        "tags": ["Payments"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/billing/me/renewal": {
       "get": {
         "description": "Devuelve `initPoint` si el scheduler ya generó un checkout para que el frontend lo abra en una pestaña.",

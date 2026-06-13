@@ -180,6 +180,19 @@ export class PaymentsService {
           sub.reactivated_at = now;
         }
 
+        // Si había un cambio de plan pendiente de pago, lo aplicamos ahora.
+        if (sub.pending_plan_id) {
+          sub.plan_id = sub.pending_plan_id;
+          sub.pending_plan_id = null;
+          sub.current_period_start = wasInactive
+            ? sub.current_period_start
+            : new Date();
+          sub.current_period_end = new Date(
+            (wasInactive ? sub.current_period_start : new Date()).getTime() +
+              30 * 24 * 60 * 60 * 1000,
+          );
+        }
+
         sub.status = 'active';
         sub.grace_period_until = null;
         sub.grace_warning_sent_at = null;

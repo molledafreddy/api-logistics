@@ -98,14 +98,24 @@ export class SubscriptionsService implements OnModuleDestroy {
     );
     await this.validatePlanChangeAudience(id, newPlanId, 'upgrade');
     const newStatus = await this.resolveStatusForPlan(newPlanId);
-    const result = await this.subscriptionRepo.update(id, {
-      plan_id: newPlanId,
-      status: newStatus,
-      current_period_start: new Date(),
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      canceled_at: undefined,
-      cancel_at_period_end: false,
-    });
+
+    // Si el plan requiere pago, NO cambiamos plan_id todavía — el usuario
+    // conserva su plan actual hasta que el webhook confirme el pago.
+    // pending_plan_id guarda el destino; applyEventToSubscription lo aplica.
+    const updateData: Record<string, unknown> =
+      newStatus === 'pending_payment'
+        ? { status: newStatus, pending_plan_id: newPlanId }
+        : {
+            plan_id: newPlanId,
+            status: newStatus,
+            pending_plan_id: null,
+            current_period_start: new Date(),
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            canceled_at: null,
+            cancel_at_period_end: false,
+          };
+
+    const result = await this.subscriptionRepo.update(id, updateData as any);
     const sub = await this.subscriptionRepo.findOne({ where: { id } });
     if (sub) await this.permissionsCache.invalidate(sub.company_id);
     return result;
@@ -117,14 +127,21 @@ export class SubscriptionsService implements OnModuleDestroy {
     );
     await this.validatePlanChangeAudience(id, newPlanId, 'downgrade');
     const newStatus = await this.resolveStatusForPlan(newPlanId);
-    const result = await this.subscriptionRepo.update(id, {
-      plan_id: newPlanId,
-      status: newStatus,
-      current_period_start: new Date(),
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      canceled_at: undefined,
-      cancel_at_period_end: false,
-    });
+
+    const updateData: Record<string, unknown> =
+      newStatus === 'pending_payment'
+        ? { status: newStatus, pending_plan_id: newPlanId }
+        : {
+            plan_id: newPlanId,
+            status: newStatus,
+            pending_plan_id: null,
+            current_period_start: new Date(),
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            canceled_at: null,
+            cancel_at_period_end: false,
+          };
+
+    const result = await this.subscriptionRepo.update(id, updateData as any);
     const sub = await this.subscriptionRepo.findOne({ where: { id } });
     if (sub) await this.permissionsCache.invalidate(sub.company_id);
     return result;

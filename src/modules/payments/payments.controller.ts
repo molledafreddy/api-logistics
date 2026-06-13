@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  Header,
   HttpCode,
   Inject,
   Logger,
@@ -159,6 +161,117 @@ export class PaymentsController {
       type: result.type,
       externalId: result.externalId,
     };
+  }
+
+  // ─── Redirect pages (back_urls de MercadoPago) ─────────────────────────────
+  //
+  // MercadoPago requiere back_urls con HTTPS válido para superar la
+  // "Calidad de integración" (mínimo 73/100). Estas páginas sirven HTML
+  // con redirect automático al deep link de la app nativa.
+
+  @Public()
+  @Get('redirect/success')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({
+    summary: 'Página de retorno tras pago exitoso (back_url de MercadoPago)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'HTML con redirect al deep link de la app',
+  })
+  redirectSuccess() {
+    return this.buildRedirectPage({
+      status: 'success',
+      icon: '✅',
+      title: '¡Pago exitoso!',
+      body: 'Tu plan fue activado correctamente. Puedes cerrar esta ventana y volver a la aplicación.',
+      deepLink: 'logistics://payment/success',
+      btnClass: 'success',
+    });
+  }
+
+  @Public()
+  @Get('redirect/failure')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({
+    summary: 'Página de retorno tras pago fallido (back_url de MercadoPago)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'HTML con redirect al deep link de la app',
+  })
+  redirectFailure() {
+    return this.buildRedirectPage({
+      status: 'failure',
+      icon: '❌',
+      title: 'Pago no procesado',
+      body: 'No se pudo completar el pago. Vuelve a la app para intentarlo nuevamente.',
+      deepLink: 'logistics://payment/failure',
+      btnClass: 'failure',
+    });
+  }
+
+  @Public()
+  @Get('redirect/pending')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({
+    summary: 'Página de retorno tras pago pendiente (back_url de MercadoPago)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'HTML con redirect al deep link de la app',
+  })
+  redirectPending() {
+    return this.buildRedirectPage({
+      status: 'pending',
+      icon: '⏳',
+      title: 'Pago en revisión',
+      body: 'Tu pago está siendo procesado. Te notificaremos cuando sea confirmado.',
+      deepLink: 'logistics://payment/pending',
+      btnClass: 'pending',
+    });
+  }
+
+  private buildRedirectPage(opts: {
+    status: string;
+    icon: string;
+    title: string;
+    body: string;
+    deepLink: string;
+    btnClass: string;
+  }): string {
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Logistics App — ${opts.title}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    .card{background:#fff;border-radius:20px;padding:36px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+    .icon{font-size:52px;margin-bottom:20px;display:block}
+    h1{font-size:22px;font-weight:700;color:#0f172a;margin-bottom:10px}
+    p{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:28px}
+    .btn{display:inline-block;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:15px}
+    .success{background:#22c55e}.failure{background:#ef4444}.pending{background:#f59e0b}
+    small{display:block;margin-top:16px;font-size:12px;color:#94a3b8}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon">${opts.icon}</span>
+    <h1>${opts.title}</h1>
+    <p>${opts.body}</p>
+    <a href="${opts.deepLink}" class="btn ${opts.btnClass}">Volver a la app</a>
+    <small>Redirigiendo automáticamente...</small>
+  </div>
+  <script>setTimeout(function(){window.location.href='${opts.deepLink}';},1500);</script>
+</body>
+</html>`;
   }
 
   // ─── Helpers ───────────────────────────────
