@@ -248,18 +248,24 @@ export class PaymentsController {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Logistics App — ${opts.title}</title>
+  <title>Logistics App</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;visibility:hidden}
+    body.show{visibility:visible}
     .card{background:#fff;border-radius:20px;padding:36px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
     .icon{font-size:52px;margin-bottom:20px;display:block}
     h1{font-size:22px;font-weight:700;color:#0f172a;margin-bottom:10px}
     p{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:28px}
     .btn{display:inline-block;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:15px}
     .success{background:#22c55e}.failure{background:#ef4444}.pending{background:#f59e0b}
-    small{display:block;margin-top:16px;font-size:12px;color:#94a3b8}
   </style>
+  <script>
+    // Redirige inmediatamente. En el WebView nativo de la app esto es interceptado
+    // por onLoadStart/onShouldStartLoadWithRequest antes de que el body sea visible.
+    // En un navegador sin la app instalada falla silenciosamente y se muestra el contenido.
+    try { window.location.replace('${opts.deepLink}'); } catch(e) {}
+  </script>
 </head>
 <body>
   <div class="card">
@@ -267,9 +273,11 @@ export class PaymentsController {
     <h1>${opts.title}</h1>
     <p>${opts.body}</p>
     <a href="${opts.deepLink}" class="btn ${opts.btnClass}">Volver a la app</a>
-    <small>Redirigiendo automáticamente...</small>
   </div>
-  <script>setTimeout(function(){window.location.href='${opts.deepLink}';},1500);</script>
+  <script>
+    // Si el redirect al deep link falló (navegador sin la app instalada), mostrar contenido.
+    document.body.classList.add('show');
+  </script>
 </body>
 </html>`;
   }
