@@ -113,7 +113,10 @@ export class MercadoPagoProvider implements IPaymentProvider {
         subscription_id: input.subscriptionId,
         company_id: input.companyId,
       },
-      payer: input.payerEmail ? { email: input.payerEmail } : undefined,
+      // No pre-llenamos el payer para evitar que MP bloquee self-payment cuando
+      // el comprador usa la misma cuenta que el vendedor. El email del comprador
+      // queda registrado en los detalles del pago al confirmar.
+      payer: undefined,
     };
 
     const url = `${this.baseUrl}/checkout/preferences`;
