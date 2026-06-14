@@ -57,6 +57,7 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     .brand { display: flex; align-items: center; gap: 10px; }
     .brand-logo {
       width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;
+      border-radius: 8px; background: rgba(255,255,255,.9); padding: 2px;
     }
     .brand-name {
       font-size: 17px; font-weight: 800;
@@ -297,6 +298,7 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     .footer-brand { display: flex; align-items: center; gap: 9px; }
     .footer-logo {
       width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
+      border-radius: 6px; background: rgba(255,255,255,.9); padding: 2px;
     }
     .footer-name { font-size: 13px; font-weight: 700; color: #0f172a; }
     .footer-right { display: flex; align-items: center; gap: 10px; }

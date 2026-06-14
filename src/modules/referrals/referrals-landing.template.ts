@@ -21,7 +21,7 @@ export function buildReferralLandingHtml(
 
     /* ════════ HEADER ════════ */
     .header {
-      background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+      background: #7ee8a2;
       padding: 20px 20px 22px; position: relative; overflow: hidden;
     }
     .header::after {
@@ -34,27 +34,27 @@ export function buildReferralLandingHtml(
       width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;
       border-radius: 8px; background: rgba(255,255,255,.9); padding: 2px;
     }
-    .brand-name    { font-size: 16px; font-weight: 700; color: #fff; }
-    .brand-tagline { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 1px; }
+    .brand-name    { font-size: 16px; font-weight: 700; color: #0f172a; }
+    .brand-tagline { font-size: 11px; color: #166534; margin-top: 1px; }
     .mode-chip {
       display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px;
       font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 99px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.9);
+      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6); color: #14532d;
     }
     .discount-hero-header {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
       border-radius: 14px; padding: 16px; backdrop-filter: blur(8px);
       display: flex; align-items: center; gap: 16px;
     }
     .discount-pct-badge {
-      background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.5); border: 2px solid rgba(255,255,255,.7);
       border-radius: 12px; padding: 10px 14px; text-align: center; flex-shrink: 0;
     }
-    .discount-pct-num   { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; }
-    .discount-pct-label { font-size: 9px; color: rgba(255,255,255,.7); font-weight: 600; letter-spacing: .05em; }
-    .discount-info-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 3px; }
-    .discount-info-sub   { font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.4; }
-    .discount-expiry     { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 5px; }
+    .discount-pct-num   { font-size: 28px; font-weight: 800; color: #14532d; line-height: 1; }
+    .discount-pct-label { font-size: 9px; color: #166534; font-weight: 600; letter-spacing: .05em; }
+    .discount-info-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+    .discount-info-sub   { font-size: 12px; color: #166534; line-height: 1.4; }
+    .discount-expiry     { font-size: 11px; color: #14532d; margin-top: 5px; }
 
     /* ════════ BODY ════════ */
     .body { flex: 1; padding: 20px 16px 8px; max-width: 520px; margin: 0 auto; width: 100%; }
@@ -174,15 +174,15 @@ export function buildReferralLandingHtml(
     .error-sub   { font-size: 13px; color: #64748b; line-height: 1.5; }
 
     /* ════════ FOOTER ════════ */
-    .footer { background: #14532d; padding: 20px; margin-top: 24px; }
+    .footer { background: #7ee8a2; padding: 20px; margin-top: 24px; }
     .footer-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
     .footer-brand-logo {
       width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
       border-radius: 6px; background: rgba(255,255,255,.9); padding: 2px;
     }
-    .footer-brand-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); }
-    .footer-divider    { height: 1px; background: rgba(255,255,255,.1); margin: 10px 0; }
-    .footer-hint       { font-size: 11px; color: rgba(255,255,255,.4); }
+    .footer-brand-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .footer-divider    { height: 1px; background: rgba(20,83,45,.15); margin: 10px 0; }
+    .footer-hint       { font-size: 11px; color: #166534; }
 
     /* Skeleton */
     .skeleton {
