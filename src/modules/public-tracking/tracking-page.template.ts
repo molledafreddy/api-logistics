@@ -42,7 +42,7 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
 
     /* ══ TOPBAR ══ */
     .topbar {
-      background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+      background: #7ee8a2;
       padding: 20px 20px 22px;
       display: flex; align-items: center; justify-content: space-between;
       gap: 12px;
@@ -52,27 +52,27 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     .topbar::after {
       content: ''; position: absolute; right: -40px; top: -40px;
       width: 160px; height: 160px; border-radius: 50%;
-      background: rgba(255,255,255,.06); pointer-events: none;
+      background: rgba(20,83,45,.06); pointer-events: none;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
     .brand-icon {
       width: 36px; height: 36px; border-radius: 10px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
     .brand-name {
       font-size: 17px; font-weight: 800;
-      color: #fff; letter-spacing: -.4px;
+      color: #0f172a; letter-spacing: -.4px;
     }
-    .brand-sub { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 1px; }
+    .brand-sub { font-size: 12px; color: #166534; margin-top: 1px; }
 
     .live-chip {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 12px; font-weight: 600;
       padding: 5px 12px; border-radius: 99px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
-      color: rgba(255,255,255,.9);
+      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
+      color: #14532d;
       white-space: nowrap;
     }
     .live-dot {
@@ -344,10 +344,10 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     <div class="brand">
       <div class="brand-icon" id="brand-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M1 3h15v13H1V3z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M16 8h4l3 4v4h-7V8z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-          <circle cx="5.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
-          <circle cx="18.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
+          <path d="M1 3h15v13H1V3z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M16 8h4l3 4v4h-7V8z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
+          <circle cx="5.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
+          <circle cx="18.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
         </svg>
       </div>
       <div>
