@@ -287,7 +287,7 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
 
     /* ══ FOOTER ══ */
     .footer {
-      background: #14532d;
+      background: #7ee8a2;
       border-top: none;
       padding: 14px 20px;
       margin-top: auto;
@@ -300,22 +300,22 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     .footer-brand { display: flex; align-items: center; gap: 9px; }
     .footer-icon {
       width: 28px; height: 28px; border-radius: 8px;
-      background: rgba(255,255,255,.12);
+      background: rgba(255,255,255,.5);
       display: flex; align-items: center; justify-content: center;
     }
-    .footer-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); }
+    .footer-name { font-size: 13px; font-weight: 700; color: #0f172a; }
     .footer-right { display: flex; align-items: center; gap: 10px; }
-    .footer-hint  { font-size: 12px; color: rgba(255,255,255,.4); }
-    .footer-hint span { color: rgba(255,255,255,.7); font-weight: 500; }
+    .footer-hint  { font-size: 12px; color: #166534; }
+    .footer-hint span { color: #14532d; font-weight: 500; }
     .refresh-btn {
       font-size: 12px; font-weight: 500;
       font-family: 'Plus Jakarta Sans', sans-serif;
       padding: 6px 14px; border-radius: 8px;
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
-      color: rgba(255,255,255,.8); cursor: pointer;
+      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
+      color: #14532d; cursor: pointer;
       transition: all .15s ease;
     }
-    .refresh-btn:hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.35); color: #fff; }
+    .refresh-btn:hover { background: rgba(255,255,255,.75); border-color: rgba(255,255,255,.9); color: #0f172a; }
 
     /* ══ SKELETON ══ */
     .sk {
@@ -444,10 +444,10 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       <div class="footer-brand">
         <div class="footer-icon">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-            <path d="M1 3h15v13H1V3z" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M16 8h4l3 4v4h-7V8z" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="5.5" cy="18.5" r="2" stroke="rgba(255,255,255,.8)" stroke-width="2"/>
-            <circle cx="18.5" cy="18.5" r="2" stroke="rgba(255,255,255,.8)" stroke-width="2"/>
+            <path d="M1 3h15v13H1V3z" stroke="#14532d" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 8h4l3 4v4h-7V8z" stroke="#14532d" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="5.5" cy="18.5" r="2" stroke="#14532d" stroke-width="2"/>
+            <circle cx="18.5" cy="18.5" r="2" stroke="#14532d" stroke-width="2"/>
           </svg>
         </div>
         <div class="footer-name">Logistics Software</div>
@@ -499,10 +499,10 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       chip:    { icon: '📦', label: 'Envío de paquete' },
       tagline: 'Seguimiento de envío',
       brandSvg: \`<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M1 3h15v13H1V3z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M16 8h4l3 4v4h-7V8z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-        <circle cx="5.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
-        <circle cx="18.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
+        <path d="M1 3h15v13H1V3z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M16 8h4l3 4v4h-7V8z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="5.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
+        <circle cx="18.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
       </svg>\`,
       steps: [
         { icon: '📦', title: 'Preparando envío',   sub: 'Tu paquete está siendo preparado para el despacho.' },
@@ -517,8 +517,8 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       chip:    { icon: '🧑', label: 'Transporte de pasajero' },
       tagline: 'Seguimiento de pasajero',
       brandSvg: \`<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="7" r="4" stroke="white" stroke-width="1.8"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="7" r="4" stroke="#14532d" stroke-width="1.8"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#14532d" stroke-width="1.8" stroke-linecap="round"/>
       </svg>\`,
       steps: [
         { icon: '🕐', title: 'Esperando conductor',  sub: 'Tu viaje fue confirmado y se asignará un conductor.' },
@@ -533,9 +533,9 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       chip:    { icon: '🧒', label: 'Transporte escolar' },
       tagline: 'Seguimiento escolar',
       brandSvg: \`<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="6" r="3.5" stroke="white" stroke-width="1.8"/>
-        <path d="M5 20.5c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M9 14l1.5 3 1.5-2 1.5 2L15 14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="6" r="3.5" stroke="#14532d" stroke-width="1.8"/>
+        <path d="M5 20.5c0-3.5 3.1-6.5 7-6.5s7 3 7 6.5" stroke="#14532d" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M9 14l1.5 3 1.5-2 1.5 2L15 14" stroke="#14532d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>\`,
       steps: [
         { icon: '🏠', title: 'Esperando recogida',    sub: 'El conductor está en camino a recoger a tu hijo/a.' },
