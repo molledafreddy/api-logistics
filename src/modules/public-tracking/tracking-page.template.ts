@@ -5,7 +5,7 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <meta name="robots" content="noindex" />
-  <title>Seguimiento · Logistics</title>
+  <title>Seguimiento · P&P Logis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -55,11 +55,8 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       background: rgba(20,83,45,.06); pointer-events: none;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+    .brand-logo {
+      width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;
     }
     .brand-name {
       font-size: 17px; font-weight: 800;
@@ -298,10 +295,8 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
     .footer-brand { display: flex; align-items: center; gap: 9px; }
-    .footer-icon {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: rgba(255,255,255,.5);
-      display: flex; align-items: center; justify-content: center;
+    .footer-logo {
+      width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
     }
     .footer-name { font-size: 13px; font-weight: 700; color: #0f172a; }
     .footer-right { display: flex; align-items: center; gap: 10px; }
@@ -342,16 +337,9 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="brand">
-      <div class="brand-icon" id="brand-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M1 3h15v13H1V3z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M16 8h4l3 4v4h-7V8z" stroke="#14532d" stroke-width="1.8" stroke-linejoin="round"/>
-          <circle cx="5.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
-          <circle cx="18.5" cy="18.5" r="2" stroke="#14532d" stroke-width="1.8"/>
-        </svg>
-      </div>
+      <img class="brand-logo" src="/public/logo.png" alt="P&P Logis" />
       <div>
-        <div class="brand-name">Logistics</div>
+        <div class="brand-name">P&amp;P Logis</div>
         <div class="brand-sub" id="brand-tagline">Seguimiento en tiempo real</div>
       </div>
     </div>
@@ -442,15 +430,8 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <div class="footer-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-            <path d="M1 3h15v13H1V3z" stroke="#14532d" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M16 8h4l3 4v4h-7V8z" stroke="#14532d" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="5.5" cy="18.5" r="2" stroke="#14532d" stroke-width="2"/>
-            <circle cx="18.5" cy="18.5" r="2" stroke="#14532d" stroke-width="2"/>
-          </svg>
-        </div>
-        <div class="footer-name">Logistics Software</div>
+        <img class="footer-logo" src="/public/logo.png" alt="P&P Logis" />
+        <div class="footer-name">P&amp;P Logis</div>
       </div>
       <div class="footer-right">
         <div class="footer-hint">Actualizado: <span id="footer-update">—</span></div>
@@ -575,7 +556,6 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
     const isFinal    = FINAL.has(d.status);
     const isCancelled= CANCELLED.has(d.status);
 
-    document.getElementById('brand-icon').innerHTML      = cfg.brandSvg;
     document.getElementById('brand-tagline').textContent = cfg.tagline;
     document.getElementById('mode-icon').textContent     = cfg.chip.icon;
     document.getElementById('mode-label').textContent    = cfg.chip.label;

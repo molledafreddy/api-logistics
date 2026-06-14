@@ -8,7 +8,7 @@ export function buildReferralLandingHtml(
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <meta name="robots" content="noindex" />
-  <title>Únete a Logistics · Invitación</title>
+  <title>Únete a P&P Logis · Invitación</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -30,10 +30,9 @@ export function buildReferralLandingHtml(
       background: rgba(255,255,255,.06); pointer-events: none;
     }
     .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .brand-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .brand-logo {
+      width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;
+      border-radius: 8px; background: rgba(255,255,255,.9); padding: 2px;
     }
     .brand-name    { font-size: 16px; font-weight: 700; color: #fff; }
     .brand-tagline { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 1px; }
@@ -177,9 +176,9 @@ export function buildReferralLandingHtml(
     /* ════════ FOOTER ════════ */
     .footer { background: #14532d; padding: 20px; margin-top: 24px; }
     .footer-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .footer-brand-icon {
-      width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,.12);
-      display: flex; align-items: center; justify-content: center;
+    .footer-brand-logo {
+      width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
+      border-radius: 6px; background: rgba(255,255,255,.9); padding: 2px;
     }
     .footer-brand-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); }
     .footer-divider    { height: 1px; background: rgba(255,255,255,.1); margin: 10px 0; }
@@ -205,16 +204,9 @@ export function buildReferralLandingHtml(
   <!-- HEADER -->
   <div class="header">
     <div class="brand">
-      <div class="brand-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M1 3h15v13H1V3z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M16 8h4l3 4v4h-7V8z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-          <circle cx="5.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
-          <circle cx="18.5" cy="18.5" r="2" stroke="white" stroke-width="1.8"/>
-        </svg>
-      </div>
+      <img class="brand-logo" src="/public/logo.png" alt="P&P Logis" />
       <div>
-        <div class="brand-name">Logistics</div>
+        <div class="brand-name">P&amp;P Logis</div>
         <div class="brand-tagline">Plataforma de gestión de transporte</div>
       </div>
     </div>
@@ -366,15 +358,8 @@ export function buildReferralLandingHtml(
   <!-- FOOTER -->
   <div class="footer">
     <div class="footer-brand">
-      <div class="footer-brand-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M1 3h15v13H1V3z" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M16 8h4l3 4v4h-7V8z" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linejoin="round"/>
-          <circle cx="5.5" cy="18.5" r="2" stroke="rgba(255,255,255,.8)" stroke-width="2"/>
-          <circle cx="18.5" cy="18.5" r="2" stroke="rgba(255,255,255,.8)" stroke-width="2"/>
-        </svg>
-      </div>
-      <div class="footer-brand-name">Logistics Software</div>
+      <img class="footer-brand-logo" src="/public/logo.png" alt="P&P Logis" />
+      <div class="footer-brand-name">P&amp;P Logis</div>
     </div>
     <div class="footer-divider"></div>
     <div class="footer-hint">Esta invitación fue generada por un usuario de la plataforma.</div>
