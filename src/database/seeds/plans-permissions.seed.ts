@@ -47,6 +47,10 @@ export async function seedPlansAndPermissions(): Promise<void> {
     { code: 'shipments.write', description: 'Crear/editar envíos' },
     { code: 'reports.advanced', description: 'Reportes avanzados' },
     { code: 'settings.billing', description: 'Configuración de facturación' },
+    {
+      code: 'templates.basic',
+      description: 'Gestión de plantillas recurrentes',
+    },
   ];
   const permIds: Record<string, string> = {};
   for (const perm of permissions) {
