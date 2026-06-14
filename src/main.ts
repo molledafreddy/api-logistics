@@ -124,7 +124,12 @@ async function bootstrap() {
             directives: {
               defaultSrc: ["'self'"],
               scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
-              styleSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+              styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                'https://unpkg.com',
+                'https://fonts.googleapis.com',
+              ],
               imgSrc: [
                 "'self'",
                 'data:',
@@ -132,7 +137,7 @@ async function bootstrap() {
                 'https://unpkg.com',
               ],
               connectSrc: ["'self'"],
-              fontSrc: ["'self'"],
+              fontSrc: ["'self'", 'https://fonts.gstatic.com'],
               objectSrc: ["'none'"],
               frameAncestors: ["'none'"],
             },

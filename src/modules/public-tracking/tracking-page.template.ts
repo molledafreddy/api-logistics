@@ -698,6 +698,14 @@ export function buildTrackingPageHtml(token: string, apiBase: string): string {
       }
     } catch (e) {
       console.warn('[Tracking] error:', e.message);
+      const stepper = document.getElementById('stepper');
+      if (stepper && stepper.querySelector('.sk')) {
+        stepper.innerHTML =
+          '<div style="padding:24px 18px;text-align:center;color:#94a3b8;font-size:14px">'
+          + '⚠️ No se pudo cargar la información. '
+          + '<button onclick="fetchData()" style="background:none;border:none;color:#16a34a;font-weight:600;cursor:pointer;font-size:14px">Reintentar</button>'
+          + '</div>';
+      }
     }
   }
 
