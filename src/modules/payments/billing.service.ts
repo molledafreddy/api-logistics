@@ -156,12 +156,22 @@ export class BillingService {
       throw new BadRequestException('Free plans cannot be retried');
     }
 
+    const referrerDiscountPct = sub.pending_referral_discount_pct ?? 0;
+    const effectiveAmount =
+      referrerDiscountPct > 0
+        ? Math.round(amount * (1 - referrerDiscountPct / 100))
+        : amount;
+    const itemTitle =
+      referrerDiscountPct > 0
+        ? `Renovación ${plan.name} (${referrerDiscountPct}% desc. referido)`
+        : `Renovación ${plan.name}`;
+
     const checkout = await this.paymentsService.createCheckout({
       subscriptionId: sub.id,
       companyId: sub.company_id,
-      amount,
+      amount: effectiveAmount,
       currency: 'CLP',
-      itemTitle: `Renovación ${plan.name}`,
+      itemTitle,
     });
 
     sub.last_renewal_init_point = checkout.initPoint;

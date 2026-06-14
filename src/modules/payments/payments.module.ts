@@ -9,10 +9,12 @@ import { PaymentEvent } from '../subscriptions/entities/payment-event.entity';
 import { User } from '../auth/entities/user.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ReferralsModule } from '../referrals/referrals.module';
+import { MailModule } from '../mail/mail.module';
 
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { BillingNotificationsService } from './billing-notifications.service';
+import { BillingMailService } from './billing-mail.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { PAYMENT_PROVIDER_TOKEN } from './payments.types';
@@ -39,12 +41,14 @@ import { MercadoPagoProvider } from './providers/mercadopago.provider';
     TypeOrmModule.forFeature([Subscription, Invoice, PaymentEvent, Plan, User]),
     NotificationsModule,
     ReferralsModule,
+    MailModule,
   ],
   controllers: [PaymentsController, BillingController],
   providers: [
     PaymentsService,
     BillingService,
     BillingNotificationsService,
+    BillingMailService,
     MockPaymentProvider,
     MercadoPagoProvider,
     {

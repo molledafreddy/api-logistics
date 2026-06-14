@@ -157,6 +157,30 @@ describe('BillingService', () => {
       );
     });
 
+    it('aplica descuento de referido pendiente al monto del checkout', async () => {
+      const sub = makeSub({ pending_referral_discount_pct: 20 } as any);
+      subRepo.findOne.mockResolvedValue(sub);
+      planRepo.findOne.mockResolvedValue({
+        id: 'plan-1',
+        name: 'Pro',
+        price: 14990,
+      } as unknown as Plan);
+      payments.createCheckout.mockResolvedValue({
+        initPoint: 'https://mp/discounted',
+        providerCheckoutId: 'p',
+        externalReference: 'r',
+      });
+
+      await svc.retry('co-1');
+
+      expect(payments.createCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: Math.round(14990 * 0.8), // 20% de descuento → 11992
+          itemTitle: 'Renovación Pro (20% desc. referido)',
+        }),
+      );
+    });
+
     it('acepta sub en estado suspended', async () => {
       const sub = makeSub({ status: 'suspended' });
       subRepo.findOne.mockResolvedValue(sub);

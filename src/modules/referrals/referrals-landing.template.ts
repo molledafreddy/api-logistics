@@ -14,7 +14,7 @@ export function buildReferralLandingHtml(
     html, body {
       min-height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f0fdf4; color: #0f172a;
+      background: #f8fafc; color: #0f172a;
       -webkit-font-smoothing: antialiased;
     }
     .page { min-height: 100vh; display: flex; flex-direction: column; }
