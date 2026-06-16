@@ -15,6 +15,7 @@ import {
 } from './dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 
 @Injectable()
@@ -31,7 +32,7 @@ export class TrackingService {
     dto: CreateTrackingPointDto,
     user: IUserPayload,
   ): Promise<TrackingPoint> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     if (!dto.shipmentId && !dto.truckId) {
       throw new BadRequestException(
@@ -54,7 +55,7 @@ export class TrackingService {
     dto: BulkTrackingPointsDto,
     user: IUserPayload,
   ): Promise<{ inserted: number }> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     const points = dto.points.map((p) =>
       this.trackingRepository.create({
@@ -83,7 +84,7 @@ export class TrackingService {
     const qb = this.trackingRepository.createQueryBuilder('tp');
 
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('tp.companyId = :companyId', { companyId });
     }
 
@@ -109,7 +110,7 @@ export class TrackingService {
       .where('tp.shipmentId = :sid', { sid: shipmentId });
 
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('tp.companyId = :companyId', { companyId });
     }
 
@@ -125,7 +126,7 @@ export class TrackingService {
       .where('tp.truckId = :tid', { tid: truckId });
 
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('tp.companyId = :companyId', { companyId });
     }
 
@@ -160,13 +161,6 @@ export class TrackingService {
       from: points[0].capturedAt,
       to: points[points.length - 1].capturedAt,
     };
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private haversine(

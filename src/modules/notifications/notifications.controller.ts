@@ -18,6 +18,7 @@ import {
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RegisterPushTokenDto } from './dto/register-push-token.dto';
+import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -32,7 +33,7 @@ export class NotificationsController {
     description: 'List of notifications for current user',
   })
   findMine(
-    @CurrentUser() user: any,
+    @CurrentUser() user: IUserPayload,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -59,7 +60,7 @@ export class NotificationsController {
     status: 200,
     description: 'All unread notifications marked as read',
   })
-  markAllRead(@CurrentUser() user: any) {
+  markAllRead(@CurrentUser() user: IUserPayload) {
     return this.service.markAllRead(user.sub);
   }
 
@@ -71,7 +72,7 @@ export class NotificationsController {
   @ApiResponse({ status: 201, description: 'Push token registered' })
   @ApiResponse({ status: 400, description: 'Invalid token format' })
   registerPushToken(
-    @CurrentUser() user: any,
+    @CurrentUser() user: IUserPayload,
     @Body() dto: RegisterPushTokenDto,
   ) {
     return this.service.registerPushToken(
@@ -86,7 +87,10 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Unregister/deactivate a push notification token' })
   @ApiResponse({ status: 200, description: 'Push token deactivated' })
   @ApiResponse({ status: 404, description: 'Push token not found' })
-  removePushToken(@CurrentUser() user: any, @Param('token') token: string) {
+  removePushToken(
+    @CurrentUser() user: IUserPayload,
+    @Param('token') token: string,
+  ) {
     return this.service.removePushToken(user.sub, token);
   }
 }

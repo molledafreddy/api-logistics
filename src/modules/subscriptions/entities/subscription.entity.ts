@@ -31,7 +31,7 @@ export class Subscription {
   cancel_at_period_end: boolean;
 
   @Column({ type: 'timestamptz', nullable: true })
-  canceled_at?: Date;
+  canceled_at?: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   trial_start?: Date;

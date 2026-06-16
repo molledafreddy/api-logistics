@@ -40,7 +40,11 @@ describe('NotificationsService', () => {
         { provide: EventEmitter2, useValue: emitter },
         {
           provide: PushSenderService,
-          useValue: { sendPushToUser: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            sendPushToUser: jest
+              .fn()
+              .mockResolvedValue({ pushed: true, error: null }),
+          },
         },
       ],
     }).compile();

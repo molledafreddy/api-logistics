@@ -25,6 +25,7 @@ import { ShipmentStatus } from '../../common/enums/shipment-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { NotificationType } from '../../common/enums/notification-type.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { RelationshipsService } from '../relationships/relationships.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -109,68 +110,27 @@ export class ShipmentsService {
   //      c) Notificar a los admins/dispatchers de la empresa carrier
   // ─────────────────────────────────────────────
   async create(dto: CreateShipmentDto, user: IUserPayload): Promise<Shipment> {
-    const userCompanyId = this.requireCompanyId(user);
+    const userCompanyId = requireCompanyId(user);
 
     if (user.role !== UserRole.SUPER_ADMIN) {
       await this.checkDailyShipmentLimit(userCompanyId);
     }
 
-    // Por convención, el creador siempre forma parte de la transacción:
-    //  - Si dto.customerCompanyId está presente → quien crea es el CLIENTE,
-    //    y la empresa creadora se considera el CUSTOMER. Pero el carrier (companyId)
-    //    puede haber sido seleccionado por el cliente (campo dto.companyId opcional)
-    //    o, si no se pasa, se asume que es un shipment interno.
-    //
-    // Para mantener simple el flujo y no romper compatibilidad, definimos:
-    //   - companyId        = userCompanyId (la empresa que opera/ejecuta el envío por defecto)
-    //   - customerCompanyId = dto.customerCompanyId (cliente externo opcional)
-    //
-    // Para subcontratación inversa (cliente A propone a carrier B), el cliente debe
-    // crear el shipment usando un endpoint donde dto contenga el carrier objetivo.
-    // Lo soportamos vía dto.proposedCarrierId si se provee:
-    const carrierId =
-      (dto as CreateShipmentDto & { proposedCarrierId?: string })
-        .proposedCarrierId || userCompanyId;
-    const customerCompanyId = dto.customerCompanyId || null;
-
-    // ─── Determinar si es cross-company ───
-    const isCrossCompany =
-      customerCompanyId !== null && customerCompanyId !== carrierId;
-
-    // ─── Determinar si el creador es cliente o carrier ───
-    const creatorIsCustomer = customerCompanyId === userCompanyId;
-    const creatorIsCarrier = carrierId === userCompanyId;
+    const { carrierId, customerCompanyId, isCrossCompany, creatorIsCustomer } =
+      this.resolveShipmentParties(dto, userCompanyId);
 
     if (isCrossCompany) {
-      if (!creatorIsCustomer && !creatorIsCarrier) {
-        throw new ForbiddenException(
-          'You must be either the customer or the carrier on this shipment',
-        );
-      }
-
-      // Validar relación activa entre ambas empresas
-      const ok = await this.relationshipsService.isActiveBetween(
-        customerCompanyId,
-        carrierId,
-      );
-      if (!ok) {
-        throw new ForbiddenException(
-          `No active business relationship exists between customer ${customerCompanyId} and carrier ${carrierId}. ` +
-            `Establish a relationship in /v1/relationships first.`,
-        );
-      }
+      // isCrossCompany === true implies customerCompanyId !== null
+      this.assertCreatorIsParty(carrierId, customerCompanyId!, userCompanyId);
+      await this.assertActiveRelationship(customerCompanyId!, carrierId);
     }
 
     const trackingCode = await this.generateTrackingCode(carrierId);
-
-    // Determinar status inicial:
-    //  - Cross-company y creado por el cliente → PENDING_ACCEPTANCE (carrier debe aceptar)
-    //  - Cross-company y creado por el carrier → DRAFT (carrier ya conoce y maneja)
-    //  - Single-company → DRAFT (o lo que pase en dto.status)
-    const initialStatus =
-      isCrossCompany && creatorIsCustomer
-        ? ShipmentStatus.PENDING_ACCEPTANCE
-        : dto.status || ShipmentStatus.DRAFT;
+    const initialStatus = this.resolveInitialStatus(
+      isCrossCompany,
+      creatorIsCustomer,
+      dto,
+    );
 
     const shipment = this.shipmentRepository.create({
       ...dto,
@@ -188,7 +148,6 @@ export class ShipmentsService {
         initialStatus === ShipmentStatus.PENDING_ACCEPTANCE ? new Date() : null,
     });
 
-    // Si el carrier asignó truck/driver al crear, validar pertenencia
     if (shipment.truckId || shipment.driverId) {
       await this.validateResourcesBelongToCarrier(
         carrierId,
@@ -202,7 +161,6 @@ export class ShipmentsService {
       `Shipment created: ${saved.trackingCode} (${saved.id}) status=${saved.status}`,
     );
 
-    // Notificar al carrier si está pendiente de aceptación
     if (saved.status === ShipmentStatus.PENDING_ACCEPTANCE) {
       await this.notifyCompanyManagers(
         carrierId,
@@ -214,6 +172,66 @@ export class ShipmentsService {
     }
 
     return saved;
+  }
+
+  private resolveShipmentParties(
+    dto: CreateShipmentDto,
+    userCompanyId: string,
+  ) {
+    const carrierId = dto.proposedCarrierId || userCompanyId;
+    const customerCompanyId = dto.customerCompanyId || null;
+    const isCrossCompany =
+      customerCompanyId !== null && customerCompanyId !== carrierId;
+    const creatorIsCustomer = customerCompanyId === userCompanyId;
+    const creatorIsCarrier = carrierId === userCompanyId;
+    return {
+      carrierId,
+      customerCompanyId,
+      isCrossCompany,
+      creatorIsCustomer,
+      creatorIsCarrier,
+    };
+  }
+
+  private assertCreatorIsParty(
+    carrierId: string,
+    customerCompanyId: string,
+    userCompanyId: string,
+  ): void {
+    const creatorIsCarrier = carrierId === userCompanyId;
+    const creatorIsCustomer = customerCompanyId === userCompanyId;
+    if (!creatorIsCustomer && !creatorIsCarrier) {
+      throw new ForbiddenException(
+        'You must be either the customer or the carrier on this shipment',
+      );
+    }
+  }
+
+  private async assertActiveRelationship(
+    customerCompanyId: string,
+    carrierId: string,
+  ): Promise<void> {
+    const ok = await this.relationshipsService.isActiveBetween(
+      customerCompanyId,
+      carrierId,
+    );
+    if (!ok) {
+      throw new ForbiddenException(
+        `No active business relationship exists between customer ${customerCompanyId} and carrier ${carrierId}. ` +
+          `Establish a relationship in /v1/relationships first.`,
+      );
+    }
+  }
+
+  private resolveInitialStatus(
+    isCrossCompany: boolean,
+    creatorIsCustomer: boolean,
+    dto: CreateShipmentDto,
+  ): ShipmentStatus {
+    if (isCrossCompany && creatorIsCustomer) {
+      return ShipmentStatus.PENDING_ACCEPTANCE;
+    }
+    return dto.status || ShipmentStatus.DRAFT;
   }
 
   // ─────────────────────────────────────────────
@@ -234,7 +252,7 @@ export class ShipmentsService {
         });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere(
         '(shipment.companyId = :companyId OR shipment.customerCompanyId = :companyId)',
         { companyId },
@@ -361,7 +379,7 @@ export class ShipmentsService {
     const rejected: string[] = [];
     for (const key of Object.keys(dto) as Array<keyof UpdateShipmentDto>) {
       if (allowedFields.has(key)) {
-        (filtered as any)[key] = (dto as any)[key];
+        Object.assign(filtered, { [key]: dto[key] });
       } else {
         rejected.push(key);
       }
@@ -643,7 +661,15 @@ export class ShipmentsService {
     return this.shipmentRepository.save(shipment);
   }
 
-  async getTimeline(id: string, user: IUserPayload) {
+  async getTimeline(
+    id: string,
+    user: IUserPayload,
+  ): Promise<{
+    shipmentId: string;
+    trackingCode: string;
+    currentStatus: string;
+    events: Array<Record<string, unknown>>;
+  }> {
     const shipment = await this.findOne(id, user);
     return {
       shipmentId: shipment.id,
@@ -681,7 +707,7 @@ export class ShipmentsService {
           at: shipment.cancelledAt,
           reason: shipment.cancelReason,
         },
-      ].filter(Boolean),
+      ].filter(Boolean) as Array<Record<string, unknown>>,
     };
   }
 
@@ -701,13 +727,6 @@ export class ShipmentsService {
   // ─────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
-  }
-
   private assertTenantAccess(shipment: Shipment, user: IUserPayload): void {
     if (user.role === UserRole.SUPER_ADMIN) return;
     if (

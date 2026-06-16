@@ -19,6 +19,7 @@ import {
   AddParticipantsDto,
 } from './dto';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 
 @Injectable()
@@ -42,7 +43,7 @@ export class ChatService {
     dto: CreateConversationDto,
     user: IUserPayload,
   ): Promise<Conversation> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     const participantIds = Array.from(
       new Set([...dto.participantIds, user.sub]),
@@ -72,12 +73,9 @@ export class ChatService {
     query: QueryConversationsDto,
     user: IUserPayload,
   ): Promise<(Conversation & { participantName: string | null })[]> {
-    const companyId = this.requireCompanyId(user);
-
     const qb = this.conversationRepository
       .createQueryBuilder('c')
       .where('c.deletedAt IS NULL')
-      .andWhere('c.companyId = :companyId', { companyId })
       .andWhere(`c.participantIds @> :uid::jsonb`, {
         uid: JSON.stringify([user.sub]),
       });
@@ -270,7 +268,7 @@ export class ChatService {
   }
 
   async getUnreadCount(user: IUserPayload): Promise<{ unread: number }> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     // Conversaciones del usuario
     const convs = await this.conversationRepository
@@ -302,13 +300,6 @@ export class ChatService {
   // ─────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
-  }
-
   private assertParticipant(conv: Conversation, user: IUserPayload): void {
     if (!conv.participantIds.includes(user.sub)) {
       throw new ForbiddenException(

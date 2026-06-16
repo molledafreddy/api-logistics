@@ -24,7 +24,7 @@ export class PaymentEvent {
   event_date: Date;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
 
   // ─── Sprint E — idempotencia por provider ─────
   /** 'mercadopago' | 'stripe' | 'manual' | etc. */

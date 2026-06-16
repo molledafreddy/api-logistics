@@ -5,8 +5,11 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { CompanyStatus } from '../../common/enums/company-status.enum';
+import { VerificationStatus } from '../../common/enums/verification-status.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,6 +17,14 @@ import { Repository } from 'typeorm';
 import { Company } from '../companies/entities/company.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { Verification } from '../verifications/entities/verification.entity';
+
+class UpdateCompanyAdminDto {
+  @IsOptional() @IsString() @MaxLength(200) name?: string;
+  @IsOptional() @IsString() @MaxLength(200) legalName?: string;
+  @IsOptional() @IsEnum(CompanyStatus) status?: CompanyStatus;
+  @IsOptional() @IsString() @MaxLength(254) email?: string;
+  @IsOptional() @IsString() @MaxLength(30) phone?: string;
+}
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -73,7 +84,10 @@ export class AdminController {
   @ApiResponse({ status: 404, description: 'Company not found' })
   @ApiResponse({ status: 400, description: 'Invalid data' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async updateCompany(@Param('id') id: string, @Body() body: any) {
+  async updateCompany(
+    @Param('id') id: string,
+    @Body() body: UpdateCompanyAdminDto,
+  ) {
     await this.companyRepo.update(id, body);
     return this.companyRepo.findOneByOrFail({ id });
   }
@@ -90,7 +104,7 @@ export class AdminController {
     const p = Number(page) || 1;
     const l = Number(limit) || 20;
     return this.subscriptionRepo.find({
-      order: { created_at: 'DESC' } as any,
+      order: { created_at: 'DESC' as const },
       skip: (p - 1) * l,
       take: l,
     });
@@ -108,7 +122,7 @@ export class AdminController {
   ) {
     const p = Number(page) || 1;
     const l = Number(limit) || 20;
-    const where = status ? { status: status as any } : {};
+    const where = status ? { status: status as VerificationStatus } : {};
     return this.verificationRepo.find({
       where,
       order: { createdAt: 'DESC' },

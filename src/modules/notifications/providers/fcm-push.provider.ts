@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type * as AdminTypes from 'firebase-admin';
+import { PushProvider } from './push-provider.abstract';
 
 @Injectable()
-export class FcmPushProvider {
+export class FcmPushProvider extends PushProvider {
   private readonly logger = new Logger(FcmPushProvider.name);
   private _admin: typeof AdminTypes | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(private readonly config: ConfigService) {
+    super();
+  }
 
   // Lazy-load firebase-admin on first use instead of at module parse time.
   // A top-level `import * as admin from 'firebase-admin'` causes Node.js to

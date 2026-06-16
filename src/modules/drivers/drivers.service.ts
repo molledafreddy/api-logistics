@@ -21,6 +21,7 @@ import { DriverStatus } from '../../common/enums/driver-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { MailService } from '../mail/mail.service';
 
@@ -40,7 +41,7 @@ export class DriversService {
   ) {}
 
   async create(dto: CreateDriverDto, user: IUserPayload): Promise<Driver> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     if (user.role !== UserRole.SUPER_ADMIN) {
       await this.checkDriverPlanLimit(companyId);
@@ -81,7 +82,7 @@ export class DriversService {
         });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('driver.companyId = :companyId', { companyId });
     }
 
@@ -244,7 +245,7 @@ export class DriversService {
       if (!linked || linked.status !== UserStatus.PENDING_VERIFICATION) {
         return tokenOnlyResponse(driver.userId);
       }
-      driver.userId = null as any;
+      driver.userId = null;
       await this.driverRepository.save(driver);
     }
 
@@ -331,13 +332,6 @@ export class DriversService {
 
     await this.driverRepository.softRemove(driver);
     this.logger.log(`Driver soft-deleted: ${driver.fullName} (${driver.id})`);
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private assertTenantAccess(driver: Driver, user: IUserPayload): void {

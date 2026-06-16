@@ -24,6 +24,7 @@ import {
   AddDocumentDto,
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -108,7 +109,7 @@ export class VerificationsController {
   review(
     @Param('id') id: string,
     @Body() dto: ReviewVerificationDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: IUserPayload,
   ) {
     return this.service.review(id, dto, user.sub);
   }

@@ -12,6 +12,7 @@ import { CreateExpenseDto, UpdateExpenseDto, QueryExpenseDto } from './dto';
 import { ExpenseStatus } from '../../common/enums/expense-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 @Injectable()
@@ -24,7 +25,7 @@ export class ExpensesService {
   ) {}
 
   async create(dto: CreateExpenseDto, user: IUserPayload): Promise<Expense> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     const expense = this.expenseRepository.create({
       ...dto,
@@ -56,7 +57,7 @@ export class ExpensesService {
         });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('exp.companyId = :companyId', { companyId });
 
       // Drivers solo ven los suyos
@@ -191,7 +192,7 @@ export class ExpensesService {
       .where('exp.deletedAt IS NULL');
 
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('exp.companyId = :companyId', { companyId });
     } else if (query.companyId) {
       qb.andWhere('exp.companyId = :companyId', { companyId: query.companyId });
@@ -233,13 +234,6 @@ export class ExpensesService {
     }
 
     await this.expenseRepository.softRemove(expense);
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private assertTenantAccess(expense: Expense, user: IUserPayload): void {

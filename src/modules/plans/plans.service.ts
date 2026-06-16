@@ -32,30 +32,30 @@ export class PlansService {
   ) {}
 
   // --- Planes ---
-  async createPlan(dto: CreatePlanDto) {
+  async createPlan(dto: CreatePlanDto): Promise<Plan> {
     this.logger.debug(`[createPlan] dto: ${JSON.stringify(dto)}`);
     return this.planRepository.save(dto);
   }
 
-  async findAllPlans() {
+  async findAllPlans(): Promise<Plan[]> {
     this.logger.debug(`[findAllPlans] llamada`);
     return this.planRepository.find({ where: { is_active: true } });
   }
 
-  async findOnePlan(id: string) {
+  async findOnePlan(id: string): Promise<Plan> {
     this.logger.debug(`[findOnePlan] id: ${id}`);
     const plan = await this.planRepository.findOne({ where: { id } });
     if (!plan) throw new NotFoundException('Plan not found');
     return plan;
   }
 
-  async updatePlan(id: string, dto: UpdatePlanDto) {
+  async updatePlan(id: string, dto: UpdatePlanDto): Promise<Plan> {
     this.logger.debug(`[updatePlan] id: ${id}, dto: ${JSON.stringify(dto)}`);
     await this.planRepository.update(id, dto);
     return this.findOnePlan(id);
   }
 
-  async removePlan(id: string) {
+  async removePlan(id: string): Promise<{ deleted: boolean }> {
     this.logger.debug(`[removePlan] id: ${id}`);
     const result = await this.planRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Plan not found');
@@ -63,17 +63,19 @@ export class PlansService {
   }
 
   // --- Permission Definitions ---
-  async createPermission(dto: CreatePermissionDefinitionDto) {
+  async createPermission(
+    dto: CreatePermissionDefinitionDto,
+  ): Promise<PermissionDefinition> {
     this.logger.debug(`[createPermission] dto: ${JSON.stringify(dto)}`);
     return this.permissionDefinitionRepository.save(dto);
   }
 
-  async findAllPermissions() {
+  async findAllPermissions(): Promise<PermissionDefinition[]> {
     this.logger.debug(`[findAllPermissions] llamada`);
     return this.permissionDefinitionRepository.find();
   }
 
-  async findOnePermission(id: string) {
+  async findOnePermission(id: string): Promise<PermissionDefinition> {
     this.logger.debug(`[findOnePermission] id: ${id}`);
     const perm = await this.permissionDefinitionRepository.findOne({
       where: { id },
@@ -82,7 +84,10 @@ export class PlansService {
     return perm;
   }
 
-  async updatePermission(id: string, dto: UpdatePermissionDefinitionDto) {
+  async updatePermission(
+    id: string,
+    dto: UpdatePermissionDefinitionDto,
+  ): Promise<PermissionDefinition> {
     this.logger.debug(
       `[updatePermission] id: ${id}, dto: ${JSON.stringify(dto)}`,
     );
@@ -90,7 +95,7 @@ export class PlansService {
     return this.findOnePermission(id);
   }
 
-  async removePermission(id: string) {
+  async removePermission(id: string): Promise<{ deleted: boolean }> {
     this.logger.debug(`[removePermission] id: ${id}`);
     const result = await this.permissionDefinitionRepository.delete(id);
     if (result.affected === 0)
@@ -99,7 +104,9 @@ export class PlansService {
   }
 
   // --- Asignar Permiso a Plan ---
-  async assignPermissionToPlan(dto: AssignPermissionDto) {
+  async assignPermissionToPlan(
+    dto: AssignPermissionDto,
+  ): Promise<PlanPermission> {
     this.logger.debug(`[assignPermissionToPlan] dto: ${JSON.stringify(dto)}`);
     const plan = await this.planRepository.findOne({
       where: { id: dto.planId },
@@ -156,7 +163,10 @@ export class PlansService {
   }
 
   // --- Límites de Plan ---
-  async createPlanLimit(planId: string, dto: CreatePlanLimitDto) {
+  async createPlanLimit(
+    planId: string,
+    dto: CreatePlanLimitDto,
+  ): Promise<PlanLimit> {
     const plan = await this.planRepository.findOne({ where: { id: planId } });
     if (!plan) throw new NotFoundException('Plan not found');
     const planLimit = this.planLimitRepository.create({
@@ -171,13 +181,16 @@ export class PlansService {
     return saved;
   }
 
-  async findPlanLimits(planId: string) {
+  async findPlanLimits(planId: string): Promise<PlanLimit[]> {
     return this.planLimitRepository.find({
       where: { planId },
     });
   }
 
-  async updatePlanLimit(id: string, dto: UpdatePlanLimitDto) {
+  async updatePlanLimit(
+    id: string,
+    dto: UpdatePlanLimitDto,
+  ): Promise<PlanLimit> {
     const planLimit = await this.planLimitRepository.findOne({ where: { id } });
     if (!planLimit) throw new NotFoundException('PlanLimit not found');
     Object.assign(planLimit, dto);
@@ -186,7 +199,7 @@ export class PlansService {
     return saved;
   }
 
-  async removePlanLimit(id: string) {
+  async removePlanLimit(id: string): Promise<{ deleted: boolean }> {
     const planLimit = await this.planLimitRepository.findOne({ where: { id } });
     if (!planLimit) throw new NotFoundException('PlanLimit not found');
     const planId = planLimit.planId;
@@ -223,7 +236,7 @@ export class PlansService {
    * Devuelve sólo planes con `code` definido (es decir, planes "del nuevo
    * mundo" Sprint A; los legacy con `code IS NULL` quedan ocultos).
    */
-  async getCatalog() {
+  async getCatalog(): Promise<Plan[]> {
     this.logger.debug(`[getCatalog] llamada`);
     return this.planRepository
       .createQueryBuilder('p')

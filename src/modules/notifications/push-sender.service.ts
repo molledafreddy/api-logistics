@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PushToken } from './entities/push-token.entity';
 import { Notification } from './entities/notification.entity';
-import { FcmPushProvider } from './providers/fcm-push.provider';
+import { PushProvider } from './providers/push-provider.abstract';
 
 @Injectable()
 export class PushSenderService {
@@ -12,21 +12,19 @@ export class PushSenderService {
   constructor(
     @InjectRepository(PushToken)
     private readonly pushTokenRepo: Repository<PushToken>,
-    @InjectRepository(Notification)
-    private readonly notifRepo: Repository<Notification>,
-    private readonly fcmProvider: FcmPushProvider,
+    private readonly pushProvider: PushProvider,
   ) {}
 
   async sendPushToUser(
     userId: string,
-    notification: Notification,
-  ): Promise<void> {
+    notification: Pick<Notification, 'id' | 'title' | 'body' | 'data'>,
+  ): Promise<{ pushed: boolean; error: string | null }> {
     const tokens = await this.pushTokenRepo.find({
       where: { userId, isActive: true },
     });
     if (!tokens.length) {
       this.logger.warn(`No push tokens for user ${userId}`);
-      return;
+      return { pushed: false, error: 'No active tokens' };
     }
 
     const payload = {
@@ -50,7 +48,7 @@ export class PushSenderService {
 
     for (const token of tokens) {
       try {
-        await this.fcmProvider.sendPush(token.token, payload);
+        await this.pushProvider.sendPush(token.token, payload);
         pushed = true;
       } catch (err) {
         lastError = (err as Error)?.message ?? String(err);
@@ -58,10 +56,6 @@ export class PushSenderService {
       }
     }
 
-    await this.notifRepo.update(notification.id, {
-      pushSent: pushed,
-      pushSentAt: pushed ? new Date() : null,
-      pushError: pushed ? null : lastError,
-    });
+    return { pushed, error: pushed ? null : lastError };
   }
 }

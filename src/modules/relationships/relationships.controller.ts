@@ -12,6 +12,7 @@ import {
   TerminateRelationshipDto,
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -26,7 +27,10 @@ export class RelationshipsController {
   @ApiOperation({ summary: 'Create a company relationship invitation' })
   @ApiResponse({ status: 201, description: 'Relationship invitation created' })
   @ApiResponse({ status: 400, description: 'Invalid parameters' })
-  create(@Body() dto: CreateRelationshipDto, @CurrentUser() user: any) {
+  create(
+    @Body() dto: CreateRelationshipDto,
+    @CurrentUser() user: IUserPayload,
+  ) {
     return this.service.create(dto, user.sub);
   }
 
@@ -73,7 +77,7 @@ export class RelationshipsController {
   respond(
     @Param('id') id: string,
     @Body() dto: RespondRelationshipDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: IUserPayload,
   ) {
     return this.service.respond(id, dto, user.sub);
   }
@@ -90,7 +94,7 @@ export class RelationshipsController {
   terminate(
     @Param('id') id: string,
     @Body() dto: TerminateRelationshipDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: IUserPayload,
   ) {
     return this.service.terminate(id, dto, user.sub);
   }

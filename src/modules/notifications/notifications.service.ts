@@ -36,12 +36,21 @@ export class NotificationsService {
       data: data.data || {},
     });
     const saved = await this.notifRepo.save(notif);
-    // Notifica vía WebSocket de manera best-effort
     this.eventEmitter.emit(INTERNAL_EVENTS.NOTIFICATION_CREATED, saved);
-    // Enviar push real (best-effort, no bloquear)
-    this.pushSender.sendPushToUser(saved.userId, saved).catch((err) => {
-      this.logger.warn(`Error enviando push real: ${err?.message || err}`);
-    });
+    this.pushSender
+      .sendPushToUser(saved.userId, saved)
+      .then(({ pushed, error }) =>
+        this.notifRepo.update(saved.id, {
+          pushSent: pushed,
+          pushSentAt: pushed ? new Date() : null,
+          pushError: pushed ? null : error,
+        }),
+      )
+      .catch((err) => {
+        this.logger.warn(
+          `Push error for notification ${saved.id}: ${err?.message || err}`,
+        );
+      });
     return saved;
   }
 

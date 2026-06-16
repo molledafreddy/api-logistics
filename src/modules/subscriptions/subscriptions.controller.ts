@@ -35,7 +35,7 @@ export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   // Log para depuración
-  private logRequest(method: string, extra?: any) {
+  private logRequest(method: string, extra?: unknown) {
     console.log(`[SUBSCRIPTIONS_CONTROLLER] ${method} llamada`, extra || '');
   }
 

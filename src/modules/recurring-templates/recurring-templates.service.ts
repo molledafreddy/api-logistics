@@ -28,6 +28,7 @@ import { DeliveryRunStatus } from '../../common/enums/delivery-run-status.enum';
 import { ShipmentStatus } from '../../common/enums/shipment-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 
@@ -78,7 +79,7 @@ export class RecurringTemplatesService {
     dto: CreateRecurringTemplateDto,
     user: IUserPayload,
   ): Promise<RecurringTemplate> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
     this.assertManagerRole(user);
 
     if (user.role !== 'super_admin') {
@@ -130,7 +131,7 @@ export class RecurringTemplatesService {
     const qb = this.templateRepo.createQueryBuilder('tpl');
 
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('tpl.companyId = :companyId', { companyId });
     }
 
@@ -509,13 +510,6 @@ export class RecurringTemplatesService {
         );
       }
     }
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private assertTenantAccess(tpl: RecurringTemplate, user: IUserPayload): void {

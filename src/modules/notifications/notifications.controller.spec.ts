@@ -8,7 +8,9 @@ const svc = () => ({
   removePushToken: jest.fn().mockResolvedValue('OK'),
 });
 
-const user = { sub: 'u1' };
+const user = {
+  sub: 'u1',
+} as unknown as import('../../common/interfaces/user-payload.interface').IUserPayload;
 
 describe('NotificationsController', () => {
   let s: ReturnType<typeof svc>;

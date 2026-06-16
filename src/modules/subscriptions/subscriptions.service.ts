@@ -3,7 +3,7 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionAddon } from './entities/subscription-addon.entity';
 import { Invoice } from './entities/invoice.entity';
@@ -45,9 +45,9 @@ export class SubscriptionsService implements OnModuleDestroy {
     );
     // Cancelar suscripciones activas previas para evitar permisos combinados
     await this.subscriptionRepo.update(
-      { company_id: companyId, status: 'active' as any },
+      { company_id: companyId, status: 'active' },
       {
-        status: 'canceled' as any,
+        status: 'canceled',
         canceled_at: new Date(),
         cancel_at_period_end: false,
       },
@@ -102,7 +102,7 @@ export class SubscriptionsService implements OnModuleDestroy {
     // Si el plan requiere pago, NO cambiamos plan_id todavía — el usuario
     // conserva su plan actual hasta que el webhook confirme el pago.
     // pending_plan_id guarda el destino; applyEventToSubscription lo aplica.
-    const updateData: Record<string, unknown> =
+    const updateData: DeepPartial<Subscription> =
       newStatus === 'pending_payment'
         ? { status: newStatus, pending_plan_id: newPlanId }
         : {
@@ -115,7 +115,7 @@ export class SubscriptionsService implements OnModuleDestroy {
             cancel_at_period_end: false,
           };
 
-    const result = await this.subscriptionRepo.update(id, updateData as any);
+    const result = await this.subscriptionRepo.update(id, updateData);
     const sub = await this.subscriptionRepo.findOne({ where: { id } });
     if (sub) await this.permissionsCache.invalidate(sub.company_id);
     return result;
@@ -128,7 +128,7 @@ export class SubscriptionsService implements OnModuleDestroy {
     await this.validatePlanChangeAudience(id, newPlanId, 'downgrade');
     const newStatus = await this.resolveStatusForPlan(newPlanId);
 
-    const updateData: Record<string, unknown> =
+    const updateData: DeepPartial<Subscription> =
       newStatus === 'pending_payment'
         ? { status: newStatus, pending_plan_id: newPlanId }
         : {
@@ -141,7 +141,7 @@ export class SubscriptionsService implements OnModuleDestroy {
             cancel_at_period_end: false,
           };
 
-    const result = await this.subscriptionRepo.update(id, updateData as any);
+    const result = await this.subscriptionRepo.update(id, updateData);
     const sub = await this.subscriptionRepo.findOne({ where: { id } });
     if (sub) await this.permissionsCache.invalidate(sub.company_id);
     return result;

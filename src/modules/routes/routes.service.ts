@@ -10,6 +10,7 @@ import { Route } from './entities/route.entity';
 import { CreateRouteDto, UpdateRouteDto, QueryRouteDto } from './dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 @Injectable()
@@ -22,7 +23,7 @@ export class RoutesService {
   ) {}
 
   async create(dto: CreateRouteDto, user: IUserPayload): Promise<Route> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     const route = this.routeRepository.create({
       ...dto,
@@ -52,7 +53,7 @@ export class RoutesService {
         });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('route.companyId = :companyId', { companyId });
     }
 
@@ -134,13 +135,6 @@ export class RoutesService {
     const route = await this.findOne(id, user);
     await this.routeRepository.softRemove(route);
     this.logger.log(`Route soft-deleted: ${route.name} (${route.id})`);
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private assertTenantAccess(route: Route, user: IUserPayload): void {

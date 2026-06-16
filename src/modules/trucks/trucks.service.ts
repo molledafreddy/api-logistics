@@ -13,6 +13,7 @@ import { CreateTruckDto, UpdateTruckDto, QueryTruckDto } from './dto';
 import { TruckStatus } from '../../common/enums/truck-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 const FREE_PLAN_MAX_TRUCKS = 1;
@@ -31,7 +32,7 @@ export class TrucksService {
   // CREATE
   // ─────────────────────────────────────────────
   async create(dto: CreateTruckDto, user: IUserPayload): Promise<Truck> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     if (user.role !== UserRole.SUPER_ADMIN) {
       await this.checkTruckPlanLimit(companyId);
@@ -91,7 +92,7 @@ export class TrucksService {
         });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('truck.companyId = :companyId', { companyId });
     }
 
@@ -273,12 +274,6 @@ export class TrucksService {
   // ─────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
-  }
 
   private assertTenantAccess(truck: Truck, user: IUserPayload): void {
     if (user.role === UserRole.SUPER_ADMIN) return;

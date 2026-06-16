@@ -12086,7 +12086,7 @@
           },
           "fileUrl": {
             "type": "string",
-            "description": "URL del archivo si type != text"
+            "description": "URL del archivo si type es image o file"
           },
           "fileName": {
             "type": "string"

@@ -35,6 +35,7 @@ import { RelationshipStatus } from '../../common/enums/relationship-status.enum'
 import { RelationshipType } from '../../common/enums/relationship-type.enum';
 import { NotificationType } from '../../common/enums/notification-type.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 import { ComplianceService } from '../verifications/compliance.service';
@@ -86,7 +87,7 @@ export class DeliveryRunsService {
     dto: CreateDeliveryRunDto,
     user: IUserPayload,
   ): Promise<DeliveryRun> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     // DR-005 (preventivo): valida que driver/truck pertenezcan al carrier
     if (dto.driverId || dto.truckId) {
@@ -139,13 +140,13 @@ export class DeliveryRunsService {
 
     // Tenant
     if (user.role !== UserRole.SUPER_ADMIN) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('run.companyId = :companyId', { companyId });
     }
 
     // Drivers solo ven sus propios runs (filtra por Driver entity ID, no User ID)
     if (user.role === UserRole.DRIVER) {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       const driver = await this.driverRepo.findOne({
         where: { userId: user.sub, companyId },
         select: ['id'],
@@ -913,13 +914,6 @@ export class DeliveryRunsService {
     if (!run) throw new NotFoundException(`DeliveryRun ${id} not found`);
     this.assertTenantAccess(run, user);
     return run;
-  }
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
   }
 
   private assertTenantAccess(run: DeliveryRun, user: IUserPayload): void {

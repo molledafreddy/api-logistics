@@ -16,6 +16,7 @@ import {
 } from './dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
+import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 /**
@@ -41,7 +42,7 @@ export class SavedAddressesService {
     dto: CreateSavedAddressDto,
     user: IUserPayload,
   ): Promise<SavedAddress> {
-    const companyId = this.requireCompanyId(user);
+    const companyId = requireCompanyId(user);
 
     const dup = await this.repo.findOne({
       where: { companyId, label: dto.label },
@@ -83,7 +84,7 @@ export class SavedAddressesService {
         qb.andWhere('addr.companyId = :cid', { cid: query.companyId });
       }
     } else {
-      const companyId = this.requireCompanyId(user);
+      const companyId = requireCompanyId(user);
       qb.andWhere('addr.companyId = :cid', { cid: companyId });
     }
 
@@ -149,13 +150,6 @@ export class SavedAddressesService {
   }
 
   // ─── Helpers ───────────────────────────────
-
-  private requireCompanyId(user: IUserPayload): string {
-    if (!user.companyId) {
-      throw new ForbiddenException('User has no company associated');
-    }
-    return user.companyId;
-  }
 
   private assertTenantAccess(addr: SavedAddress, user: IUserPayload): void {
     if (user.role === UserRole.SUPER_ADMIN) return;
