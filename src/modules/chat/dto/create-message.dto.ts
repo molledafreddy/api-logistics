@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateMessageDto {
   @ApiPropertyOptional({
@@ -15,10 +22,12 @@ export class CreateMessageDto {
   @MaxLength(5000)
   content!: string;
 
-  @ApiPropertyOptional({ description: 'URL del archivo si type != text' })
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'URL del archivo si type es image o file',
+  })
+  @ValidateIf((o) => o.type === 'image' || o.type === 'file')
+  @IsUrl()
   @MaxLength(500)
-  @IsOptional()
   fileUrl?: string;
 
   @ApiPropertyOptional()

@@ -43,7 +43,7 @@ export class Message {
   readBy!: string[];
 
   @Column({ type: 'jsonb', default: {} })
-  metadata!: Record<string, unknown>;
+  metadata: Record<string, unknown> = {};
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt!: Date;

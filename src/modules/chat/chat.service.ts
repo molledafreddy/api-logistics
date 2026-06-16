@@ -7,9 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
+import { User } from '../auth/entities/user.entity';
 import {
   CreateConversationDto,
   CreateMessageDto,
@@ -29,6 +30,8 @@ export class ChatService {
     private readonly conversationRepository: Repository<Conversation>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -68,7 +71,7 @@ export class ChatService {
   async listConversations(
     query: QueryConversationsDto,
     user: IUserPayload,
-  ): Promise<Conversation[]> {
+  ): Promise<(Conversation & { participantName: string | null })[]> {
     const companyId = this.requireCompanyId(user);
 
     const qb = this.conversationRepository
@@ -88,7 +91,35 @@ export class ChatService {
       'DESC',
     );
 
-    return qb.getMany();
+    const conversations = await qb.getMany();
+
+    // Resolve names for the other participant in direct conversations
+    const otherIds = [
+      ...new Set(
+        conversations
+          .filter((c) => c.type === 'direct')
+          .flatMap((c) => c.participantIds.filter((id) => id !== user.sub)),
+      ),
+    ];
+
+    const nameMap = new Map<string, string>();
+    if (otherIds.length > 0) {
+      const users = await this.userRepository.find({
+        where: { id: In(otherIds) },
+        select: ['id', 'firstName', 'lastName'],
+      });
+      users.forEach((u) => nameMap.set(u.id, `${u.firstName} ${u.lastName}`));
+    }
+
+    return conversations.map((c) => ({
+      ...c,
+      participantName:
+        c.type === 'direct'
+          ? (nameMap.get(
+              c.participantIds.find((id) => id !== user.sub) ?? '',
+            ) ?? null)
+          : null,
+    }));
   }
 
   async getConversation(id: string, user: IUserPayload): Promise<Conversation> {
