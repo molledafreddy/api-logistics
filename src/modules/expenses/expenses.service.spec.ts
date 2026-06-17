@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ExpensesService } from './expenses.service';
 import { Expense } from './entities/expense.entity';
 import { ExpenseStatus } from '../../common/enums/expense-status.enum';
@@ -52,6 +53,7 @@ describe('ExpensesService', () => {
       providers: [
         ExpensesService,
         { provide: getRepositoryToken(Expense), useValue: repo },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
     service = module.get(ExpensesService);

@@ -12,6 +12,7 @@ const repoMock = () => ({
   create: jest.fn((x) => x),
   save: jest.fn(async (x) => ({ id: 'n1', ...x })),
   find: jest.fn(async () => []),
+  findAndCount: jest.fn(async () => [[], 0]),
   findOneBy: jest.fn(),
   update: jest.fn(),
   createQueryBuilder: jest.fn(() => ({
@@ -73,7 +74,7 @@ describe('NotificationsService', () => {
   describe('findByUser', () => {
     it('paginates with skip/take', async () => {
       await service.findByUser('u1', 2, 10);
-      expect(notifRepo.find).toHaveBeenCalledWith(
+      expect(notifRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({ skip: 10, take: 10 }),
       );
     });
