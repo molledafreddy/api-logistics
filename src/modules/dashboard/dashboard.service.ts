@@ -1,4 +1,4 @@
-import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shipment } from '../shipments/entities/shipment.entity';
@@ -13,10 +13,13 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { DashboardQueryDto } from './dto';
 
+interface ShipmentScope {
+  companyId: string | null;
+  createdBy?: string;
+}
+
 @Injectable()
 export class DashboardService {
-  private readonly logger = new Logger(DashboardService.name);
-
   constructor(
     @InjectRepository(Shipment)
     private readonly shipmentRepo: Repository<Shipment>,
@@ -28,7 +31,8 @@ export class DashboardService {
 
   // ─── Resumen general (KPIs) ──────────────
   async overview(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const scope = this.resolveShipmentScope(query, user);
+    const companyId = scope.companyId;
 
     const [
       shipmentsTotal,
@@ -41,8 +45,8 @@ export class DashboardService {
       driversOnTrip,
       expensesPending,
     ] = await Promise.all([
-      this.countShipments(companyId, {}),
-      this.countShipments(companyId, {
+      this.countShipments(scope, {}),
+      this.countShipments(scope, {
         statusIn: [
           ShipmentStatus.ASSIGNED,
           ShipmentStatus.PICKED_UP,
@@ -50,7 +54,7 @@ export class DashboardService {
           ShipmentStatus.AT_STOP,
         ],
       }),
-      this.countShipments(companyId, { statusIn: [ShipmentStatus.COMPLETED] }),
+      this.countShipments(scope, { statusIn: [ShipmentStatus.COMPLETED] }),
       this.countTrucks(companyId, {}),
       this.countTrucks(companyId, { status: TruckStatus.AVAILABLE }),
       this.countTrucks(companyId, { status: TruckStatus.IN_TRANSIT }),
@@ -82,12 +86,15 @@ export class DashboardService {
   }
 
   async shipmentsByStatus(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const scope = this.resolveShipmentScope(query, user);
 
     const qb = this.shipmentRepo
       .createQueryBuilder('s')
       .where('s.deletedAt IS NULL');
-    if (companyId) qb.andWhere('s.companyId = :companyId', { companyId });
+    if (scope.companyId)
+      qb.andWhere('s.companyId = :companyId', { companyId: scope.companyId });
+    if (scope.createdBy)
+      qb.andWhere('s.createdBy = :createdBy', { createdBy: scope.createdBy });
     if (query.from) qb.andWhere('s.createdAt >= :from', { from: query.from });
     if (query.to) qb.andWhere('s.createdAt <= :to', { to: query.to });
 
@@ -101,13 +108,16 @@ export class DashboardService {
   }
 
   async revenue(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const scope = this.resolveShipmentScope(query, user);
 
     const qb = this.shipmentRepo
       .createQueryBuilder('s')
       .where('s.deletedAt IS NULL')
       .andWhere('s.status = :status', { status: ShipmentStatus.COMPLETED });
-    if (companyId) qb.andWhere('s.companyId = :companyId', { companyId });
+    if (scope.companyId)
+      qb.andWhere('s.companyId = :companyId', { companyId: scope.companyId });
+    if (scope.createdBy)
+      qb.andWhere('s.createdBy = :createdBy', { createdBy: scope.createdBy });
     if (query.from) qb.andWhere('s.deliveredAt >= :from', { from: query.from });
     if (query.to) qb.andWhere('s.deliveredAt <= :to', { to: query.to });
 
@@ -125,7 +135,7 @@ export class DashboardService {
   }
 
   async expensesByCategory(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const { companyId } = this.resolveShipmentScope(query, user);
 
     const qb = this.expenseRepo
       .createQueryBuilder('e')
@@ -150,7 +160,7 @@ export class DashboardService {
   }
 
   async fleetUtilization(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const { companyId } = this.resolveShipmentScope(query, user);
 
     const qb = this.truckRepo
       .createQueryBuilder('t')
@@ -176,7 +186,7 @@ export class DashboardService {
   }
 
   async topDrivers(query: DashboardQueryDto, user: IUserPayload) {
-    const companyId = this.resolveCompanyId(query, user);
+    const { companyId } = this.resolveShipmentScope(query, user);
 
     const qb = this.driverRepo
       .createQueryBuilder('d')
@@ -199,27 +209,40 @@ export class DashboardService {
   }
 
   // ─── Helpers ────────────────────────────
-  private resolveCompanyId(
+
+  /**
+   * Resuelve el scope de consulta de envíos según el rol del usuario.
+   * - SUPER_ADMIN: scope global (o filtrado por companyId de query)
+   * - DISPATCHER: scope de su empresa + solo sus envíos (createdBy)
+   * - Resto: scope de empresa completa
+   */
+  private resolveShipmentScope(
     query: DashboardQueryDto,
     user: IUserPayload,
-  ): string | null {
+  ): ShipmentScope {
     if (user.role === UserRole.SUPER_ADMIN) {
-      return query.companyId || null; // null = todos
+      return { companyId: query.companyId ?? null };
     }
     if (!user.companyId) {
       throw new ForbiddenException('User has no company associated');
     }
-    return user.companyId;
+    if (user.role === UserRole.DISPATCHER) {
+      return { companyId: user.companyId, createdBy: user.sub };
+    }
+    return { companyId: user.companyId };
   }
 
   private async countShipments(
-    companyId: string | null,
+    scope: ShipmentScope,
     filters: { statusIn?: ShipmentStatus[] },
   ): Promise<number> {
     const qb = this.shipmentRepo
       .createQueryBuilder('s')
       .where('s.deletedAt IS NULL');
-    if (companyId) qb.andWhere('s.companyId = :cid', { cid: companyId });
+    if (scope.companyId)
+      qb.andWhere('s.companyId = :cid', { cid: scope.companyId });
+    if (scope.createdBy)
+      qb.andWhere('s.createdBy = :createdBy', { createdBy: scope.createdBy });
     if (filters.statusIn?.length) {
       qb.andWhere('s.status IN (:...statuses)', { statuses: filters.statusIn });
     }

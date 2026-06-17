@@ -6,6 +6,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum DevicePlatform {
+  IOS = 'ios',
+  ANDROID = 'android',
+}
+
 @Entity('push_tokens')
 export class PushToken {
   @PrimaryGeneratedColumn('uuid')
@@ -17,8 +22,8 @@ export class PushToken {
   @Column({ type: 'varchar', length: 500, unique: true })
   token!: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  platform!: string;
+  @Column({ type: 'enum', enum: DevicePlatform })
+  platform!: DevicePlatform;
 
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'device_name' })
   deviceName!: string | null;

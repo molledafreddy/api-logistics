@@ -24,7 +24,7 @@ export class Conversation {
     default: 'direct',
     comment: 'direct | group | shipment',
   })
-  type!: string;
+  type!: 'direct' | 'group' | 'shipment';
 
   @Column({ type: 'varchar', length: 150, nullable: true })
   title!: string | null;
@@ -36,6 +36,10 @@ export class Conversation {
   // Lista de userIds participantes (para queries rápidas)
   @Column({ type: 'jsonb', default: [] })
   participantIds!: string[];
+
+  // Usuarios que han ocultado la conversación (soft-delete por usuario)
+  @Column({ type: 'jsonb', default: [], name: 'hidden_by' })
+  hiddenBy!: string[];
 
   @Column({ type: 'uuid', name: 'created_by' })
   createdBy!: string;

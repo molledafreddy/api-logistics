@@ -1,3 +1,11 @@
+import type { Message } from '../../modules/chat/entities/message.entity';
+import type { Conversation } from '../../modules/chat/entities/conversation.entity';
+
+export interface ChatMessageSentPayload {
+  message: Message;
+  conversation: Pick<Conversation, 'id' | 'participantIds'>;
+}
+
 /**
  * Eventos internos del bus EventEmitter2.
  * Los servicios los emiten; los gateways los escuchan y los reenvían por WebSocket.

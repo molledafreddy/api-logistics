@@ -6,6 +6,7 @@ import { PushSenderService } from './push-sender.service';
 import { Notification } from './entities/notification.entity';
 import { PushToken } from './entities/push-token.entity';
 import { NotificationType } from '../../common/enums/notification-type.enum';
+import { DevicePlatform } from './entities/push-token.entity';
 
 const repoMock = () => ({
   create: jest.fn((x) => x),
@@ -80,7 +81,7 @@ describe('NotificationsService', () => {
 
   describe('markAsRead', () => {
     it('updates readAt', async () => {
-      const res = await service.markAsRead('n1');
+      const res = await service.markAsRead('n1', 'u1');
       expect(notifRepo.update).toHaveBeenCalledWith(
         'n1',
         expect.objectContaining({ readAt: expect.any(Date) }),
@@ -104,19 +105,28 @@ describe('NotificationsService', () => {
         userId: 'u1',
         token: 't',
       });
-      const res = await service.registerPushToken('u1', 't', 'ios');
+      const res = await service.registerPushToken(
+        'u1',
+        't',
+        DevicePlatform.IOS,
+      );
       expect(res).toMatchObject({ id: 'p1' });
       expect(pushRepo.save).not.toHaveBeenCalled();
     });
 
     it('creates new token if missing', async () => {
       pushRepo.findOneBy.mockResolvedValueOnce(undefined);
-      const res = await service.registerPushToken('u1', 't', 'ios', 'iPhone');
+      const res = await service.registerPushToken(
+        'u1',
+        't',
+        DevicePlatform.IOS,
+        'iPhone',
+      );
       expect(pushRepo.create).toHaveBeenCalled();
       expect(pushRepo.save).toHaveBeenCalled();
       expect(res).toMatchObject({
         token: 't',
-        platform: 'ios',
+        platform: DevicePlatform.IOS,
         deviceName: 'iPhone',
       });
     });

@@ -1,4 +1,5 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
+import { CreateMessageDto } from '../../modules/chat/dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   ConnectedSocket,
@@ -12,7 +13,10 @@ import {
 import { Server, Socket } from 'socket.io';
 import { WsAuthService } from '../ws-auth.service';
 import { CHAT_EVENTS } from '../events/chat.events';
-import { INTERNAL_EVENTS } from '../events/internal.events';
+import {
+  INTERNAL_EVENTS,
+  type ChatMessageSentPayload,
+} from '../events/internal.events';
 import { ChatService } from '../../modules/chat/chat.service';
 import { Message } from '../../modules/chat/entities/message.entity';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
@@ -37,10 +41,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const user = await this.wsAuth.authenticate(client);
       client.data.user = user;
       await client.join(this.userRoom(user.sub));
+      if (user.companyId) {
+        await client.join(this.companyRoom(user.companyId));
+      }
       this.logger.log(`[CHAT] Connected user=${user.sub} socket=${client.id}`);
 
-      // Anuncia online a sus contactos (rooms futuras pueden manejar presencia)
-      client.broadcast.emit(CHAT_EVENTS.USER_ONLINE, { userId: user.sub });
+      // Broadcast presence only to members of the same company
+      if (user.companyId) {
+        client
+          .to(this.companyRoom(user.companyId))
+          .emit(CHAT_EVENTS.USER_ONLINE, { userId: user.sub });
+      }
       client.emit('connected', { userId: user.sub });
     } catch (err) {
       this.logger.warn(`[CHAT] Auth failed: ${(err as Error).message}`);
@@ -51,8 +62,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     const user = client.data.user as IUserPayload | undefined;
-    if (user) {
-      client.broadcast.emit(CHAT_EVENTS.USER_OFFLINE, { userId: user.sub });
+    if (user?.companyId) {
+      client
+        .to(this.companyRoom(user.companyId))
+        .emit(CHAT_EVENTS.USER_OFFLINE, { userId: user.sub });
     }
     this.logger.log(`[CHAT] Disconnected socket=${client.id}`);
   }
@@ -93,14 +106,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     },
   ) {
     const user = this.requireUser(client);
+    const dto: CreateMessageDto = {
+      content: payload.content,
+      type: payload.type,
+      fileUrl: payload.fileUrl,
+      fileName: payload.fileName,
+    };
     const message = await this.chatService.sendMessage(
       payload.conversationId,
-      {
-        content: payload.content,
-        type: payload.type,
-        fileUrl: payload.fileUrl,
-        fileName: payload.fileName,
-      } as never,
+      dto,
       user,
     );
     // No difundimos aquí: el service emite `internal.chat.message.sent`
@@ -161,7 +175,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ─── Bridge: servicio → WS (para mensajes creados vía REST) ──
   @OnEvent(INTERNAL_EVENTS.CHAT_MESSAGE_SENT)
-  handleMessageSent(message: Message) {
+  handleMessageSent({ message }: ChatMessageSentPayload) {
     this.broadcastMessage(message);
   }
 
@@ -194,5 +208,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private userRoom(userId: string): string {
     return `user:${userId}`;
+  }
+
+  private companyRoom(companyId: string): string {
+    return `company:${companyId}`;
   }
 }

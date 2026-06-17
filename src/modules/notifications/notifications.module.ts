@@ -5,7 +5,7 @@ import { Notification } from './entities/notification.entity';
 import { PushToken } from './entities/push-token.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
-import { FcmPushProvider } from './providers/fcm-push.provider';
+import { ExpoPushProvider } from './providers/expo-push.provider';
 import { PushProvider } from './providers/push-provider.abstract';
 import { PushSenderService } from './push-sender.service';
 import { WhatsAppService } from './whatsapp.service';
@@ -20,7 +20,7 @@ import { Shipment } from '../shipments/entities/shipment.entity';
   controllers: [NotificationsController],
   providers: [
     NotificationsService,
-    { provide: PushProvider, useClass: FcmPushProvider },
+    { provide: PushProvider, useClass: ExpoPushProvider },
     PushSenderService,
     WhatsAppService,
     ProximityAlertService,

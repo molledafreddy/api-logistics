@@ -1,4 +1,5 @@
 import { NotificationsController } from './notifications.controller';
+import { DevicePlatform } from './entities/push-token.entity';
 
 const svc = () => ({
   findByUser: jest.fn().mockResolvedValue('LIST'),
@@ -33,8 +34,8 @@ describe('NotificationsController', () => {
     expect(s.findByUser).toHaveBeenCalledWith('u1', 1, 20);
   });
   it('markAsRead', async () => {
-    await c.markAsRead('nid');
-    expect(s.markAsRead).toHaveBeenCalledWith('nid');
+    await c.markAsRead('nid', user);
+    expect(s.markAsRead).toHaveBeenCalledWith('nid', 'u1');
   });
   it('markAllRead uses user.sub', async () => {
     await c.markAllRead(user);
@@ -43,13 +44,13 @@ describe('NotificationsController', () => {
   it('registerPushToken extracts body fields', async () => {
     await c.registerPushToken(user, {
       token: 't',
-      platform: 'ios',
+      platform: DevicePlatform.IOS,
       deviceName: 'iPhone',
     });
     expect(s.registerPushToken).toHaveBeenCalledWith(
       'u1',
       't',
-      'ios',
+      DevicePlatform.IOS,
       'iPhone',
     );
   });

@@ -264,6 +264,10 @@ export class Shipment extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true, name: 'cancelled_at' })
   cancelledAt!: Date | null;
 
+  // ─── Auditoría de creación ─────────────────
+  @Column({ type: 'uuid', nullable: true, name: 'created_by' })
+  createdBy!: string | null;
+
   // ─── Workflow de aceptación cross-company ──
   @Column({ type: 'uuid', nullable: true, name: 'proposed_by' })
   proposedBy!: string | null;

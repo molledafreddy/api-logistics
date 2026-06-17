@@ -26,7 +26,7 @@ export class Message {
     default: 'text',
     comment: 'text | image | file | system',
   })
-  type!: string;
+  type!: 'text' | 'image' | 'file' | 'system';
 
   @Column({ type: 'text' })
   content!: string;

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsUUID, Min, Max, IsString } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsUUID, Min, Max } from 'class-validator';
 
 export class QueryMessagesDto {
   @ApiPropertyOptional({
@@ -20,10 +20,10 @@ export class QueryMessagesDto {
 }
 
 export class QueryConversationsDto {
-  @ApiPropertyOptional({ description: 'direct | group | shipment' })
-  @IsString()
+  @ApiPropertyOptional({ enum: ['direct', 'group', 'shipment'] })
+  @IsIn(['direct', 'group', 'shipment'])
   @IsOptional()
-  type?: string;
+  type?: 'direct' | 'group' | 'shipment';
 
   @ApiPropertyOptional()
   @IsUUID()

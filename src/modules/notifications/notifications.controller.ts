@@ -47,9 +47,13 @@ export class NotificationsController {
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark a single notification as read' })
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
+  @ApiResponse({
+    status: 403,
+    description: 'Notification does not belong to current user',
+  })
   @ApiResponse({ status: 404, description: 'Notification not found' })
-  markAsRead(@Param('id') id: string) {
-    return this.service.markAsRead(id);
+  markAsRead(@Param('id') id: string, @CurrentUser() user: IUserPayload) {
+    return this.service.markAsRead(id, user.sub);
   }
 
   @Patch('read-all')

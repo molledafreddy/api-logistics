@@ -27,9 +27,7 @@ import {
 } from './dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import * as UserPayloadNS from '../../common/interfaces/user-payload.interface';
-
-type IUserPayload = UserPayloadNS.IUserPayload;
+import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 
 @ApiTags('Chat')
 @ApiBearerAuth()
@@ -85,6 +83,20 @@ export class ChatController {
     @CurrentUser() user: IUserPayload,
   ) {
     return this.chatService.removeParticipant(id, userId, user);
+  }
+
+  @Delete('conversations/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary:
+      'Ocultar conversación para el usuario actual (soft-delete por usuario)',
+  })
+  @ApiResponse({ status: 204, description: 'Conversación ocultada' })
+  hideConversation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: IUserPayload,
+  ) {
+    return this.chatService.hideConversation(id, user);
   }
 
   @Post('conversations/:id/leave')

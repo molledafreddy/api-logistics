@@ -22,25 +22,16 @@ export class PushSenderService {
     const tokens = await this.pushTokenRepo.find({
       where: { userId, isActive: true },
     });
+
     if (!tokens.length) {
       this.logger.warn(`No push tokens for user ${userId}`);
       return { pushed: false, error: 'No active tokens' };
     }
 
     const payload = {
-      notification: {
-        title: notification.title,
-        body: notification.body || undefined,
-      },
-      data: {
-        notificationId: notification.id,
-        ...Object.fromEntries(
-          Object.entries(notification.data ?? {}).map(([k, v]) => [
-            k,
-            String(v),
-          ]),
-        ),
-      },
+      title: notification.title,
+      body: notification.body ?? undefined,
+      data: this.buildPushData(notification.id, notification.data),
     };
 
     let pushed = false;
@@ -52,10 +43,40 @@ export class PushSenderService {
         pushed = true;
       } catch (err) {
         lastError = (err as Error)?.message ?? String(err);
-        this.logger.error(`Error enviando push a ${token.token}: ${lastError}`);
+        this.logger.error(
+          `Error sending push to ${token.token.slice(0, 30)}...: ${lastError}`,
+        );
+
+        if (this.isInvalidTokenError(lastError)) {
+          await this.pushTokenRepo.update(
+            { id: token.id },
+            { isActive: false },
+          );
+          this.logger.warn(`Deactivated invalid push token id=${token.id}`);
+        }
       }
     }
 
     return { pushed, error: pushed ? null : lastError };
+  }
+
+  private buildPushData(
+    notificationId: string,
+    extra?: Record<string, unknown> | null,
+  ): Record<string, string> {
+    return {
+      notificationId,
+      ...Object.fromEntries(
+        Object.entries(extra ?? {}).map(([k, v]) => [k, String(v)]),
+      ),
+    };
+  }
+
+  private isInvalidTokenError(message: string): boolean {
+    return (
+      message.includes('DeviceNotRegistered') ||
+      message.includes('InvalidRegistration') ||
+      message.includes('NotRegistered')
+    );
   }
 }

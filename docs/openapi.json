@@ -4115,6 +4115,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyAdminDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Company updated"
@@ -10799,6 +10809,10 @@
           }
         },
         "required": ["reason"]
+      },
+      "UpdateCompanyAdminDto": {
+        "type": "object",
+        "properties": {}
       },
       "CreateTruckDto": {
         "type": "object",

@@ -22,6 +22,8 @@ import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 
+const MAX_PREVIEW_LENGTH = 200;
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -55,11 +57,28 @@ export class ChatService {
       );
     }
 
+    if (dto.type === 'direct') {
+      const existing = await this.findExistingDirectConversation(
+        companyId,
+        participantIds,
+      );
+      if (existing) {
+        this.logger.log(
+          `Returning existing direct conversation: ${existing.id}`,
+        );
+        if (existing.hiddenBy.includes(user.sub)) {
+          existing.hiddenBy = existing.hiddenBy.filter((id) => id !== user.sub);
+          await this.conversationRepository.save(existing);
+        }
+        return existing;
+      }
+    }
+
     const conversation = this.conversationRepository.create({
       companyId,
       type: dto.type,
-      title: dto.title || null,
-      shipmentId: dto.shipmentId || null,
+      title: dto.title ?? null,
+      shipmentId: dto.shipmentId ?? null,
       participantIds,
       createdBy: user.sub,
     });
@@ -69,15 +88,40 @@ export class ChatService {
     return saved;
   }
 
+  private async findExistingDirectConversation(
+    companyId: string,
+    participantIds: string[],
+  ): Promise<Conversation | null> {
+    return this.conversationRepository
+      .createQueryBuilder('c')
+      .where('c.companyId = :companyId', { companyId })
+      .andWhere('c.type = :type', { type: 'direct' })
+      .andWhere('c.deletedAt IS NULL')
+      .andWhere('c.participantIds @> :p1::jsonb', {
+        p1: JSON.stringify([participantIds[0]]),
+      })
+      .andWhere('c.participantIds @> :p2::jsonb', {
+        p2: JSON.stringify([participantIds[1]]),
+      })
+      .andWhere('jsonb_array_length(c.participantIds) = 2')
+      .getOne();
+  }
+
   async listConversations(
     query: QueryConversationsDto,
     user: IUserPayload,
   ): Promise<(Conversation & { participantName: string | null })[]> {
+    const companyId = requireCompanyId(user);
+
     const qb = this.conversationRepository
       .createQueryBuilder('c')
       .where('c.deletedAt IS NULL')
+      .andWhere('c.companyId = :companyId', { companyId })
       .andWhere(`c.participantIds @> :uid::jsonb`, {
         uid: JSON.stringify([user.sub]),
+      })
+      .andWhere(`NOT (c.hiddenBy @> :hiddenUid::jsonb)`, {
+        hiddenUid: JSON.stringify([user.sub]),
       });
 
     if (query.type) qb.andWhere('c.type = :type', { type: query.type });
@@ -133,17 +177,13 @@ export class ChatService {
     user: IUserPayload,
   ): Promise<Conversation> {
     const conv = await this.getConversation(id, user);
-
-    if (conv.type === 'direct') {
-      throw new BadRequestException(
-        'Cannot add participants to a direct conversation',
-      );
-    }
-
-    const newSet = Array.from(
+    this.assertGroupConversation(
+      conv,
+      'Cannot add participants to a direct conversation',
+    );
+    conv.participantIds = Array.from(
       new Set([...conv.participantIds, ...dto.userIds]),
     );
-    conv.participantIds = newSet;
     return this.conversationRepository.save(conv);
   }
 
@@ -153,15 +193,21 @@ export class ChatService {
     user: IUserPayload,
   ): Promise<Conversation> {
     const conv = await this.getConversation(id, user);
-
-    if (conv.type === 'direct') {
-      throw new BadRequestException(
-        'Cannot remove participants from direct conversation',
-      );
-    }
-
+    this.assertGroupConversation(
+      conv,
+      'Cannot remove participants from direct conversation',
+    );
     conv.participantIds = conv.participantIds.filter((u) => u !== userId);
     return this.conversationRepository.save(conv);
+  }
+
+  async hideConversation(id: string, user: IUserPayload): Promise<void> {
+    const conv = await this.getConversation(id, user);
+    if (!conv.hiddenBy.includes(user.sub)) {
+      conv.hiddenBy = [...conv.hiddenBy, user.sub];
+      await this.conversationRepository.save(conv);
+    }
+    this.logger.log(`Conversation ${id} hidden by user ${user.sub}`);
   }
 
   async leaveConversation(id: string, user: IUserPayload): Promise<void> {
@@ -187,22 +233,26 @@ export class ChatService {
     const message = this.messageRepository.create({
       conversationId: conv.id,
       senderId: user.sub,
-      type: dto.type || 'text',
+      type: dto.type ?? 'text',
       content: dto.content,
-      fileUrl: dto.fileUrl || null,
-      fileName: dto.fileName || null,
+      fileUrl: dto.fileUrl ?? null,
+      fileName: dto.fileName ?? null,
       readBy: [user.sub],
     });
 
     const saved = await this.messageRepository.save(message);
 
-    // Update conversation preview
+    // Update conversation preview and restore visibility for all participants
     conv.lastMessageAt = saved.createdAt;
-    conv.lastMessagePreview = dto.content.substring(0, 200);
+    conv.lastMessagePreview = dto.content.substring(0, MAX_PREVIEW_LENGTH);
+    conv.hiddenBy = [];
     await this.conversationRepository.save(conv);
 
-    // Bridge a WebSocket
-    this.eventEmitter.emit(INTERNAL_EVENTS.CHAT_MESSAGE_SENT, saved);
+    // Notifies gateway (WebSocket broadcast) and ChatNotificationListener (push)
+    this.eventEmitter.emit(INTERNAL_EVENTS.CHAT_MESSAGE_SENT, {
+      message: saved,
+      conversation: conv,
+    });
 
     return saved;
   }
@@ -238,20 +288,17 @@ export class ChatService {
   ): Promise<{ updated: number }> {
     await this.getConversation(conversationId, user);
 
-    const messages = await this.messageRepository.find({
-      where: { conversationId },
-    });
+    const updated: { id: string }[] = await this.messageRepository.query(
+      `UPDATE chat_messages
+       SET read_by = read_by || $1::jsonb
+       WHERE conversation_id = $2
+         AND deleted_at IS NULL
+         AND NOT (read_by @> $1::jsonb)
+       RETURNING id`,
+      [JSON.stringify([user.sub]), conversationId],
+    );
 
-    let updated = 0;
-    for (const msg of messages) {
-      if (!msg.readBy.includes(user.sub)) {
-        msg.readBy = [...msg.readBy, user.sub];
-        await this.messageRepository.save(msg);
-        updated++;
-      }
-    }
-
-    return { updated };
+    return { updated: updated.length };
   }
 
   async deleteMessage(messageId: string, user: IUserPayload): Promise<void> {
@@ -268,14 +315,13 @@ export class ChatService {
   }
 
   async getUnreadCount(user: IUserPayload): Promise<{ unread: number }> {
-    const companyId = requireCompanyId(user);
-
-    // Conversaciones del usuario
     const convs = await this.conversationRepository
       .createQueryBuilder('c')
-      .where('c.companyId = :companyId', { companyId })
-      .andWhere('c.deletedAt IS NULL')
+      .where('c.deletedAt IS NULL')
       .andWhere(`c.participantIds @> :uid::jsonb`, {
+        uid: JSON.stringify([user.sub]),
+      })
+      .andWhere(`NOT (c.hiddenBy @> :uid::jsonb)`, {
         uid: JSON.stringify([user.sub]),
       })
       .select(['c.id'])
@@ -305,6 +351,12 @@ export class ChatService {
       throw new ForbiddenException(
         'You are not a participant of this conversation',
       );
+    }
+  }
+
+  private assertGroupConversation(conv: Conversation, message: string): void {
+    if (conv.type === 'direct') {
+      throw new BadRequestException(message);
     }
   }
 }

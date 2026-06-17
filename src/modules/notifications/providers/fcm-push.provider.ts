@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type * as AdminTypes from 'firebase-admin';
-import { PushProvider } from './push-provider.abstract';
+import { PushProvider, type PushPayload } from './push-provider.abstract';
 
 @Injectable()
 export class FcmPushProvider extends PushProvider {
@@ -12,10 +12,6 @@ export class FcmPushProvider extends PushProvider {
     super();
   }
 
-  // Lazy-load firebase-admin on first use instead of at module parse time.
-  // A top-level `import * as admin from 'firebase-admin'` causes Node.js to
-  // load the module synchronously during the require() chain, which deadlocks
-  // on startup before any application code runs.
   private getAdmin(): typeof AdminTypes {
     if (!this._admin) {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -54,12 +50,13 @@ export class FcmPushProvider extends PushProvider {
     return this._admin;
   }
 
-  async sendPush(
-    token: string,
-    payload: AdminTypes.messaging.MessagingPayload,
-  ): Promise<void> {
+  async sendPush(token: string, payload: PushPayload): Promise<void> {
     const admin = this.getAdmin();
-    await admin.messaging().send({ token, ...payload });
+    await admin.messaging().send({
+      token,
+      notification: { title: payload.title, body: payload.body },
+      data: payload.data,
+    });
     this.logger.log(`Push enviado a token=${token.slice(0, 20)}...`);
   }
 }

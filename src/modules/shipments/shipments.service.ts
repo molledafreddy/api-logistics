@@ -142,6 +142,7 @@ export class ShipmentsService {
       priority: dto.priority || 'normal',
       cargoType: dto.cargoType || 'general',
       currency: dto.currency || 'USD',
+      createdBy: user.sub,
       proposedBy:
         initialStatus === ShipmentStatus.PENDING_ACCEPTANCE ? user.sub : null,
       proposedAt:
@@ -257,6 +258,9 @@ export class ShipmentsService {
         '(shipment.companyId = :companyId OR shipment.customerCompanyId = :companyId)',
         { companyId },
       );
+      if (user.role === UserRole.DISPATCHER) {
+        qb.andWhere('shipment.createdBy = :createdBy', { createdBy: user.sub });
+      }
     }
 
     if (query.search) {

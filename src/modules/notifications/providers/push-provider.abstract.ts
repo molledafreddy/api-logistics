@@ -1,8 +1,9 @@
-import type * as AdminTypes from 'firebase-admin';
+export interface PushPayload {
+  title: string;
+  body?: string;
+  data?: Record<string, string>;
+}
 
 export abstract class PushProvider {
-  abstract sendPush(
-    token: string,
-    payload: AdminTypes.messaging.MessagingPayload,
-  ): Promise<void>;
+  abstract sendPush(token: string, payload: PushPayload): Promise<void>;
 }
