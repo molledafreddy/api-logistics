@@ -81,6 +81,7 @@ describe('NotificationsService', () => {
 
   describe('markAsRead', () => {
     it('updates readAt', async () => {
+      notifRepo.findOneBy.mockResolvedValueOnce({ id: 'n1', userId: 'u1' });
       const res = await service.markAsRead('n1', 'u1');
       expect(notifRepo.update).toHaveBeenCalledWith(
         'n1',
