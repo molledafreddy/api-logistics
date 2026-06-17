@@ -24,7 +24,8 @@ describe('Notifications E2E', () => {
       .get('/api/v1/notifications')
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(typeof res.body.total).toBe('number');
   });
 
   it('POST /api/v1/notifications/push-tokens - should register a push token', async () => {
