@@ -1,15 +1,15 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-06-16T23:32:37.366Z_
+_Generated: 2026-06-17T03:37:43.246Z_
 
 ## 📊 Summary
 
-- Total operations: **222**
-- With `summary`: 222 / 222 (100.0%)
-- With `description`: 20 / 222 (9.0%)
-- With `tags`: 222 / 222 (100.0%)
-- With `security`: 215 / 222 (96.8%)
-- With 2xx response: 222 / 222 (100.0%)
+- Total operations: **223**
+- With `summary`: 223 / 223 (100.0%)
+- With `description`: 20 / 223 (9.0%)
+- With `tags`: 223 / 223 (100.0%)
+- With `security`: 216 / 223 (96.9%)
+- With 2xx response: 223 / 223 (100.0%)
 
 - 🔴 Errors: **0**
 - 🟡 Warnings: **3**
@@ -32,8 +32,8 @@ _Generated: 2026-06-16T23:32:37.366Z_
 | DeliveryRuns       | 16         |
 | Shipments          | 14         |
 | Verifications      | 12         |
+| Chat               | 12         |
 | Subscriptions      | 11         |
-| Chat               | 11         |
 | Auth               | 9          |
 | Trucks             | 9          |
 | Drivers            | 9          |

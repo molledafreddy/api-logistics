@@ -33,14 +33,15 @@ import { ShipmentStatus } from '../../common/enums/shipment-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { RelationshipStatus } from '../../common/enums/relationship-status.enum';
 import { RelationshipType } from '../../common/enums/relationship-type.enum';
-import { NotificationType } from '../../common/enums/notification-type.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
-import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
+import {
+  INTERNAL_EVENTS,
+  DeliveryRunAssignedPayload,
+} from '../../gateways/events/internal.events';
 import { ComplianceService } from '../verifications/compliance.service';
 import { WhatsAppService } from '../notifications/whatsapp.service';
-import { NotificationsService } from '../notifications/notifications.service';
 import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 
 /**
@@ -76,7 +77,6 @@ export class DeliveryRunsService {
     private readonly eventEmitter: EventEmitter2,
     private readonly complianceService: ComplianceService,
     private readonly whatsapp: WhatsAppService,
-    private readonly notificationsService: NotificationsService,
     private readonly permissionsCache: PermissionsCacheService,
   ) {}
 
@@ -1113,26 +1113,14 @@ export class DeliveryRunsService {
       .getMany();
   }
 
-  /**
-   * Envía push notification al driver cuando se le asigna un run.
-   * Best-effort: no lanza si el driver no tiene cuenta o push token.
-   */
   private notifyAssignedDriver(driverId: string, run: DeliveryRun): void {
-    this.driverRepo
-      .findOne({ where: { id: driverId }, select: ['userId'] })
-      .then((driver) => {
-        if (!driver?.userId) return;
-        return this.notificationsService.create({
-          userId: driver.userId,
-          type: NotificationType.RUN_ASSIGNED,
-          title: 'Nueva ruta asignada',
-          body: `Tienes una ruta programada para el ${run.scheduledDate}`,
-          data: { runId: run.id, scheduledDate: run.scheduledDate },
-        });
-      })
-      .catch((err) =>
-        this.logger.warn(`notifyAssignedDriver error: ${err?.message ?? err}`),
-      );
+    const payload: DeliveryRunAssignedPayload = {
+      runId: run.id,
+      driverId,
+      companyId: run.companyId,
+      scheduledDate: run.scheduledDate,
+    };
+    this.eventEmitter.emit(INTERNAL_EVENTS.DELIVERY_RUN_ASSIGNED, payload);
   }
 
   private async loadCompanyPermissions(companyId: string): Promise<string[]> {

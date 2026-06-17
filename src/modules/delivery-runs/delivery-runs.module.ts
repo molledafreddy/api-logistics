@@ -9,6 +9,7 @@ import { CompanyRelationship } from '../relationships/entities/company-relations
 
 import { DeliveryRunsService } from './delivery-runs.service';
 import { DeliveryRunsController } from './delivery-runs.controller';
+import { DeliveryRunNotificationListener } from './delivery-run-notification.listener';
 import { VerificationsModule } from '../verifications/verifications.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -25,7 +26,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [DeliveryRunsController],
-  providers: [DeliveryRunsService],
+  providers: [DeliveryRunsService, DeliveryRunNotificationListener],
   exports: [DeliveryRunsService],
 })
 export class DeliveryRunsModule {}

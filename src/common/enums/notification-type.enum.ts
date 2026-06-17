@@ -12,5 +12,6 @@ export enum NotificationType {
   DRIVER_LOCATION = 'driver_location',
   PROXIMITY_ALERT = 'proximity_alert',
   RUN_ASSIGNED = 'run_assigned',
+  EXPENSE_CREATED = 'expense_created',
   SYSTEM = 'system',
 }

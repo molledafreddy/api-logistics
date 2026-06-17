@@ -6,6 +6,22 @@ export interface ChatMessageSentPayload {
   conversation: Pick<Conversation, 'id' | 'participantIds'>;
 }
 
+export interface DeliveryRunAssignedPayload {
+  runId: string;
+  driverId: string;
+  companyId: string;
+  scheduledDate: string;
+}
+
+export interface ExpenseCreatedPayload {
+  expenseId: string;
+  companyId: string;
+  createdByUserId: string;
+  category: string;
+  amount: number;
+  currency: string;
+}
+
 /**
  * Eventos internos del bus EventEmitter2.
  * Los servicios los emiten; los gateways los escuchan y los reenvían por WebSocket.
@@ -34,4 +50,8 @@ export const INTERNAL_EVENTS = {
 
   // PARTE 7 · Sprint 7 — Optimization
   DELIVERY_RUN_OPTIMIZED: 'internal.delivery-run.optimized',
+
+  // Notificaciones de dominio
+  DELIVERY_RUN_ASSIGNED: 'internal.delivery-run.assigned',
+  EXPENSE_CREATED: 'internal.expense.created',
 } as const;

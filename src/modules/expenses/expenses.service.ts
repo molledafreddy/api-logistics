@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expense } from './entities/expense.entity';
 import { CreateExpenseDto, UpdateExpenseDto, QueryExpenseDto } from './dto';
 import { ExpenseStatus } from '../../common/enums/expense-status.enum';
@@ -14,6 +15,10 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
+import {
+  INTERNAL_EVENTS,
+  type ExpenseCreatedPayload,
+} from '../../gateways/events/internal.events';
 
 @Injectable()
 export class ExpensesService {
@@ -22,6 +27,7 @@ export class ExpensesService {
   constructor(
     @InjectRepository(Expense)
     private readonly expenseRepository: Repository<Expense>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(dto: CreateExpenseDto, user: IUserPayload): Promise<Expense> {
@@ -39,6 +45,17 @@ export class ExpensesService {
     this.logger.log(
       `Expense created: ${saved.amount} ${saved.currency} (${saved.id})`,
     );
+
+    const eventPayload: ExpenseCreatedPayload = {
+      expenseId: saved.id,
+      companyId: saved.companyId,
+      createdByUserId: user.sub,
+      category: saved.category,
+      amount: Number(saved.amount),
+      currency: saved.currency,
+    };
+    this.eventEmitter.emit(INTERNAL_EVENTS.EXPENSE_CREATED, eventPayload);
+
     return saved;
   }
 

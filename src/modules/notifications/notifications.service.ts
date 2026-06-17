@@ -62,12 +62,13 @@ export class NotificationsService {
   }
 
   async findByUser(userId: string, page = 1, limit = 20) {
-    return this.notifRepo.find({
+    const [data, total] = await this.notifRepo.findAndCount({
       where: { userId },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
+    return { data, total, page, limit };
   }
 
   async markAsRead(id: string, userId: string) {
