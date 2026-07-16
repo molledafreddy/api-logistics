@@ -89,6 +89,23 @@ export class NotificationsService {
     return { success: true };
   }
 
+  async deleteOne(id: string, userId: string) {
+    const notif = await this.notifRepo.findOneBy({ id });
+    if (!notif) throw new NotFoundException(`Notification ${id} not found`);
+    if (notif.userId !== userId) throw new ForbiddenException('Access denied');
+    await this.notifRepo.delete(id);
+    return { success: true };
+  }
+
+  async deleteRead(userId: string) {
+    await this.notifRepo
+      .createQueryBuilder()
+      .delete()
+      .where('user_id = :userId AND read_at IS NOT NULL', { userId })
+      .execute();
+    return { success: true };
+  }
+
   async registerPushToken(
     userId: string,
     token: string,

@@ -87,6 +87,25 @@ export class NotificationsController {
     );
   }
 
+  @Delete('read')
+  @ApiOperation({ summary: 'Delete all read notifications for current user' })
+  @ApiResponse({ status: 200, description: 'Read notifications deleted' })
+  deleteRead(@CurrentUser() user: IUserPayload) {
+    return this.service.deleteRead(user.sub);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a single notification' })
+  @ApiResponse({ status: 200, description: 'Notification deleted' })
+  @ApiResponse({
+    status: 403,
+    description: 'Notification does not belong to current user',
+  })
+  @ApiResponse({ status: 404, description: 'Notification not found' })
+  deleteOne(@Param('id') id: string, @CurrentUser() user: IUserPayload) {
+    return this.service.deleteOne(id, user.sub);
+  }
+
   @Delete('push-tokens/:token')
   @ApiOperation({ summary: 'Unregister/deactivate a push notification token' })
   @ApiResponse({ status: 200, description: 'Push token deactivated' })

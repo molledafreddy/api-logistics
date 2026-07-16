@@ -45,11 +45,12 @@ export class CreateDriverDto {
   @IsOptional()
   birthDate?: string;
 
-  @ApiProperty({ example: 'D1234567', maxLength: 50 })
+  @ApiPropertyOptional({ example: 'D1234567', maxLength: 50 })
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  licenseNumber!: string;
+  @IsOptional()
+  licenseNumber?: string;
 
   @ApiPropertyOptional({ example: 'CDL-A', maxLength: 20 })
   @IsString()

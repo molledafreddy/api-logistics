@@ -42,8 +42,13 @@ export class Driver extends BaseEntity {
   birthDate!: Date | null;
 
   // ─── Licencia ──────────────────────────
-  @Column({ type: 'varchar', length: 50, name: 'license_number' })
-  licenseNumber!: string;
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    name: 'license_number',
+  })
+  licenseNumber!: string | null;
 
   @Column({
     type: 'varchar',

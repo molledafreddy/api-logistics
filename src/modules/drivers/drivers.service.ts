@@ -47,13 +47,15 @@ export class DriversService {
       await this.checkDriverPlanLimit(companyId);
     }
 
-    const existing = await this.driverRepository.findOne({
-      where: { companyId, licenseNumber: dto.licenseNumber },
-    });
-    if (existing) {
-      throw new ConflictException(
-        `Driver with license "${dto.licenseNumber}" already exists in this company`,
-      );
+    if (dto.licenseNumber) {
+      const existing = await this.driverRepository.findOne({
+        where: { companyId, licenseNumber: dto.licenseNumber },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `Driver with license "${dto.licenseNumber}" already exists in this company`,
+        );
+      }
     }
 
     const driver = this.driverRepository.create({
