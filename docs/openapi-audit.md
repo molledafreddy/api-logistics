@@ -1,15 +1,15 @@
 # OpenAPI Audit Report
 
-_Generated: 2026-06-19T03:15:51.761Z_
+_Generated: 2026-07-31T05:27:25.578Z_
 
 ## 📊 Summary
 
-- Total operations: **223**
-- With `summary`: 223 / 223 (100.0%)
-- With `description`: 20 / 223 (9.0%)
-- With `tags`: 223 / 223 (100.0%)
-- With `security`: 216 / 223 (96.9%)
-- With 2xx response: 223 / 223 (100.0%)
+- Total operations: **225**
+- With `summary`: 225 / 225 (100.0%)
+- With `description`: 20 / 225 (8.9%)
+- With `tags`: 225 / 225 (100.0%)
+- With `security`: 218 / 225 (96.9%)
+- With 2xx response: 225 / 225 (100.0%)
 
 - 🔴 Errors: **0**
 - 🟡 Warnings: **3**
@@ -42,13 +42,13 @@ _Generated: 2026-06-19T03:15:51.761Z_
 | Routes             | 8          |
 | RecurringTemplates | 8          |
 | Referrals          | 7          |
+| Notifications      | 7          |
 | Relationships      | 6          |
 | Admin              | 6          |
 | Tracking           | 6          |
 | Dashboard          | 6          |
 | Companies          | 5          |
 | Payments           | 5          |
-| Notifications      | 5          |
 | Files              | 5          |
 | Saved Addresses    | 5          |
 | Health             | 4          |

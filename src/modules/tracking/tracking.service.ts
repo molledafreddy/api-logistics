@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 import { TrackingPoint } from './entities/tracking-point.entity';
+import { Driver } from '../drivers/entities/driver.entity';
 import {
   CreateTrackingPointDto,
   BulkTrackingPointsDto,
@@ -18,6 +19,11 @@ import { IUserPayload } from '../../common/interfaces/user-payload.interface';
 import { requireCompanyId } from '../../common/helpers/tenant.helpers';
 import { INTERNAL_EVENTS } from '../../gateways/events/internal.events';
 
+interface DriverContext {
+  driverId: string;
+  truckId: string | null;
+}
+
 @Injectable()
 export class TrackingService {
   private readonly logger = new Logger(TrackingService.name);
@@ -25,8 +31,26 @@ export class TrackingService {
   constructor(
     @InjectRepository(TrackingPoint)
     private readonly trackingRepository: Repository<TrackingPoint>,
+    @InjectRepository(Driver)
+    private readonly driverRepository: Repository<Driver>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  /**
+   * Resuelve driverId/truckId desde la cuenta autenticada (vía su perfil de
+   * Driver) cuando el cliente no los envía explícitamente. El cliente móvil
+   * solo conoce lat/lng — no tiene por qué saber su propio driverId/truckId.
+   */
+  private async resolveDriverContext(
+    user: IUserPayload,
+  ): Promise<DriverContext | null> {
+    const driver = await this.driverRepository.findOne({
+      where: { userId: user.sub },
+    });
+    return driver
+      ? { driverId: driver.id, truckId: driver.currentTruckId }
+      : null;
+  }
 
   async create(
     dto: CreateTrackingPointDto,
@@ -34,14 +58,24 @@ export class TrackingService {
   ): Promise<TrackingPoint> {
     const companyId = requireCompanyId(user);
 
-    if (!dto.shipmentId && !dto.truckId) {
+    let truckId = dto.truckId;
+    let driverId = dto.driverId;
+    if (!dto.shipmentId && !truckId) {
+      const context = await this.resolveDriverContext(user);
+      truckId ??= context?.truckId ?? undefined;
+      driverId ??= context?.driverId;
+    }
+
+    if (!dto.shipmentId && !truckId) {
       throw new BadRequestException(
-        'At least one of shipmentId or truckId is required',
+        'shipmentId o truckId son requeridos (o el usuario debe tener un conductor con vehículo asignado)',
       );
     }
 
     const point = this.trackingRepository.create({
       ...dto,
+      truckId,
+      driverId,
       companyId,
       capturedAt: dto.capturedAt ? new Date(dto.capturedAt) : new Date(),
     });
@@ -57,9 +91,16 @@ export class TrackingService {
   ): Promise<{ inserted: number }> {
     const companyId = requireCompanyId(user);
 
+    const needsFallback = dto.points.some((p) => !p.shipmentId && !p.truckId);
+    const context = needsFallback
+      ? await this.resolveDriverContext(user)
+      : null;
+
     const points = dto.points.map((p) =>
       this.trackingRepository.create({
         ...p,
+        truckId: p.truckId ?? context?.truckId ?? undefined,
+        driverId: p.driverId ?? context?.driverId,
         companyId,
         capturedAt: p.capturedAt ? new Date(p.capturedAt) : new Date(),
       }),

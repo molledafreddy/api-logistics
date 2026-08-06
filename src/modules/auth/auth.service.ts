@@ -3,6 +3,7 @@ import {
   Logger,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,6 +23,11 @@ import { CompanyType } from '../../common/enums/company-type.enum';
 import { CompanyStatus } from '../../common/enums/company-status.enum';
 import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 import { ReferralsService } from '../referrals/referrals.service';
+import { MailService } from '../mail/mail.service';
+
+const VERIFICATION_CODE_TTL_MS = 10 * 60_000; // 10 minutos
+const VERIFICATION_RESEND_COOLDOWN_MS = 60_000; // 60 segundos
+const VERIFICATION_MAX_ATTEMPTS = 5;
 
 @Injectable()
 export class AuthService {
@@ -36,6 +42,7 @@ export class AuthService {
     private readonly dataSource: DataSource,
     private readonly permissionsCache: PermissionsCacheService,
     private readonly referralsService: ReferralsService,
+    private readonly mailService: MailService,
   ) {
     // Anon client for user-facing auth operations (login, signup)
     const url = this.configService.get<string>('supabase.url')!;
@@ -118,6 +125,18 @@ export class AuthService {
       this.logger.log(
         `User registered: ${savedUser.email} (${savedUser.id}) — Company: ${savedCompany.name} (${savedCompany.id})`,
       );
+
+      // Best-effort: el usuario y la empresa ya quedaron confirmados en esta
+      // transacción. Si el envío del código falla (Resend caído, etc.), no
+      // debemos hacer fallar el registro completo — el usuario podrá pedir
+      // un nuevo código desde la pantalla de verificación ("Reenviar").
+      try {
+        await this.issueVerificationCode(savedUser);
+      } catch (codeError) {
+        this.logger.error(
+          `Failed to issue verification code for ${savedUser.email}: ${(codeError as Error).message}`,
+        );
+      }
 
       if (dto.referralToken) {
         await this.referralsService.applyReferralOnRegister(
@@ -239,6 +258,14 @@ export class AuthService {
         throw new UnauthorizedException('Cuenta desactivada');
       }
 
+      if (!user.emailVerifiedAt) {
+        throw new UnauthorizedException({
+          message: 'Debes verificar tu correo antes de iniciar sesión',
+          error: 'EMAIL_NOT_VERIFIED',
+          email: user.email,
+        });
+      }
+
       // Update login tracking
       user.lastLoginAt = new Date();
       user.lastLoginIp = ipAddress || null;
@@ -288,6 +315,14 @@ export class AuthService {
 
     if (user.status === 'inactive') {
       throw new UnauthorizedException('Cuenta desactivada');
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException({
+        message: 'Debes verificar tu correo antes de iniciar sesión',
+        error: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+      });
     }
 
     // Update login tracking
@@ -384,75 +419,112 @@ export class AuthService {
   }
 
   /**
-   * Re-send email verification.
-   * Triggers Supabase to send a new confirmation email.
+   * Generate a 6-digit verification code, persist its hash + expiry, and
+   * email it to the user. Used both at registration and on manual resend.
    */
-  async resendVerification(userId: string) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+  private async issueVerificationCode(user: User): Promise<void> {
+    const code = crypto.randomInt(100_000, 1_000_000).toString();
+
+    user.emailVerificationCodeHash = await bcrypt.hash(code, 10);
+    user.emailVerificationCodeExpiresAt = new Date(
+      Date.now() + VERIFICATION_CODE_TTL_MS,
+    );
+    user.emailVerificationAttempts = 0;
+    user.emailVerificationLastSentAt = new Date();
+    await this.userRepository.save(user);
+
+    await this.mailService.sendVerificationCode({
+      to: user.email,
+      firstName: user.firstName,
+      code,
+      expiresInMinutes: VERIFICATION_CODE_TTL_MS / 60_000,
+    });
+  }
+
+  /**
+   * Re-send the verification code. Responds identically whether or not the
+   * email exists, to avoid account enumeration.
+   */
+  async resendVerificationCode(email: string) {
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    const genericResponse = {
+      message: 'Si el correo existe, se envió un código de verificación',
+    };
 
     if (!user) {
-      throw new UnauthorizedException('Usuario no encontrado');
+      return genericResponse;
     }
 
     if (user.emailVerifiedAt) {
       return { message: 'El email ya está verificado', verified: true };
     }
 
-    if (!user.authUid) {
-      throw new UnauthorizedException('Usuario sin autenticación configurada');
+    if (
+      user.emailVerificationLastSentAt &&
+      Date.now() - user.emailVerificationLastSentAt.getTime() <
+        VERIFICATION_RESEND_COOLDOWN_MS
+    ) {
+      throw new BadRequestException(
+        'Espera unos segundos antes de solicitar otro código',
+      );
     }
 
-    await this.supabaseService.resendVerificationEmail(user.email);
+    await this.issueVerificationCode(user);
 
-    return { message: 'Email de verificación enviado', verified: false };
+    return genericResponse;
   }
 
   /**
-   * Sync email verification status from Supabase to local DB.
-   * Checks Supabase Auth to see if the user has confirmed their email
-   * and updates the local emailVerifiedAt field.
+   * Validate a 6-digit verification code and mark the email as verified.
    */
-  async syncEmailVerification(userId: string) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+  async verifyEmailCode(email: string, code: string) {
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase().trim() },
+    });
 
     if (!user) {
-      throw new UnauthorizedException('Usuario no encontrado');
+      throw new UnauthorizedException('Código incorrecto o expirado');
     }
 
     if (user.emailVerifiedAt) {
-      return {
-        verified: true,
-        emailVerifiedAt: user.emailVerifiedAt,
-        message: 'Email ya verificado',
-      };
+      return { verified: true, message: 'El email ya está verificado' };
     }
 
-    if (!user.authUid) {
-      throw new UnauthorizedException('Usuario sin autenticación configurada');
+    if (
+      !user.emailVerificationCodeHash ||
+      !user.emailVerificationCodeExpiresAt ||
+      user.emailVerificationCodeExpiresAt.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException('Código incorrecto o expirado');
     }
 
-    const confirmedAt = await this.supabaseService.getEmailConfirmedAt(
-      user.authUid,
-    );
+    if (user.emailVerificationAttempts >= VERIFICATION_MAX_ATTEMPTS) {
+      throw new UnauthorizedException(
+        'Demasiados intentos fallidos. Solicita un nuevo código',
+      );
+    }
 
-    if (confirmedAt) {
-      user.emailVerifiedAt = new Date(confirmedAt);
+    const matches = await bcrypt.compare(code, user.emailVerificationCodeHash);
+
+    if (!matches) {
+      user.emailVerificationAttempts += 1;
       await this.userRepository.save(user);
-
-      this.logger.log(`Email verified for user ${user.email}`);
-
-      return {
-        verified: true,
-        emailVerifiedAt: user.emailVerifiedAt,
-        message: 'Email verificado exitosamente',
-      };
+      throw new UnauthorizedException('Código incorrecto o expirado');
     }
 
-    return {
-      verified: false,
-      emailVerifiedAt: null,
-      message: 'Email aún no verificado',
-    };
+    user.emailVerifiedAt = new Date();
+    user.emailVerificationCodeHash = null;
+    user.emailVerificationCodeExpiresAt = null;
+    user.emailVerificationAttempts = 0;
+    user.emailVerificationLastSentAt = null;
+    await this.userRepository.save(user);
+
+    this.logger.log(`Email verified for user ${user.email}`);
+
+    return { verified: true, message: 'Email verificado exitosamente' };
   }
 
   /**

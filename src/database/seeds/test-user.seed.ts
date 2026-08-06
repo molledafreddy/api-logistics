@@ -72,7 +72,7 @@ export async function seedTestUser() {
   // Crear usuario si no existe
   if (existing.length === 0) {
     await dataSource.query(
-      `INSERT INTO users (auth_uid, company_id, email, first_name, last_name, role, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+      `INSERT INTO users (auth_uid, company_id, email, first_name, last_name, role, status, email_verified_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW())`,
       [
         authUser.id,
         company[0].id,
@@ -85,6 +85,10 @@ export async function seedTestUser() {
     );
     logger.log('Usuario de pruebas creado');
   } else {
+    await dataSource.query(
+      `UPDATE users SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $1`,
+      [existing[0].id],
+    );
     logger.log('Usuario de pruebas ya existe');
   }
 

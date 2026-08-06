@@ -4,6 +4,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ForbiddenException, BadRequestException } from '@nestjs/common';
 import { TrackingService } from './tracking.service';
 import { TrackingPoint } from './entities/tracking-point.entity';
+import { Driver } from '../drivers/entities/driver.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
 import type { IUserPayload } from '../../common/interfaces/user-payload.interface';
 
@@ -23,6 +24,10 @@ const repoMock = () => ({
   createQueryBuilder: jest.fn(),
 });
 
+const driverRepoMock = () => ({
+  findOne: jest.fn().mockResolvedValue(null),
+});
+
 const tenant = (): IUserPayload =>
   ({ sub: 'u1', role: UserRole.ADMIN, companyId: 'c1' }) as never;
 const admin = (): IUserPayload =>
@@ -31,15 +36,18 @@ const admin = (): IUserPayload =>
 describe('TrackingService', () => {
   let service: TrackingService;
   let repo: ReturnType<typeof repoMock>;
+  let driverRepo: ReturnType<typeof driverRepoMock>;
   let emitter: { emit: jest.Mock };
 
   beforeEach(async () => {
     repo = repoMock();
+    driverRepo = driverRepoMock();
     emitter = { emit: jest.fn() };
     const module = await Test.createTestingModule({
       providers: [
         TrackingService,
         { provide: getRepositoryToken(TrackingPoint), useValue: repo },
+        { provide: getRepositoryToken(Driver), useValue: driverRepo },
         { provide: EventEmitter2, useValue: emitter },
       ],
     }).compile();
@@ -61,10 +69,40 @@ describe('TrackingService', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it('BadRequest when neither shipmentId nor truckId', async () => {
+    it('BadRequest when neither shipmentId nor truckId, and user has no driver profile', async () => {
       await expect(
         service.create({ lat: 0, lng: 0 } as never, tenant()),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('BadRequest when the driver profile exists but has no truck assigned', async () => {
+      driverRepo.findOne.mockResolvedValueOnce({
+        id: 'd1',
+        currentTruckId: null,
+      });
+      await expect(
+        service.create({ lat: 0, lng: 0 } as never, tenant()),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('resolves truckId/driverId from the authenticated driver when the client omits them', async () => {
+      driverRepo.findOne.mockResolvedValueOnce({
+        id: 'd1',
+        currentTruckId: 't1',
+      });
+      const res = await service.create({ lat: 1, lng: 2 } as never, tenant());
+      expect(driverRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+      });
+      expect(res).toMatchObject({ truckId: 't1', driverId: 'd1' });
+    });
+
+    it('does not query the driver profile when the client already sent shipmentId/truckId', async () => {
+      await service.create(
+        { shipmentId: 's1', lat: 1, lng: 2 } as never,
+        tenant(),
+      );
+      expect(driverRepo.findOne).not.toHaveBeenCalled();
     });
 
     it('saves and emits event', async () => {
@@ -90,6 +128,32 @@ describe('TrackingService', () => {
       );
       expect(res).toEqual({ inserted: 2 });
       expect(emitter.emit).toHaveBeenCalled();
+    });
+
+    it('resolves the driver context once and applies it to every point missing truckId', async () => {
+      driverRepo.findOne.mockResolvedValueOnce({
+        id: 'd1',
+        currentTruckId: 't1',
+      });
+      const res = await service.createBulk(
+        {
+          points: [
+            { lat: 1, lng: 1 },
+            { lat: 2, lng: 2 },
+          ],
+        } as never,
+        tenant(),
+      );
+      expect(driverRepo.findOne).toHaveBeenCalledTimes(1);
+      expect(res).toEqual({ inserted: 2 });
+    });
+
+    it('skips the driver lookup when every point already has shipmentId/truckId', async () => {
+      await service.createBulk(
+        { points: [{ shipmentId: 's1', lat: 1, lng: 1 }] } as never,
+        tenant(),
+      );
+      expect(driverRepo.findOne).not.toHaveBeenCalled();
     });
   });
 

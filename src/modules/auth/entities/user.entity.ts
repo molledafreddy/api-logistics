@@ -88,6 +88,31 @@ export class User extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true, name: 'email_verified_at' })
   emailVerifiedAt!: Date | null;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'email_verification_code_hash',
+  })
+  emailVerificationCodeHash!: string | null;
+
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'email_verification_code_expires_at',
+  })
+  emailVerificationCodeExpiresAt!: Date | null;
+
+  @Column({ type: 'int', default: 0, name: 'email_verification_attempts' })
+  emailVerificationAttempts!: number;
+
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'email_verification_last_sent_at',
+  })
+  emailVerificationLastSentAt!: Date | null;
+
   // ─── Invitation fields ─────────────────
   @Column({ type: 'uuid', nullable: true, name: 'invited_by_id' })
   invitedById!: string | null;

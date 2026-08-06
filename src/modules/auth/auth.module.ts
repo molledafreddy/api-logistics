@@ -8,12 +8,14 @@ import { SupabaseJwtStrategy } from './strategies/supabase-jwt.strategy';
 import { User } from './entities/user.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ReferralsModule } from '../referrals/referrals.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'supabase-jwt' }),
     TypeOrmModule.forFeature([User, Company]),
     forwardRef(() => ReferralsModule),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, SupabaseService, SupabaseJwtStrategy],

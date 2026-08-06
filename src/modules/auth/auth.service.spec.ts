@@ -1,10 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
+import { MailService } from '../mail/mail.service';
 import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { User } from './entities/user.entity';
@@ -29,6 +35,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let userRepository: any;
   let supabaseService: any;
+  let mailService: any;
 
   const mockUser: Partial<User> = {
     id: 'user-uuid-1',
@@ -43,7 +50,11 @@ describe('AuthService', () => {
     avatarUrl: null,
     timezone: 'America/New_York',
     language: 'en',
-    emailVerifiedAt: null,
+    emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+    emailVerificationCodeHash: null,
+    emailVerificationCodeExpiresAt: null,
+    emailVerificationAttempts: 0,
+    emailVerificationLastSentAt: null,
     lastLoginAt: null,
     lastLoginIp: null,
     failedLoginAttempts: 0,
@@ -133,8 +144,12 @@ describe('AuthService', () => {
                 },
               },
             }),
-            resendVerificationEmail: jest.fn().mockResolvedValue(undefined),
-            getEmailConfirmedAt: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendVerificationCode: jest.fn().mockResolvedValue(true),
           },
         },
         {
@@ -174,6 +189,7 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     userRepository = module.get(getRepositoryToken(User));
     supabaseService = module.get(SupabaseService);
+    mailService = module.get(MailService);
   });
 
   it('should be defined', () => {
@@ -299,6 +315,25 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
     });
+
+    it('should throw if email is not verified', async () => {
+      mockSupabaseAuth.signInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: 'supabase-auth-uid-1' },
+          session: { access_token: 'tok', refresh_token: 'ref', expires_at: 0 },
+        },
+        error: null,
+      });
+
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        emailVerifiedAt: null,
+      });
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
   describe('refreshToken', () => {
@@ -350,117 +385,151 @@ describe('AuthService', () => {
     });
   });
 
-  describe('resendVerification', () => {
-    it('should send verification email', async () => {
+  describe('resendVerificationCode', () => {
+    it('should generate and email a new code for an unverified user', async () => {
       userRepository.findOne.mockResolvedValue({
         ...mockUser,
         emailVerifiedAt: null,
+        emailVerificationLastSentAt: null,
       });
 
-      const result = await service.resendVerification('user-uuid-1');
+      const result = await service.resendVerificationCode('test@example.com');
 
-      expect(result.verified).toBe(false);
-      expect(result.message).toContain('verificación enviado');
-      expect(supabaseService.resendVerificationEmail).toHaveBeenCalledWith(
-        'test@example.com',
+      expect(result.message).toContain('código de verificación');
+      expect(userRepository.save).toHaveBeenCalled();
+      expect(mailService.sendVerificationCode).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'test@example.com' }),
       );
     });
 
-    it('should return already verified if emailVerifiedAt is set', async () => {
+    it('should return already verified without sending an email', async () => {
       userRepository.findOne.mockResolvedValue({
         ...mockUser,
         emailVerifiedAt: new Date(),
       });
 
-      const result = await service.resendVerification('user-uuid-1');
+      const result = await service.resendVerificationCode('test@example.com');
 
-      expect(result.verified).toBe(true);
-      expect(supabaseService.resendVerificationEmail).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining({ verified: true }));
+      expect(mailService.sendVerificationCode).not.toHaveBeenCalled();
     });
 
-    it('should throw if user not found', async () => {
+    it('should not reveal whether the email exists', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.resendVerification('x')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      const result = await service.resendVerificationCode('ghost@example.com');
+
+      expect(result.message).toContain('Si el correo existe');
+      expect(mailService.sendVerificationCode).not.toHaveBeenCalled();
     });
 
-    it('should throw if user has no authUid', async () => {
+    it('should throw if resent within the cooldown window', async () => {
       userRepository.findOne.mockResolvedValue({
         ...mockUser,
-        authUid: null,
         emailVerifiedAt: null,
+        emailVerificationLastSentAt: new Date(),
       });
 
-      await expect(service.resendVerification('user-uuid-1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.resendVerificationCode('test@example.com'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('syncEmailVerification', () => {
-    it('should return already verified if local emailVerifiedAt is set', async () => {
-      const verifiedDate = new Date();
-      userRepository.findOne.mockResolvedValue({
-        ...mockUser,
-        emailVerifiedAt: verifiedDate,
-      });
-
-      const result = await service.syncEmailVerification('user-uuid-1');
-
-      expect(result.verified).toBe(true);
-      expect(result.emailVerifiedAt).toBe(verifiedDate);
-    });
-
-    it('should sync from Supabase and update local DB when confirmed', async () => {
-      const confirmedAt = '2026-04-08T12:00:00.000Z';
+  describe('verifyEmailCode', () => {
+    it('should verify a correct, unexpired code', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
       userRepository.findOne.mockResolvedValue({
         ...mockUser,
         emailVerifiedAt: null,
+        emailVerificationCodeHash: codeHash,
+        emailVerificationCodeExpiresAt: new Date(Date.now() + 60_000),
+        emailVerificationAttempts: 0,
       });
-      supabaseService.getEmailConfirmedAt.mockResolvedValue(confirmedAt);
 
-      const result = await service.syncEmailVerification('user-uuid-1');
+      const result = await service.verifyEmailCode(
+        'test@example.com',
+        '123456',
+      );
 
       expect(result.verified).toBe(true);
       expect(userRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          emailVerifiedAt: new Date(confirmedAt),
+          emailVerifiedAt: expect.any(Date),
+          emailVerificationCodeHash: null,
         }),
       );
     });
 
-    it('should return not verified if Supabase has not confirmed', async () => {
+    it('should return already verified without checking the code', async () => {
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        emailVerifiedAt: new Date(),
+      });
+
+      const result = await service.verifyEmailCode(
+        'test@example.com',
+        '000000',
+      );
+
+      expect(result.verified).toBe(true);
+    });
+
+    it('should throw on an incorrect code and increment attempts', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      const user = {
+        ...mockUser,
+        emailVerifiedAt: null,
+        emailVerificationCodeHash: codeHash,
+        emailVerificationCodeExpiresAt: new Date(Date.now() + 60_000),
+        emailVerificationAttempts: 0,
+      };
+      userRepository.findOne.mockResolvedValue(user);
+
+      await expect(
+        service.verifyEmailCode('test@example.com', '999999'),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(userRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ emailVerificationAttempts: 1 }),
+      );
+    });
+
+    it('should throw on an expired code', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
       userRepository.findOne.mockResolvedValue({
         ...mockUser,
         emailVerifiedAt: null,
+        emailVerificationCodeHash: codeHash,
+        emailVerificationCodeExpiresAt: new Date(Date.now() - 1_000),
+        emailVerificationAttempts: 0,
       });
-      supabaseService.getEmailConfirmedAt.mockResolvedValue(null);
 
-      const result = await service.syncEmailVerification('user-uuid-1');
+      await expect(
+        service.verifyEmailCode('test@example.com', '123456'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
 
-      expect(result.verified).toBe(false);
-      expect(result.emailVerifiedAt).toBeNull();
+    it('should throw after too many failed attempts', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        emailVerifiedAt: null,
+        emailVerificationCodeHash: codeHash,
+        emailVerificationCodeExpiresAt: new Date(Date.now() + 60_000),
+        emailVerificationAttempts: 5,
+      });
+
+      await expect(
+        service.verifyEmailCode('test@example.com', '123456'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw if user not found', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.syncEmailVerification('x')).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should throw if user has no authUid', async () => {
-      userRepository.findOne.mockResolvedValue({
-        ...mockUser,
-        authUid: null,
-        emailVerifiedAt: null,
-      });
-
       await expect(
-        service.syncEmailVerification('user-uuid-1'),
+        service.verifyEmailCode('ghost@example.com', '123456'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });

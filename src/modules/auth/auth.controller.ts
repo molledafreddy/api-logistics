@@ -22,6 +22,8 @@ import {
   LoginDto,
   RefreshTokenDto,
   ChangePasswordDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
 } from './dto/index';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -110,24 +112,28 @@ export class AuthController {
     return this.authService.getMyPermissions(user.companyId);
   }
 
+  @Public()
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Re-enviar email de verificación' })
-  @ApiResponse({ status: 200, description: 'Email de verificación enviado' })
-  @ApiResponse({ status: 401, description: 'No autenticado' })
-  async resendVerification(@CurrentUser() user: IUserPayload) {
-    return this.authService.resendVerification(user.sub);
+  // 1 reenvío / minuto por IP (más el cooldown de 60s en el servicio, por email)
+  @Throttle({ short: { limit: 1, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Re-enviar código de verificación de email' })
+  @ApiResponse({ status: 200, description: 'Código de verificación enviado' })
+  @ApiResponse({ status: 400, description: 'Cooldown de reenvío activo' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerificationCode(dto.email);
   }
 
+  @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Sincronizar estado de verificación de email' })
-  @ApiResponse({ status: 200, description: 'Estado de verificación' })
-  @ApiResponse({ status: 401, description: 'No autenticado' })
-  async verifyEmail(@CurrentUser() user: IUserPayload) {
-    return this.authService.syncEmailVerification(user.sub);
+  // Anti-bruteforce del código de 6 dígitos: 5 intentos / minuto por IP
+  @Throttle({ short: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Verificar código de email de 6 dígitos' })
+  @ApiResponse({ status: 200, description: 'Email verificado' })
+  @ApiResponse({ status: 401, description: 'Código incorrecto o expirado' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmailCode(dto.email, dto.code);
   }
 
   @Patch('change-password')

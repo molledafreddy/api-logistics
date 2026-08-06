@@ -72,7 +72,7 @@ export async function seedCITestUsers(): Promise<void> {
       const user = existingAdmin[0];
       // Always update password_hash and role
       await dataSource.query(
-        `UPDATE users SET role = 'super_admin', password_hash = $1 WHERE id = $2`,
+        `UPDATE users SET role = 'super_admin', password_hash = $1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $2`,
         [hashedPassword, user.id],
       );
       logger.log(`✅ Super admin user updated: ${superAdminEmail}`);
@@ -81,9 +81,9 @@ export async function seedCITestUsers(): Promise<void> {
       const superAdminUid = uuidv4();
       await dataSource.query(
         `INSERT INTO users (
-          auth_uid, company_id, email, first_name, last_name, 
-          role, status, password_hash, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+          auth_uid, company_id, email, first_name, last_name,
+          role, status, password_hash, email_verified_at, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), NOW())`,
         [
           superAdminUid,
           companyId,
@@ -107,7 +107,7 @@ export async function seedCITestUsers(): Promise<void> {
     if (existingTestUser.length > 0) {
       // Always update password_hash for existing test user
       await dataSource.query(
-        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        `UPDATE users SET password_hash = $1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = $2`,
         [hashedPassword, existingTestUser[0].id],
       );
       logger.log(`✅ Test user updated: ${testUserEmail}`);
@@ -115,9 +115,9 @@ export async function seedCITestUsers(): Promise<void> {
       const testUserUid = uuidv4();
       await dataSource.query(
         `INSERT INTO users (
-          auth_uid, company_id, email, first_name, last_name, 
-          role, status, password_hash, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+          auth_uid, company_id, email, first_name, last_name,
+          role, status, password_hash, email_verified_at, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), NOW())`,
         [
           testUserUid,
           companyId,

@@ -11,8 +11,8 @@ const svc = () => ({
   refreshToken: jest.fn().mockResolvedValue('RT'),
   logout: jest.fn().mockResolvedValue('LO'),
   getProfile: jest.fn().mockResolvedValue('P'),
-  resendVerification: jest.fn().mockResolvedValue('RV'),
-  syncEmailVerification: jest.fn().mockResolvedValue('SV'),
+  resendVerificationCode: jest.fn().mockResolvedValue('RV'),
+  verifyEmailCode: jest.fn().mockResolvedValue('SV'),
 });
 
 describe('AuthController', () => {
@@ -54,12 +54,12 @@ describe('AuthController', () => {
     await c.getProfile(user());
     expect(s.getProfile).toHaveBeenCalledWith('u1');
   });
-  it('resendVerification uses user.sub', async () => {
-    await c.resendVerification(user());
-    expect(s.resendVerification).toHaveBeenCalledWith('u1');
+  it('resendVerification passes dto.email', async () => {
+    await c.resendVerification({ email: 'a@b.com' } as never);
+    expect(s.resendVerificationCode).toHaveBeenCalledWith('a@b.com');
   });
-  it('verifyEmail calls syncEmailVerification', async () => {
-    await c.verifyEmail(user());
-    expect(s.syncEmailVerification).toHaveBeenCalledWith('u1');
+  it('verifyEmail passes dto.email and dto.code', async () => {
+    await c.verifyEmail({ email: 'a@b.com', code: '123456' } as never);
+    expect(s.verifyEmailCode).toHaveBeenCalledWith('a@b.com', '123456');
   });
 });

@@ -274,4 +274,96 @@ export class MailService {
       return false;
     }
   }
+
+  async sendVerificationCode(opts: {
+    to: string;
+    firstName: string;
+    code: string;
+    expiresInMinutes: number;
+  }): Promise<boolean> {
+    const { to, firstName, code, expiresInMinutes } = opts;
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject: 'Verifica tu correo electrónico',
+        html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Logistics App</title>
+</head>
+<body style="margin:0;padding:0;background:#7ee8a2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">Tu código de verificación de Logistics App.</div>
+
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="background:#7ee8a2;padding:32px 20px 0">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+        <tr><td style="padding-bottom:20px">
+          <span style="display:inline-block;background:#ffffff;color:#15803d;font-weight:700;font-size:13px;padding:5px 14px;border-radius:8px">Logistics App</span>
+        </td></tr>
+        <tr><td style="padding-bottom:4px">
+          <div style="font-size:28px;font-weight:800;color:#0f172a;line-height:1.2">¡Hola, ${firstName}!</div>
+        </td></tr>
+        <tr><td style="padding-bottom:24px">
+          <div style="font-size:13px;color:#166534">Confirma tu correo para activar tu cuenta</div>
+        </td></tr>
+      </table>
+    </td></tr>
+
+    <tr><td align="center" style="background:#f8fafc;border-radius:28px 28px 0 0;padding:20px 16px 0">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+
+        <tr><td style="background:#ffffff;border-radius:20px;border:1px solid #e2e8f0;overflow:hidden">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:18px 18px 0">
+              <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.6px;font-weight:500">Verificación de cuenta</div>
+            </td></tr>
+            <tr><td style="padding:10px 18px 14px;font-size:16px;font-weight:700;color:#0f172a;line-height:1.5">
+              Ingresa este código en la app para verificar tu correo electrónico:
+            </td></tr>
+            <tr><td style="background:#f8fafc;border-top:1px solid #f1f5f9;padding:16px 18px;text-align:center">
+              <div style="font-size:11px;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px">Código de verificación</div>
+              <span style="display:inline-block;font-size:32px;font-weight:800;letter-spacing:0.3em;color:#0f172a;font-family:monospace;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 20px">${code}</span>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding-top:10px">
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.6">
+            ⏳ Este código es válido por <strong>${expiresInMinutes} minutos</strong>. Si no lo solicitaste, puedes ignorar este mensaje.
+          </div>
+        </td></tr>
+
+      </table>
+    </td></tr>
+
+    <tr><td align="center" style="background:#f8fafc;padding:24px 20px 40px">
+      <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.7;text-align:center">
+        Recibiste este correo porque alguien registró esta dirección en Logistics App.<br>
+        ¿Tienes dudas? Escríbenos a <a href="mailto:soporte@logisticsapp.cl" style="color:#22c55e;text-decoration:none">soporte@logisticsapp.cl</a>
+      </p>
+    </td></tr>
+  </table>
+
+</body>
+</html>`,
+      });
+
+      if (error) {
+        this.logger.warn(`Resend error sending to ${to}: ${error.message}`);
+        return false;
+      }
+
+      this.logger.log(`Verification code email sent to ${to}`);
+      return true;
+    } catch (err: any) {
+      this.logger.warn(
+        `Failed to send verification code email to ${to}: ${err.message}`,
+      );
+      return false;
+    }
+  }
 }

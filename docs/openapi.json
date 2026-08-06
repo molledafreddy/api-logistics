@@ -2963,6 +2963,66 @@
         "tags": ["Notifications"]
       }
     },
+    "/api/v1/notifications/read": {
+      "delete": {
+        "operationId": "NotificationsController_deleteRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Read notifications deleted"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Forbidden — sin permisos suficientes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete all read notifications for current user",
+        "tags": ["Notifications"]
+      }
+    },
+    "/api/v1/notifications/{id}": {
+      "delete": {
+        "operationId": "NotificationsController_deleteOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification deleted"
+          },
+          "401": {
+            "description": "Unauthorized — JWT inválido o ausente"
+          },
+          "403": {
+            "description": "Notification does not belong to current user"
+          },
+          "404": {
+            "description": "Notification not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a single notification",
+        "tags": ["Notifications"]
+      }
+    },
     "/api/v1/notifications/push-tokens/{token}": {
       "delete": {
         "operationId": "NotificationsController_removePushToken",
@@ -11134,7 +11194,7 @@
             "type": "string"
           }
         },
-        "required": ["firstName", "lastName", "licenseNumber"]
+        "required": ["firstName", "lastName"]
       },
       "UpdateDriverDto": {
         "type": "object",

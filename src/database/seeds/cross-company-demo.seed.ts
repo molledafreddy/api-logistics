@@ -330,8 +330,8 @@ async function upsertUserOwner(
   const r = await dataSource.query(
     `INSERT INTO users (
       auth_uid, company_id, email, first_name, last_name,
-      role, status, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, 'company_owner', 'active', NOW(), NOW())
+      role, status, email_verified_at, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, 'company_owner', 'active', NOW(), NOW(), NOW())
     RETURNING id`,
     [authUid, companyId, email, firstName, lastName],
   );
