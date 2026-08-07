@@ -30,6 +30,10 @@ const VERIFICATION_CODE_TTL_MS = 10 * 60_000; // 10 minutos
 const VERIFICATION_RESEND_COOLDOWN_MS = 60_000; // 60 segundos
 const VERIFICATION_MAX_ATTEMPTS = 5;
 
+const PASSWORD_RESET_CODE_TTL_MS = 10 * 60_000; // 10 minutos
+const PASSWORD_RESET_RESEND_COOLDOWN_MS = 60_000; // 60 segundos
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -526,6 +530,106 @@ export class AuthService {
     this.logger.log(`Email verified for user ${user.email}`);
 
     return { verified: true, message: 'Email verificado exitosamente' };
+  }
+
+  /**
+   * Request a password reset code. Responds identically whether or not the
+   * email exists, to avoid account enumeration.
+   */
+  async forgotPassword(email: string) {
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    const genericResponse = {
+      message: 'Si el correo existe, se envió un código de recuperación',
+    };
+
+    if (!user) {
+      return genericResponse;
+    }
+
+    if (
+      user.passwordResetLastSentAt &&
+      Date.now() - user.passwordResetLastSentAt.getTime() <
+        PASSWORD_RESET_RESEND_COOLDOWN_MS
+    ) {
+      throw new BadRequestException(
+        'Espera unos segundos antes de solicitar otro código',
+      );
+    }
+
+    const code = crypto.randomInt(100_000, 1_000_000).toString();
+
+    user.passwordResetCodeHash = await bcrypt.hash(code, 10);
+    user.passwordResetCodeExpiresAt = new Date(
+      Date.now() + PASSWORD_RESET_CODE_TTL_MS,
+    );
+    user.passwordResetAttempts = 0;
+    user.passwordResetLastSentAt = new Date();
+    await this.userRepository.save(user);
+
+    await this.mailService.sendPasswordResetCode({
+      to: user.email,
+      firstName: user.firstName,
+      code,
+      expiresInMinutes: PASSWORD_RESET_CODE_TTL_MS / 60_000,
+    });
+
+    return genericResponse;
+  }
+
+  /**
+   * Validate a password-reset code and update the user's password.
+   */
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Código incorrecto o expirado');
+    }
+
+    if (
+      !user.passwordResetCodeHash ||
+      !user.passwordResetCodeExpiresAt ||
+      user.passwordResetCodeExpiresAt.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException('Código incorrecto o expirado');
+    }
+
+    if (user.passwordResetAttempts >= PASSWORD_RESET_MAX_ATTEMPTS) {
+      throw new UnauthorizedException(
+        'Demasiados intentos fallidos. Solicita un nuevo código',
+      );
+    }
+
+    const matches = await bcrypt.compare(code, user.passwordResetCodeHash);
+
+    if (!matches) {
+      user.passwordResetAttempts += 1;
+      await this.userRepository.save(user);
+      throw new UnauthorizedException('Código incorrecto o expirado');
+    }
+
+    if (!user.authUid) {
+      throw new UnauthorizedException('Usuario sin autenticación configurada');
+    }
+
+    await this.supabaseService.updateAuthUser(user.authUid, {
+      password: newPassword,
+    });
+
+    user.passwordResetCodeHash = null;
+    user.passwordResetCodeExpiresAt = null;
+    user.passwordResetAttempts = 0;
+    user.passwordResetLastSentAt = null;
+    await this.userRepository.save(user);
+
+    this.logger.log(`Password reset for user ${user.email}`);
+
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   /**

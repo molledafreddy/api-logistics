@@ -24,6 +24,8 @@ import {
   ChangePasswordDto,
   VerifyEmailDto,
   ResendVerificationDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from './dto/index';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -134,6 +136,33 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Código incorrecto o expirado' })
   async verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.authService.verifyEmailCode(dto.email, dto.code);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  // 1 solicitud / minuto por IP (más el cooldown de 60s en el servicio, por email)
+  @Throttle({
+    short: { limit: 1, ttl: 60_000 },
+    long: { limit: 3, ttl: 3_600_000 },
+  })
+  @ApiOperation({ summary: 'Solicitar código de recuperación de contraseña' })
+  @ApiResponse({ status: 200, description: 'Código de recuperación enviado' })
+  @ApiResponse({ status: 400, description: 'Cooldown de reenvío activo' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  // Anti-bruteforce del código de 6 dígitos: 5 intentos / minuto por IP
+  @Throttle({ short: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Restablecer contraseña con código de 6 dígitos' })
+  @ApiResponse({ status: 200, description: 'Contraseña actualizada' })
+  @ApiResponse({ status: 401, description: 'Código incorrecto o expirado' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.code, dto.newPassword);
   }
 
   @Patch('change-password')

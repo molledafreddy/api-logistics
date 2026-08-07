@@ -113,6 +113,32 @@ export class User extends BaseEntity {
   })
   emailVerificationLastSentAt!: Date | null;
 
+  // ─── Password reset fields ─────────────
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'password_reset_code_hash',
+  })
+  passwordResetCodeHash!: string | null;
+
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'password_reset_code_expires_at',
+  })
+  passwordResetCodeExpiresAt!: Date | null;
+
+  @Column({ type: 'int', default: 0, name: 'password_reset_attempts' })
+  passwordResetAttempts!: number;
+
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'password_reset_last_sent_at',
+  })
+  passwordResetLastSentAt!: Date | null;
+
   // ─── Invitation fields ─────────────────
   @Column({ type: 'uuid', nullable: true, name: 'invited_by_id' })
   invitedById!: string | null;

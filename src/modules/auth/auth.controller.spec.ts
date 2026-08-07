@@ -13,6 +13,8 @@ const svc = () => ({
   getProfile: jest.fn().mockResolvedValue('P'),
   resendVerificationCode: jest.fn().mockResolvedValue('RV'),
   verifyEmailCode: jest.fn().mockResolvedValue('SV'),
+  forgotPassword: jest.fn().mockResolvedValue('FP'),
+  resetPassword: jest.fn().mockResolvedValue('RP'),
 });
 
 describe('AuthController', () => {
@@ -61,5 +63,21 @@ describe('AuthController', () => {
   it('verifyEmail passes dto.email and dto.code', async () => {
     await c.verifyEmail({ email: 'a@b.com', code: '123456' } as never);
     expect(s.verifyEmailCode).toHaveBeenCalledWith('a@b.com', '123456');
+  });
+  it('forgotPassword passes dto.email', async () => {
+    await c.forgotPassword({ email: 'a@b.com' } as never);
+    expect(s.forgotPassword).toHaveBeenCalledWith('a@b.com');
+  });
+  it('resetPassword passes dto.email, dto.code and dto.newPassword', async () => {
+    await c.resetPassword({
+      email: 'a@b.com',
+      code: '123456',
+      newPassword: 'N3wP@ss!',
+    } as never);
+    expect(s.resetPassword).toHaveBeenCalledWith(
+      'a@b.com',
+      '123456',
+      'N3wP@ss!',
+    );
   });
 });

@@ -137,6 +137,7 @@ describe('AuthService', () => {
               .fn()
               .mockResolvedValue({ id: 'supabase-auth-uid-1' }),
             deleteAuthUser: jest.fn(),
+            updateAuthUser: jest.fn().mockResolvedValue(undefined),
             getAdminClient: jest.fn().mockReturnValue({
               auth: {
                 admin: {
@@ -150,6 +151,7 @@ describe('AuthService', () => {
           provide: MailService,
           useValue: {
             sendVerificationCode: jest.fn().mockResolvedValue(true),
+            sendPasswordResetCode: jest.fn().mockResolvedValue(true),
           },
         },
         {
@@ -530,6 +532,126 @@ describe('AuthService', () => {
 
       await expect(
         service.verifyEmailCode('ghost@example.com', '123456'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should generate and email a reset code for an existing user', async () => {
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        passwordResetLastSentAt: null,
+      });
+
+      const result = await service.forgotPassword('test@example.com');
+
+      expect(result.message).toContain('código de recuperación');
+      expect(userRepository.save).toHaveBeenCalled();
+      expect(mailService.sendPasswordResetCode).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'test@example.com' }),
+      );
+    });
+
+    it('should not reveal whether the email exists', async () => {
+      userRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.forgotPassword('ghost@example.com');
+
+      expect(result.message).toContain('Si el correo existe');
+      expect(mailService.sendPasswordResetCode).not.toHaveBeenCalled();
+    });
+
+    it('should throw if requested within the cooldown window', async () => {
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        passwordResetLastSentAt: new Date(),
+      });
+
+      await expect(service.forgotPassword('test@example.com')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should update the password with a correct, unexpired code', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        passwordResetCodeHash: codeHash,
+        passwordResetCodeExpiresAt: new Date(Date.now() + 60_000),
+        passwordResetAttempts: 0,
+      });
+
+      const result = await service.resetPassword(
+        'test@example.com',
+        '123456',
+        'N3wP@ssw0rd!',
+      );
+
+      expect(result.message).toContain('actualizada');
+      expect(supabaseService.updateAuthUser).toHaveBeenCalledWith(
+        'supabase-auth-uid-1',
+        { password: 'N3wP@ssw0rd!' },
+      );
+      expect(userRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordResetCodeHash: null }),
+      );
+    });
+
+    it('should throw on an incorrect code and increment attempts', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      const user = {
+        ...mockUser,
+        passwordResetCodeHash: codeHash,
+        passwordResetCodeExpiresAt: new Date(Date.now() + 60_000),
+        passwordResetAttempts: 0,
+      };
+      userRepository.findOne.mockResolvedValue(user);
+
+      await expect(
+        service.resetPassword('test@example.com', '999999', 'N3wP@ssw0rd!'),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(userRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordResetAttempts: 1 }),
+      );
+      expect(supabaseService.updateAuthUser).not.toHaveBeenCalled();
+    });
+
+    it('should throw on an expired code', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        passwordResetCodeHash: codeHash,
+        passwordResetCodeExpiresAt: new Date(Date.now() - 1_000),
+        passwordResetAttempts: 0,
+      });
+
+      await expect(
+        service.resetPassword('test@example.com', '123456', 'N3wP@ssw0rd!'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw after too many failed attempts', async () => {
+      const codeHash = await bcrypt.hash('123456', 10);
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        passwordResetCodeHash: codeHash,
+        passwordResetCodeExpiresAt: new Date(Date.now() + 60_000),
+        passwordResetAttempts: 5,
+      });
+
+      await expect(
+        service.resetPassword('test@example.com', '123456', 'N3wP@ssw0rd!'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw if user not found', async () => {
+      userRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword('ghost@example.com', '123456', 'N3wP@ssw0rd!'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
