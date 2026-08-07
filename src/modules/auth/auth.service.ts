@@ -24,6 +24,7 @@ import { CompanyStatus } from '../../common/enums/company-status.enum';
 import { PermissionsCacheService } from '../../common/cache/permissions-cache.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { MailService } from '../mail/mail.service';
+import { ERROR_CODES } from '../../common/constants/error-codes';
 
 const VERIFICATION_CODE_TTL_MS = 10 * 60_000; // 10 minutos
 const VERIFICATION_RESEND_COOLDOWN_MS = 60_000; // 60 segundos
@@ -261,7 +262,7 @@ export class AuthService {
       if (!user.emailVerifiedAt) {
         throw new UnauthorizedException({
           message: 'Debes verificar tu correo antes de iniciar sesión',
-          error: 'EMAIL_NOT_VERIFIED',
+          errorCode: ERROR_CODES.AUTH_EMAIL_NOT_VERIFIED,
           email: user.email,
         });
       }
@@ -320,7 +321,7 @@ export class AuthService {
     if (!user.emailVerifiedAt) {
       throw new UnauthorizedException({
         message: 'Debes verificar tu correo antes de iniciar sesión',
-        error: 'EMAIL_NOT_VERIFIED',
+        errorCode: ERROR_CODES.AUTH_EMAIL_NOT_VERIFIED,
         email: user.email,
       });
     }

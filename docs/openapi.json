@@ -225,48 +225,71 @@
       "post": {
         "operationId": "AuthController_resendVerification",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Email de verificación enviado"
+            "description": "Código de verificación enviado"
+          },
+          "400": {
+            "description": "Cooldown de reenvío activo"
           },
           "401": {
-            "description": "No autenticado"
+            "description": "Unauthorized — JWT inválido o ausente"
           },
           "403": {
             "description": "Forbidden — sin permisos suficientes"
           }
         },
+        "summary": "Re-enviar código de verificación de email",
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "summary": "Re-enviar email de verificación",
-        "tags": ["Auth"]
+        ]
       }
     },
     "/api/v1/auth/verify-email": {
       "post": {
         "operationId": "AuthController_verifyEmail",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Estado de verificación"
+            "description": "Email verificado"
           },
           "401": {
-            "description": "No autenticado"
+            "description": "Código incorrecto o expirado"
           },
           "403": {
             "description": "Forbidden — sin permisos suficientes"
           }
         },
+        "summary": "Verificar código de email de 6 dígitos",
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "summary": "Sincronizar estado de verificación de email",
-        "tags": ["Auth"]
+        ]
       }
     },
     "/api/v1/auth/change-password": {
@@ -9992,6 +10015,30 @@
           }
         },
         "required": ["refreshToken"]
+      },
+      "ResendVerificationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "juan@empresa.com"
+          }
+        },
+        "required": ["email"]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "juan@empresa.com"
+          },
+          "code": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": ["email", "code"]
       },
       "ChangePasswordDto": {
         "type": "object",
