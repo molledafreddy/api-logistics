@@ -299,22 +299,22 @@ export class MailService {
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">Tu código de verificación de Logistics App.</div>
 
   <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="background:#7ee8a2;padding:32px 20px 0;text-align:center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
-        <tr><td style="padding-bottom:20px;text-align:center">
+    <tr><td align="center" style="background:#7ee8a2;padding:32px 20px 0">
+      <table width="480" align="center" cellpadding="0" cellspacing="0" style="width:480px;max-width:480px;margin:0 auto">
+        <tr><td align="center" style="padding-bottom:20px;text-align:center">
           <span style="display:inline-block;background:#ffffff;color:#15803d;font-weight:700;font-size:13px;padding:5px 14px;border-radius:8px">Logistics App</span>
         </td></tr>
-        <tr><td style="padding-bottom:4px;text-align:center">
-          <div style="font-size:28px;font-weight:800;color:#0f172a;line-height:1.2">Verifica tu correo</div>
+        <tr><td align="center" style="padding-bottom:6px;text-align:center">
+          <div style="font-size:30px;font-weight:800;color:#0f172a;line-height:1.25;letter-spacing:-0.01em">🔒 Verifica tu correo</div>
         </td></tr>
-        <tr><td style="padding-bottom:24px;text-align:center">
+        <tr><td align="center" style="padding-bottom:24px;text-align:center">
           <div style="font-size:13px;color:#166534">Hola, ${firstName} — activa tu cuenta con el código de abajo</div>
         </td></tr>
       </table>
     </td></tr>
 
     <tr><td align="center" style="background:#f8fafc;border-radius:28px 28px 0 0;padding:20px 16px 0">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+      <table width="480" align="center" cellpadding="0" cellspacing="0" style="width:480px;max-width:480px;margin:0 auto">
 
         <tr><td style="background:#ffffff;border-radius:20px;border:1px solid #e2e8f0;overflow:hidden">
           <table width="100%" cellpadding="0" cellspacing="0">
@@ -341,10 +341,14 @@ export class MailService {
     </td></tr>
 
     <tr><td align="center" style="background:#f8fafc;padding:24px 20px 40px">
-      <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.7;text-align:center">
-        Recibiste este correo porque alguien registró esta dirección en Logistics App.<br>
-        ¿Tienes dudas? Escríbenos a <a href="mailto:soporte@logisticsapp.cl" style="color:#22c55e;text-decoration:none">soporte@logisticsapp.cl</a>
-      </p>
+      <table width="480" align="center" cellpadding="0" cellspacing="0" style="width:480px;max-width:480px;margin:0 auto">
+        <tr><td align="center">
+          <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.7;text-align:center">
+            Recibiste este correo porque alguien registró esta dirección en Logistics App.<br>
+            ¿Tienes dudas? Escríbenos a <a href="mailto:soporte@logisticsapp.cl" style="color:#22c55e;text-decoration:none">soporte@logisticsapp.cl</a>
+          </p>
+        </td></tr>
+      </table>
     </td></tr>
   </table>
 
