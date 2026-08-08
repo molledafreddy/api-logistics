@@ -299,16 +299,16 @@ export class MailService {
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">Tu código de verificación de Logistics App.</div>
 
   <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="background:#7ee8a2;padding:32px 20px 0">
+    <tr><td align="center" style="background:#7ee8a2;padding:32px 20px 0;text-align:center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
-        <tr><td style="padding-bottom:20px">
+        <tr><td style="padding-bottom:20px;text-align:center">
           <span style="display:inline-block;background:#ffffff;color:#15803d;font-weight:700;font-size:13px;padding:5px 14px;border-radius:8px">Logistics App</span>
         </td></tr>
-        <tr><td style="padding-bottom:4px">
-          <div style="font-size:28px;font-weight:800;color:#0f172a;line-height:1.2">¡Hola, ${firstName}!</div>
+        <tr><td style="padding-bottom:4px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#0f172a;line-height:1.2">Verifica tu correo</div>
         </td></tr>
-        <tr><td style="padding-bottom:24px">
-          <div style="font-size:13px;color:#166534">Confirma tu correo para activar tu cuenta</div>
+        <tr><td style="padding-bottom:24px;text-align:center">
+          <div style="font-size:13px;color:#166534">Hola, ${firstName} — activa tu cuenta con el código de abajo</div>
         </td></tr>
       </table>
     </td></tr>
