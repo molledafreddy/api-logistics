@@ -45,6 +45,10 @@ ENV APP_PORT=3000
 # Expose port
 EXPOSE 3000
 
+# Copy entrypoint script
+COPY --chown=nestjs:nodejs docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Non-root user
 USER nestjs
 
@@ -52,5 +56,6 @@ USER nestjs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/v1/health || exit 1
 
-# Start command
-CMD ["node", "dist/main"]
+# Start command with unbuffered output
+ENV NODE_OPTIONS="--no-warnings"
+CMD ["/app/entrypoint.sh"]
